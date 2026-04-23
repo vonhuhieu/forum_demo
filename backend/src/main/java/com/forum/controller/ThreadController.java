@@ -23,6 +23,14 @@ public class ThreadController {
         return threadRepository.findAllByOrderByCreatedAtDesc();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Thread> getThreadById(@PathVariable Long id) {
+        return threadRepository.findById(id).map(thread -> {
+            thread.setViewCount(thread.getViewCount() + 1); // Tăng lượt xem
+            return ResponseEntity.ok(threadRepository.save(thread));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     @Autowired
     private com.forum.repository.UserRepository userRepository;
 

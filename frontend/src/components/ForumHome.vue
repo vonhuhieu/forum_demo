@@ -51,7 +51,7 @@ const formatDate = (dateStr) => {
           <div class="thread-main">
             <div class="thread-title">
               <span v-if="thread.pinned" class="badge-pinned">Ghim</span>
-              <a href="#">{{ thread.title }}</a>
+              <router-link :to="'/thread/' + thread.id">{{ thread.title }}</router-link>
             </div>
             <div class="thread-meta">
               <span>{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>

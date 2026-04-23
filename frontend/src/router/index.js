@@ -8,12 +8,18 @@ import AdminCreateThread from '../views/Admin/AdminCreateThread.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import CreateThread from '../views/CreateThread.vue'
+import ThreadDetail from '../views/ThreadDetail.vue'
 
 const routes = [
   {
     path: '/',
     name: 'home',
     component: HomeView
+  },
+  {
+    path: '/thread/:id',
+    name: 'thread-detail',
+    component: ThreadDetail
   },
   {
     path: '/login',
