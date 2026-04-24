@@ -5,6 +5,7 @@ import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import api from '../api'
 import QuillBetterTable from 'quill-better-table'
+import BlotFormatter from 'quill-blot-formatter'
 
 const route = useRoute()
 const router = useRouter()
@@ -30,14 +31,34 @@ const toolbarOptions = [
   ['clean']                                         
 ];
 
-const QuillBetterTableModule = QuillBetterTable.default || QuillBetterTable;
+const QuillBetterTableOriginal = QuillBetterTable.default || QuillBetterTable;
+class SafeQuillBetterTable extends QuillBetterTableOriginal {
+  constructor(quill, options) {
+    if (quill && quill.keyboard && quill.keyboard.bindings) {
+      if (!('Backspace' in quill.keyboard.bindings)) {
+        Object.defineProperty(quill.keyboard.bindings, 'Backspace', {
+          get: function() { return this[8] || []; },
+          set: function(val) { this[8] = val; }
+        });
+      }
+    }
+    super(quill, options);
+  }
+}
+SafeQuillBetterTable.keyboardBindings = QuillBetterTableOriginal.keyboardBindings;
 
-const editorOptions = {
-  bounds: 'body',
-  modules: {
-    blotFormatter: {}, 
-    table: false,
-    'better-table': {
+const BlotFormatterModule = BlotFormatter.default || BlotFormatter;
+
+const customModules = [
+  {
+    name: 'blotFormatter',
+    module: BlotFormatterModule,
+    options: {}
+  },
+  {
+    name: 'better-table',
+    module: SafeQuillBetterTable,
+    options: {
       operationMenu: {
         items: {
           unmergeCells: { text: 'Bỏ gộp ô' }
@@ -46,62 +67,73 @@ const editorOptions = {
           colors: ['green', 'red', 'yellow', 'blue', 'white', '#000', '#f3f4f6']
         }
       }
-    },
+    }
+  }
+];
+
+const editorOptions = {
+  bounds: 'body',
+  modules: {
+    table: false,
     keyboard: {
-      bindings: QuillBetterTableModule.keyboardBindings
+      bindings: SafeQuillBetterTable.keyboardBindings
+    }
+  }
+};
+
+const customHandlers = {
+  image: () => selectFile('image/*'),
+  video: () => selectFile('video/*'),
+  attachment: () => selectFile('*'),
+  table: function() {
+    const q = this.quill;
+    const tableMod = q.getModule('better-table');
+    if (tableMod) {
+      const rowsStr = prompt('Nhập số dòng (mặc định 3):', '3');
+      if (rowsStr === null) return;
+      const colsStr = prompt('Nhập số cột (mặc định 3):', '3');
+      if (colsStr === null) return;
+      
+      const rows = parseInt(rowsStr, 10);
+      const cols = parseInt(colsStr, 10);
+      
+      if (!isNaN(rows) && !isNaN(cols) && rows > 0 && cols > 0) {
+        q.focus();
+        tableMod.insertTable(rows, cols);
+      } else {
+        alert('Số dòng và số cột phải là số hợp lệ lớn hơn 0.');
+      }
+    } else {
+      alert('Module bảng chưa được tải!');
+    }
+  },
+  link: function(value) {
+    const q = this.quill;
+    const range = q.getSelection();
+    
+    if (value) {
+      const href = prompt('Nhập địa chỉ liên kết (URL):', 'https://');
+      if (href && href !== 'https://') {
+        q.focus();
+        if (range && range.length > 0) {
+          q.formatText(range.index, range.length, 'link', href);
+        } else {
+          const index = range ? range.index : q.getLength();
+          q.insertText(index, href, 'link', href);
+          q.setSelection(index + href.length);
+        }
+      }
+    } else {
+      q.format('link', false);
     }
   }
 };
 
 const onEditorReady = (quill) => {
-  // Gắn các handler custom vào toolbar
-  const toolbarModule = quill.getModule('toolbar');
-  if (toolbarModule) {
-    toolbarModule.addHandler('image', () => selectFile('image/*'));
-    toolbarModule.addHandler('video', () => selectFile('video/*'));
-    toolbarModule.addHandler('attachment', () => selectFile('*'));
-    toolbarModule.addHandler('table', function() {
-      const q = this.quill;
-      const tableMod = q.getModule('better-table');
-      if (tableMod) {
-        const rowsStr = prompt('Nhập số dòng (mặc định 3):', '3');
-        if (rowsStr === null) return;
-        const colsStr = prompt('Nhập số cột (mặc định 3):', '3');
-        if (colsStr === null) return;
-        
-        const rows = parseInt(rowsStr, 10);
-        const cols = parseInt(colsStr, 10);
-        
-        if (!isNaN(rows) && !isNaN(cols) && rows > 0 && cols > 0) {
-          q.focus();
-          tableMod.insertTable(rows, cols);
-        } else {
-          alert('Số dòng và số cột phải là số hợp lệ lớn hơn 0.');
-        }
-      } else {
-        alert('Module bảng chưa được tải!');
-      }
-    });
-    toolbarModule.addHandler('link', function(value) {
-      const q = this.quill;
-      const range = q.getSelection();
-      
-      if (value) {
-        const href = prompt('Nhập địa chỉ liên kết (URL):', 'https://');
-        if (href && href !== 'https://') {
-          q.focus();
-          if (range && range.length > 0) {
-            q.formatText(range.index, range.length, 'link', href);
-          } else {
-            const index = range ? range.index : q.getLength();
-            q.insertText(index, href, 'link', href);
-            q.setSelection(index + href.length);
-          }
-        }
-      } else {
-        q.format('link', false);
-      }
-    });
+  // Inject icon SVG chuẩn của Quill cho nút Table
+  const tableBtn = document.querySelector('.ql-table');
+  if (tableBtn && tableBtn.innerHTML.trim() === '') {
+    tableBtn.innerHTML = '<svg viewBox="0 0 18 18"><rect class="ql-stroke" height="12" width="14" x="2" y="3"/><line class="ql-stroke" x1="2" x2="16" y1="9" y2="9"/><line class="ql-stroke" x1="8" x2="8" y1="3" y2="15"/></svg>';
   }
 
   const tooltip = quill.theme.tooltip;
@@ -308,7 +340,8 @@ onMounted(() => {
             v-model:content="content" 
             contentType="html" 
             theme="snow" 
-            :toolbar="toolbarOptions"
+            :modules="customModules"
+            :toolbar="{ container: toolbarOptions, handlers: customHandlers }"
             @ready="onEditorReady"
             :options="editorOptions"
             placeholder="Viết nội dung bài viết vào đây..."

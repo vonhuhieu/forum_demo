@@ -3,9 +3,7 @@ import './style.css'
 import App from './App.vue'
 import router from './router'
 
-// Import Quill trực tiếp từ package 'quill'
-import Quill from 'quill'
-import { QuillEditor } from '@vueup/vue-quill'
+import { QuillEditor, Quill } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 
 // Import BlotFormatter & QuillBetterTable

@@ -654,30 +654,3 @@ body > .ql-tooltip.ql-editing {
   margin-right: 10px;
 }
 
-/* Biểu tượng nút chèn bảng (table) */
-.ql-snow .ql-toolbar button.ql-table {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  display: inline-block;
-  float: left;
-  height: 24px;
-  padding: 3px 5px;
-  width: 28px;
-  opacity: 0.8;
-  position: relative;
-}
-
-.ql-snow .ql-toolbar button.ql-table:hover {
-  opacity: 1;
-}
-
-.ql-snow .ql-toolbar button.ql-table::before {
-  content: '';
-  display: block;
-  width: 18px;
-  height: 18px;
-  background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="%23444" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2,3h14v12H2V3z"/><path fill="none" stroke="%23444" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2,9h14M8,3v12"/></svg>');
-  background-size: cover;
-  background-position: center;
-}
