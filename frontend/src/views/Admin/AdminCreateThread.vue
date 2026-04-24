@@ -1,7 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { QuillEditor } from '@vueup/vue-quill'
+import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import api from '../../api'
+import QuillBetterTable from 'quill-better-table'
 
 const router = useRouter()
 const categories = ref([])
@@ -19,30 +22,168 @@ const toolbarOptions = [
   [{ 'header': 1 }, { 'header': 2 }],
   [{ 'list': 'ordered'}, { 'list': 'bullet' }],
   [{ 'indent': '-1'}, { 'indent': '+1' }],
+  [{ 'font': ['roboto', 'arial', 'times-new-roman', 'georgia', 'courier-new', 'verdana'] }],
   [{ 'size': ['12px', '14px', '16px', '18px', '20px', '24px', '32px', '48px'] }],
   [{ 'color': [] }, { 'background': [] }],
   [{ 'align': [] }],
-  ['link', 'image', 'video'],
-  [{ 'table': [] }],
+  ['link', 'image', 'video', 'table'],
   ['attachment'],
   ['clean']
 ];
 
-const modules = {
-  blotFormatter: {}, 
-  table: true,
-  toolbar: {
-    container: toolbarOptions,
-    handlers: {
-      image: () => selectFile('image/*'),
-      video: () => selectFile('video/*'),
-      attachment: () => selectFile('*'),
-      table: function() {
-        this.quill.getModule('table').insertTable(2, 3);
+const QuillBetterTableModule = QuillBetterTable.default || QuillBetterTable;
+
+const editorOptions = {
+  bounds: 'body',
+  modules: {
+    blotFormatter: {}, 
+    table: false,
+    'better-table': {
+      operationMenu: {
+        items: {
+          unmergeCells: { text: 'Bỏ gộp ô' }
+        },
+        color: {
+          colors: ['green', 'red', 'yellow', 'blue', 'white', '#000', '#f3f4f6']
+        }
       }
+    },
+    keyboard: {
+      bindings: QuillBetterTableModule.keyboardBindings
     }
   }
-}
+};
+
+const onEditorReady = (quill) => {
+  // Gắn các handler custom vào toolbar
+  const toolbarModule = quill.getModule('toolbar');
+  if (toolbarModule) {
+    toolbarModule.addHandler('image', () => selectFile('image/*'));
+    toolbarModule.addHandler('video', () => selectFile('video/*'));
+    toolbarModule.addHandler('attachment', () => selectFile('*'));
+    toolbarModule.addHandler('table', function() {
+      const q = this.quill;
+      const tableMod = q.getModule('better-table');
+      if (tableMod) {
+        const rowsStr = prompt('Nhập số dòng (mặc định 3):', '3');
+        if (rowsStr === null) return;
+        const colsStr = prompt('Nhập số cột (mặc định 3):', '3');
+        if (colsStr === null) return;
+        
+        const rows = parseInt(rowsStr, 10);
+        const cols = parseInt(colsStr, 10);
+        
+        if (!isNaN(rows) && !isNaN(cols) && rows > 0 && cols > 0) {
+          q.focus();
+          tableMod.insertTable(rows, cols);
+        } else {
+          alert('Số dòng và số cột phải là số hợp lệ lớn hơn 0.');
+        }
+      } else {
+        alert('Module bảng chưa được tải!');
+      }
+    });
+    toolbarModule.addHandler('link', function(value) {
+      const q = this.quill;
+      const range = q.getSelection();
+      
+      if (value) {
+        const href = prompt('Nhập địa chỉ liên kết (URL):', 'https://');
+        if (href && href !== 'https://') {
+          q.focus();
+          if (range && range.length > 0) {
+            q.formatText(range.index, range.length, 'link', href);
+          } else {
+            const index = range ? range.index : q.getLength();
+            q.insertText(index, href, 'link', href);
+            q.setSelection(index + href.length);
+          }
+        }
+      } else {
+        q.format('link', false);
+      }
+    });
+  }
+
+  const tooltip = quill.theme.tooltip;
+  if (!tooltip) return;
+
+  // Helper tìm Link Blot tại vị trí con trỏ (xử lý case con trỏ ở cuối link)
+  const getLinkBlotAtCursor = (range) => {
+    if (!range) return null;
+    let [leaf] = quill.getLeaf(range.index);
+    if (leaf && leaf.parent && leaf.parent.statics.blotName === 'link') {
+      return leaf.parent;
+    }
+    if (range.index > 0) {
+      let [leafBefore] = quill.getLeaf(range.index - 1);
+      if (leafBefore && leafBefore.parent && leafBefore.parent.statics.blotName === 'link') {
+        return leafBefore.parent;
+      }
+    }
+    return null;
+  };
+
+  // Ghi đè nút Lưu (Sửa link)
+  const originalSave = tooltip.save;
+  tooltip.save = function() {
+    const value = this.textbox.value;
+    const range = this.quill.getSelection(true);
+    
+    if (value && this.root.getAttribute('data-mode') === 'link') {
+      const linkBlot = getLinkBlotAtCursor(range);
+      if (linkBlot) {
+        const text = linkBlot.domNode.innerText;
+        const oldHref = linkBlot.formats().link;
+        
+        if (text && oldHref && text.trim() === oldHref.trim()) {
+          const linkIndex = this.quill.getIndex(linkBlot);
+          const linkLength = linkBlot.length();
+          this.quill.deleteText(linkIndex, linkLength);
+          this.quill.insertText(linkIndex, value, 'link', value);
+          this.hide();
+          return;
+        }
+      }
+    }
+    originalSave.call(this);
+  };
+
+  // Xóa nút Gỡ bỏ mặc định và thay bằng nút mới để chặn event listener cứng của Quill
+  const removeBtn = tooltip.root.querySelector('a.ql-remove');
+  if (removeBtn) {
+    const newRemoveBtn = removeBtn.cloneNode(true);
+    removeBtn.parentNode.replaceChild(newRemoveBtn, removeBtn);
+    
+    newRemoveBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation(); // Ngăn chặn mọi hành vi mặc định
+      
+      let deleted = false;
+      
+      // Quill SnowTooltip thường lưu linkRange
+      if (tooltip.linkRange) {
+        quill.deleteText(tooltip.linkRange.index, tooltip.linkRange.length);
+        deleted = true;
+      } else {
+        const range = quill.getSelection(true);
+        const linkBlot = getLinkBlotAtCursor(range);
+        if (linkBlot) {
+          const linkIndex = quill.getIndex(linkBlot);
+          const linkLength = linkBlot.length();
+          quill.deleteText(linkIndex, linkLength);
+          deleted = true;
+        }
+      }
+      
+      if (!deleted) {
+        quill.format('link', false);
+      }
+      
+      tooltip.hide();
+    });
+  }
+};
 
 const selectFile = (accept) => {
   const input = document.createElement('input');
@@ -166,7 +307,9 @@ onMounted(() => {
               v-model:content="form.content" 
               contentType="html" 
               theme="snow" 
-              :modules="modules"
+              :toolbar="toolbarOptions"
+              @ready="onEditorReady"
+              :options="editorOptions"
               placeholder="Nhập nội dung bài viết..."
               style="height: 500px;"
             />
