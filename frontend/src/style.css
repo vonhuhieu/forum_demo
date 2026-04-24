@@ -210,17 +210,35 @@ body {
 
 .banner-box {
   width: 100%;
-  height: 300px;
+  position: relative;
   margin-bottom: 1rem;
   border-radius: 4px;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .banner-box img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
+}
+
+.banner-text-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 30px 15px 15px 15px; /* More padding at top for smooth fade */
+  background: linear-gradient(to top, rgba(2, 20, 30, 0.95) 0%, rgba(2, 20, 30, 0.7) 40%, transparent 100%);
+  text-align: center;
+  color: #c4f9ff;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 0 20px rgba(0, 255, 255, 0.4);
+  z-index: 10;
+  /* Adjusting font family to look modern and futuristic if possible */
+  font-family: var(--font-sans);
 }
 
 /* Thread List */
@@ -402,20 +420,7 @@ body {
 }
 
 
-.banner-box {
-  width: 100%;
-  height: 300px;
-  margin-bottom: 1rem;
-  border-radius: 4px;
-  overflow: hidden;
-}
 
-.banner-box img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
 
 /* Thread List */
 .thread-row {
