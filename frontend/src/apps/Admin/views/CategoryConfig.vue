@@ -1,61 +1,31 @@
 <template>
   <div class="page-content">
-    <!-- Filter Section -->
-    <div class="card filter-card">
-      <div class="filter-row">
-        <div class="filter-item">
-          <label>Tìm kiếm tên:</label>
-          <input v-model="filter.name" placeholder="Nhập tên chuyên mục...">
-        </div>
-        <div class="filter-actions">
-          <button @click="fetchCategories" class="btn-search">Tìm kiếm</button>
-          <button @click="openAddModal" class="btn-add">+ Thêm mới</button>
-        </div>
-      </div>
-    </div>
+    <DataTable
+      title="Danh sách chuyên mục diễn đàn"
+      placeholder="Tìm kiếm tên, mô tả..."
+      addButtonLabel="Thêm chuyên mục"
+      :headers="headers"
+      :items="displayCategories"
+      :totalItems="filteredCategories.length"
+      v-model:pageSize="pageSize"
+      v-model:currentPage="currentPage"
+      :loading="loading"
+      @search="handleSearch"
+      @add="openAddModal"
+      @edit="openEditModal"
+      @delete="deleteCategory"
+      @view="openEditModal"
+    >
+      <template #item-name="{ item }">
+        <strong>{{ item.name }}</strong>
+      </template>
 
-    <!-- Data Table Section -->
-    <div class="card table-card">
-      <div class="card-header">Danh sách chuyên mục diễn đàn</div>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>STT</th>
-            <th>Tên chuyên mục</th>
-            <th>Mô tả</th>
-            <th>Thứ tự</th>
-            <th>Trạng thái</th>
-            <th class="text-center">Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(cat, index) in categories" :key="cat.id">
-            <td>{{ index + 1 }}</td>
-            <td><strong>{{ cat.name }}</strong></td>
-            <td>{{ cat.description }}</td>
-            <td>{{ cat.positionOrder }}</td>
-            <td>
-              <span :class="['badge', cat.active ? 'badge-success' : 'badge-danger']">
-                {{ cat.active ? 'Hoạt động' : 'Tắt' }}
-              </span>
-            </td>
-            <td class="actions">
-              <button @click="openEditModal(cat)" title="Sửa" class="action-btn edit-btn">✎</button>
-              <button @click="deleteCategory(cat.id)" title="Xóa" class="action-btn delete-btn">🗑</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      
-      <div class="pagination">
-        <span>Hiển thị kết quả từ 1 đến {{ categories.length }} của {{ categories.length }} kết quả</span>
-        <div class="page-numbers">
-          <button disabled>←</button>
-          <button class="active">1</button>
-          <button disabled>→</button>
-        </div>
-      </div>
-    </div>
+      <template #item-active="{ item }">
+        <span :class="['badge', item.active ? 'badge-success' : 'badge-danger']">
+          {{ item.active ? 'Hoạt động' : 'Tắt' }}
+        </span>
+      </template>
+    </DataTable>
 
     <!-- Modal Form -->
     <div v-if="showModal" class="modal-overlay">
@@ -86,17 +56,43 @@
 
 <script>
 import AdminService from '@/apps/Admin/services/admin.service'
+import DataTable from '@/shared/components/DataTable.vue'
+import { alertConfirm, toastSuccess, toastError } from '@/shared/utils/swal'
 
 export default {
   name: 'CategoryConfig',
+  components: { DataTable },
   data() {
     return {
       categories: [],
       loading: false,
-      filter: { name: '' },
+      keyword: '',
+      pageSize: 10,
+      currentPage: 1,
       showModal: false,
       isEditing: false,
+      headers: [
+        { text: 'Tên chuyên mục', value: 'name', sortable: true },
+        { text: 'Mô tả', value: 'description', sortable: true },
+        { text: 'Thứ tự', value: 'positionOrder', sortable: true, width: '100px' },
+        { text: 'Trạng thái', value: 'active', sortable: true, width: '120px' }
+      ],
       form: { id: null, name: '', description: '', positionOrder: 0, active: true }
+    }
+  },
+  computed: {
+    filteredCategories() {
+      if (!this.keyword) return this.categories
+      const k = this.keyword.toLowerCase()
+      return this.categories.filter(c => 
+        (c.name && c.name.toLowerCase().includes(k)) ||
+        (c.description && c.description.toLowerCase().includes(k))
+      )
+    },
+    displayCategories() {
+      const start = (this.currentPage - 1) * this.pageSize
+      const end = start + this.pageSize
+      return this.filteredCategories.slice(start, end)
     }
   },
   mounted() {
@@ -109,6 +105,10 @@ export default {
       this.categories = response.data
       this.loading = false
     },
+    handleSearch(k) {
+      this.keyword = k
+      this.currentPage = 1
+    },
     openAddModal() {
       this.resetForm()
       this.showModal = true
@@ -119,18 +119,30 @@ export default {
       this.showModal = true
     },
     async handleSubmit() {
-      if (this.isEditing) {
-        await AdminService.updateCategory(this.form.id, this.form)
-      } else {
-        await AdminService.createCategory(this.form)
-      }
-      this.showModal = false
-      this.fetchCategories()
-    },
-    async deleteCategory(id) {
-      if (confirm('Bạn có chắc chắn muốn xóa?')) {
-        await AdminService.deleteCategory(id)
+      try {
+        if (this.isEditing) {
+          await AdminService.updateCategory(this.form.id, this.form)
+          toastSuccess('Cập nhật chuyên mục thành công')
+        } else {
+          await AdminService.createCategory(this.form)
+          toastSuccess('Thêm chuyên mục thành công')
+        }
+        this.showModal = false
         this.fetchCategories()
+      } catch (error) {
+        toastError('Lỗi khi lưu dữ liệu')
+      }
+    },
+    async deleteCategory(item) {
+      const result = await alertConfirm('Xóa chuyên mục', `Bạn có chắc chắn muốn xóa chuyên mục "${item.name}"?`)
+      if (result.isConfirmed) {
+        try {
+          await AdminService.deleteCategory(item.id)
+          toastSuccess('Đã xóa chuyên mục')
+          this.fetchCategories()
+        } catch (error) {
+          toastError('Lỗi khi xóa chuyên mục')
+        }
       }
     },
     resetForm() {
@@ -142,27 +154,10 @@ export default {
 </script>
 
 <style scoped>
-.filter-card { padding: 1.5rem; margin-bottom: 1.5rem; }
-.filter-row { display: flex; align-items: flex-end; gap: 2rem; }
-.filter-item { flex: 1; }
-.filter-item label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: #555; }
-.filter-item input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; }
-.btn-search { background: #34495e; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; }
-.btn-add { background: #27ae60; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; margin-left: 10px; font-weight: bold; }
-.table-card { padding: 0; overflow: hidden; }
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th { background: #f8f9fa; padding: 1rem; text-align: left; border-bottom: 2px solid #eee; color: #1a507a; }
-.data-table td { padding: 1rem; border-bottom: 1px solid #eee; }
 .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
 .badge-success { background: #d4edda; color: #155724; }
 .badge-danger { background: #f8d7da; color: #721c24; }
-.actions { text-align: center; display: flex; justify-content: center; gap: 10px; }
-.action-btn { width: 32px; height: 32px; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
-.edit-btn { background: #e3f2fd; color: #1976d2; }
-.delete-btn { background: #ffebee; color: #c62828; }
-.pagination { padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; font-size: 0.85rem; color: #666; }
-.page-numbers button { padding: 4px 10px; margin-left: 5px; border: 1px solid #ddd; background: white; cursor: pointer; }
-.page-numbers button.active { background: #1a507a; color: white; border-color: #1a507a; }
+
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal-card { background: white; width: 500px; border-radius: 8px; overflow: hidden; }
 .admin-form { padding: 1.5rem; }
@@ -173,3 +168,4 @@ export default {
 .btn-save { background: #27ae60; color: white; border: none; padding: 0.75rem 2rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
 .btn-cancel { background: #95a5a6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; }
 </style>
+

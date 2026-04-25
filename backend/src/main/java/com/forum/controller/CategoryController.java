@@ -1,8 +1,9 @@
 package com.forum.controller;
 
-import com.forum.entity.Category;
-import com.forum.repository.CategoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.forum.dto.CategoryDTO;
+import com.forum.dto.ResponseDTO;
+import com.forum.service.CategoryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,37 +11,36 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/categories")
+@RequiredArgsConstructor
 public class CategoryController {
 
-    @Autowired
-    private CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     @GetMapping
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAllByOrderByPositionOrderAsc();
+    public ResponseEntity<ResponseDTO<List<CategoryDTO>>> getAllCategories() {
+        return ResponseEntity.ok(categoryService.getAllCategories());
     }
 
     @PostMapping
-    public Category createCategory(@RequestBody Category category) {
-        return categoryRepository.save(category);
+    public ResponseEntity<ResponseDTO<CategoryDTO>> createCategory(@RequestBody CategoryDTO categoryDTO) {
+        return ResponseEntity.ok(categoryService.createCategory(categoryDTO));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody Category categoryDetails) {
-        return categoryRepository.findById(id).map(category -> {
-            category.setName(categoryDetails.getName());
-            category.setDescription(categoryDetails.getDescription());
-            category.setPositionOrder(categoryDetails.getPositionOrder());
-            category.setActive(categoryDetails.isActive());
-            return ResponseEntity.ok(categoryRepository.save(category));
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ResponseDTO<CategoryDTO>> updateCategory(@PathVariable Long id, @RequestBody CategoryDTO categoryDTO) {
+        try {
+            return ResponseEntity.ok(categoryService.updateCategory(id, categoryDTO));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        return categoryRepository.findById(id).map(category -> {
-            categoryRepository.delete(category);
-            return ResponseEntity.ok().<Void>build();
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ResponseDTO<Void>> deleteCategory(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(categoryService.deleteCategory(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

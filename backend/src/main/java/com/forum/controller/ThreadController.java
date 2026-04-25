@@ -1,8 +1,9 @@
 package com.forum.controller;
 
-import com.forum.entity.Thread;
-import com.forum.repository.ThreadRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.forum.dto.ResponseDTO;
+import com.forum.dto.ThreadDTO;
+import com.forum.service.ThreadService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,50 +11,54 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/threads")
+@RequiredArgsConstructor
 public class ThreadController {
 
-    @Autowired
-    private ThreadRepository threadRepository;
+    private final ThreadService threadService;
 
     @GetMapping
-    public List<Thread> getAllThreads(@RequestParam(required = false) Long categoryId) {
-        if (categoryId != null) {
-            return threadRepository.findAllByCategoryIdOrderByPinnedDescCreatedAtDesc(categoryId);
-        }
-        return threadRepository.findAllByOrderByCreatedAtDesc();
+    public ResponseEntity<ResponseDTO<List<ThreadDTO>>> getAllThreads(@RequestParam(required = false) Long categoryId) {
+        return ResponseEntity.ok(threadService.getAllThreads(categoryId));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Thread> getThreadById(@PathVariable Long id) {
-        return threadRepository.findById(id).map(thread -> {
-            thread.setViewCount(thread.getViewCount() + 1); // Tăng lượt xem
-            return ResponseEntity.ok(threadRepository.save(thread));
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ResponseDTO<ThreadDTO>> getThreadById(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(threadService.getThreadById(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
-    @Autowired
-    private com.forum.repository.UserRepository userRepository;
-
     @PostMapping
-    public Thread createThread(@RequestBody Thread thread) {
-        // Tạm thời gán author là admin (ID: 1)
-        userRepository.findById(1L).ifPresent(thread::setAuthor);
-        return threadRepository.save(thread);
+    public ResponseEntity<ResponseDTO<ThreadDTO>> createThread(@RequestBody ThreadDTO threadDTO) {
+        return ResponseEntity.ok(threadService.createThread(threadDTO));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ResponseDTO<ThreadDTO>> updateThread(@PathVariable Long id, @RequestBody ThreadDTO threadDTO) {
+        try {
+            return ResponseEntity.ok(threadService.updateThread(id, threadDTO));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteThread(@PathVariable Long id) {
-        return threadRepository.findById(id).map(thread -> {
-            threadRepository.delete(thread);
-            return ResponseEntity.ok().<Void>build();
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ResponseDTO<Void>> deleteThread(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(threadService.deleteThread(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PatchMapping("/{id}/pin")
-    public ResponseEntity<Thread> togglePin(@PathVariable Long id) {
-        return threadRepository.findById(id).map(thread -> {
-            thread.setPinned(!thread.isPinned());
-            return ResponseEntity.ok(threadRepository.save(thread));
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ResponseDTO<ThreadDTO>> togglePin(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(threadService.togglePin(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

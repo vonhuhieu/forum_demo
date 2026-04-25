@@ -1,8 +1,9 @@
 package com.forum.controller;
 
-import com.forum.entity.Menu;
-import com.forum.repository.MenuRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.forum.dto.MenuDTO;
+import com.forum.dto.ResponseDTO;
+import com.forum.service.MenuService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,38 +11,36 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/menus")
-@CrossOrigin(origins = "*") // Tạm thời cho phép tất cả các nguồn để test
+@RequiredArgsConstructor
 public class MenuController {
 
-    @Autowired
-    private MenuRepository menuRepository;
+    private final MenuService menuService;
 
     @GetMapping
-    public List<Menu> getAllMenus() {
-        return menuRepository.findAllByOrderByPositionOrderAsc();
+    public ResponseEntity<ResponseDTO<List<MenuDTO>>> getAllMenus() {
+        return ResponseEntity.ok(menuService.getAllMenus());
     }
 
     @PostMapping
-    public Menu createMenu(@RequestBody Menu menu) {
-        return menuRepository.save(menu);
+    public ResponseEntity<ResponseDTO<MenuDTO>> createMenu(@RequestBody MenuDTO menuDTO) {
+        return ResponseEntity.ok(menuService.createMenu(menuDTO));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Menu> updateMenu(@PathVariable Long id, @RequestBody Menu menuDetails) {
-        return menuRepository.findById(id).map(menu -> {
-            menu.setTitle(menuDetails.getTitle());
-            menu.setUrl(menuDetails.getUrl());
-            menu.setPositionOrder(menuDetails.getPositionOrder());
-            menu.setActive(menuDetails.isActive());
-            return ResponseEntity.ok(menuRepository.save(menu));
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ResponseDTO<MenuDTO>> updateMenu(@PathVariable Long id, @RequestBody MenuDTO menuDTO) {
+        try {
+            return ResponseEntity.ok(menuService.updateMenu(id, menuDTO));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMenu(@PathVariable Long id) {
-        return menuRepository.findById(id).map(menu -> {
-            menuRepository.delete(menu);
-            return ResponseEntity.ok().<Void>build();
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ResponseDTO<Void>> deleteMenu(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(menuService.deleteMenu(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

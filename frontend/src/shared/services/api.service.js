@@ -18,9 +18,15 @@ api.interceptors.request.use(
   }
 )
 
-// Interceptor xử lý lỗi 401 (Hết hạn token)
+// Interceptor xử lý phản hồi
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Nếu phản hồi có cấu trúc { status, data } từ ResponseDTO của Backend
+    if (response.data && Object.prototype.hasOwnProperty.call(response.data, 'status') && Object.prototype.hasOwnProperty.call(response.data, 'data')) {
+      return { ...response, data: response.data.data }
+    }
+    return response
+  },
   (error) => {
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('token')

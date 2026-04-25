@@ -1,40 +1,56 @@
 <template>
   <div class="admin-create-thread">
     <div class="card">
-      <div class="card-header">TẠO BÀI VIẾT MỚI (QUẢN TRỊ)</div>
+      <div class="card-header">{{ pageTitle }}</div>
       <div class="admin-form" style="padding: 2rem;">
         <div class="form-group">
           <label>Tiêu đề bài viết:</label>
-          <input v-model="form.title" class="admin-input-large" placeholder="Nhập tiêu đề..." required>
+          <input 
+            v-model="form.title" 
+            class="admin-input-large" 
+            placeholder="Nhập tiêu đề..." 
+            required
+            :disabled="isViewMode"
+          >
         </div>
 
         <div class="form-row" style="display: flex; gap: 2rem; margin-bottom: 1.5rem;">
           <div class="form-group" style="flex: 1;">
             <label>Chuyên mục:</label>
-            <select v-model="form.categoryId" class="admin-input" required>
+            <select 
+              v-model="form.categoryId" 
+              class="admin-input" 
+              required
+              :disabled="isViewMode"
+            >
               <option value="">-- Chọn chuyên mục --</option>
               <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
             </select>
           </div>
           <div class="form-group" style="padding-top: 2rem;">
             <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-              <input type="checkbox" v-model="form.pinned"> Ghim bài viết lên đầu
+              <input 
+                type="checkbox" 
+                v-model="form.pinned"
+                :disabled="isViewMode"
+              > Ghim bài viết lên đầu
             </label>
           </div>
         </div>
 
         <div class="form-group">
           <label>Nội dung bài viết:</label>
-          <div class="editor-wrapper">
+          <div class="editor-wrapper" :class="{ 'disabled-editor': isViewMode }">
             <QuillEditor
               ref="quillRef"
               v-model:content="form.content"
               contentType="html"
               theme="snow"
               :modules="customModules"
-              :toolbar="{ container: toolbarOptions, handlers: customHandlers }"
+              :toolbar="isViewMode ? false : { container: toolbarOptions, handlers: customHandlers }"
               @ready="onEditorReady"
               :options="editorOptions"
+              :readOnly="isViewMode"
               placeholder="Nhập nội dung bài viết..."
               style="height: 500px;"
             />
@@ -42,8 +58,12 @@
         </div>
 
         <div class="form-actions" style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
-          <button @click="$router.push('/admin/threads')" class="btn-cancel">Hủy bỏ</button>
-          <button @click="handlePost" class="btn-save">Đăng bài ngay</button>
+          <button @click="$router.push('/admin/threads')" class="btn-cancel">
+            {{ isViewMode ? 'Quay lại' : 'Hủy bỏ' }}
+          </button>
+          <button v-if="!isViewMode" @click="handlePost" class="btn-save">
+            {{ isEditMode ? 'Cập nhật bài viết' : 'Đăng bài ngay' }}
+          </button>
         </div>
       </div>
     </div>
@@ -57,6 +77,7 @@ import api from '@/shared/services/api.service'
 import AdminService from '@/apps/Admin/services/admin.service'
 import QuillBetterTable from 'quill-better-table'
 import BlotFormatter from 'quill-blot-formatter'
+import { alertSuccess, alertError } from '@/shared/utils/swal'
 
 const QuillBetterTableOriginal = QuillBetterTable.default || QuillBetterTable
 class SafeQuillBetterTable extends QuillBetterTableOriginal {
@@ -169,8 +190,27 @@ export default {
       }
     }
   },
-  mounted() {
-    this.fetchCategories()
+  computed: {
+    isEditMode() {
+      return this.$route.path.includes('/threads/edit/')
+    },
+    isViewMode() {
+      return this.$route.path.includes('/threads/view/')
+    },
+    threadId() {
+      return this.$route.params.id
+    },
+    pageTitle() {
+      if (this.isViewMode) return 'XEM CHI TIẾT BÀI VIẾT'
+      if (this.isEditMode) return 'CHỈNH SỬA BÀI VIẾT'
+      return 'TẠO BÀI VIẾT MỚI'
+    }
+  },
+  async mounted() {
+    await this.fetchCategories()
+    if (this.threadId) {
+      await this.fetchThread()
+    }
     setTimeout(this.addTooltips, 500)
   },
   methods: {
@@ -178,24 +218,48 @@ export default {
       const response = await AdminService.getCategories()
       this.categories = response.data
     },
+    async fetchThread() {
+      try {
+        const response = await api.get(`/threads/${this.threadId}`)
+        const thread = response.data
+        this.form = {
+          title: thread.title,
+          content: thread.content,
+          categoryId: thread.category ? thread.category.id : '',
+          pinned: thread.pinned || false
+        }
+      } catch (error) {
+        alertError('Không thể tải thông tin bài viết')
+      }
+    },
     async handlePost() {
       if (!this.form.title || !this.form.content || !this.form.categoryId) {
-        alert('Vui lòng điền đầy đủ thông tin')
+        alertError('Vui lòng điền đầy đủ thông tin')
         return
       }
       try {
-        await api.post('/threads', {
+        const payload = {
           title: this.form.title,
           content: this.form.content,
           category: { id: this.form.categoryId },
           pinned: this.form.pinned
-        })
+        }
+        
+        if (this.isEditMode) {
+          await api.put(`/threads/${this.threadId}`, payload)
+          await alertSuccess('Cập nhật bài viết thành công')
+        } else {
+          await api.post('/threads', payload)
+          await alertSuccess('Đăng bài viết thành công')
+        }
+        
         this.$router.push('/admin/threads')
       } catch (error) {
-        alert('Lỗi khi đăng bài')
+        alertError(this.isEditMode ? 'Lỗi khi cập nhật bài viết' : 'Lỗi khi đăng bài')
       }
     },
     selectFile(accept) {
+      if (this.isViewMode) return
       const input = document.createElement('input')
       input.setAttribute('type', 'file')
       input.setAttribute('accept', accept)
@@ -221,15 +285,18 @@ export default {
           }
           quill.setSelection(range.index + 1)
         } catch (error) {
-          alert('Lỗi khi tải file lên')
+          alertError('Lỗi khi tải file lên')
         }
       }
     },
     onEditorReady(quill) {
-      const tableBtn = document.querySelector('.ql-table')
-      if (tableBtn && tableBtn.innerHTML.trim() === '') {
-        tableBtn.innerHTML = '<svg viewBox="0 0 18 18"><rect class="ql-stroke" height="12" width="14" x="2" y="3"/><line class="ql-stroke" x1="2" x2="16" y1="9" y2="9"/><line class="ql-stroke" x1="8" x2="8" y1="3" y2="15"/></svg>'
+      if (!this.isViewMode) {
+        const tableBtn = document.querySelector('.ql-table')
+        if (tableBtn && tableBtn.innerHTML.trim() === '') {
+          tableBtn.innerHTML = '<svg viewBox="0 0 18 18"><rect class="ql-stroke" height="12" width="14" x="2" y="3"/><line class="ql-stroke" x1="2" x2="16" y1="9" y2="9"/><line class="ql-stroke" x1="8" x2="8" y1="3" y2="15"/></svg>'
+        }
       }
+      
       const tooltip = quill.theme.tooltip
       if (!tooltip) return
       const getLinkBlotAtCursor = (range) => {
@@ -288,6 +355,7 @@ export default {
       }
     },
     addTooltips() {
+      if (this.isViewMode) return
       const tooltips = {
         'ql-bold': 'In đậm', 'ql-italic': 'In nghiêng', 'ql-underline': 'Gạch chân', 'ql-strike': 'Gạch ngang',
         'ql-blockquote': 'Trích dẫn', 'ql-code-block': 'Chèn mã', 'ql-list[value="ordered"]': 'Số thứ tự',
@@ -313,7 +381,10 @@ export default {
 .btn-save { background-color: #27ae60; color: white; border: none; padding: 12px 30px; border-radius: 4px; font-weight: bold; cursor: pointer; }
 .btn-cancel { background-color: #95a5a6; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; }
 .form-group label { font-weight: bold; display: block; margin-bottom: 0.5rem; }
+.disabled-editor :deep(.ql-toolbar) { display: none; }
+.disabled-editor :deep(.ql-container) { border-top: 1px solid #ccc !important; }
 :deep(.ql-editor) { font-size: 16px; }
 :deep(.ql-editor table) { border-collapse: collapse; width: 100%; }
 :deep(.ql-editor td) { border: 1px solid #ccc; padding: 8px; }
 </style>
+

@@ -1,48 +1,35 @@
 <template>
   <div class="page-content">
-    <div class="card filter-card">
-      <div class="filter-row">
-        <div class="filter-item">
-          <label>Tìm kiếm menu:</label>
-          <input placeholder="Nhập tiêu đề menu...">
-        </div>
-        <div class="filter-actions">
-          <button class="btn-search">Tìm kiếm</button>
-          <button @click="openAddModal" class="btn-add">+ Thêm Menu</button>
-        </div>
-      </div>
-    </div>
+    <DataTable
+      title="Danh sách Menu trên Header"
+      placeholder="Tìm kiếm tiêu đề menu, URL..."
+      addButtonLabel="Thêm Menu"
+      :headers="headers"
+      :items="displayMenus"
+      :totalItems="filteredMenus.length"
+      v-model:pageSize="pageSize"
+      v-model:currentPage="currentPage"
+      :loading="loading"
+      @search="handleSearch"
+      @add="openAddModal"
+      @edit="openEditModal"
+      @delete="deleteMenu"
+      @view="openEditModal"
+    >
+      <template #item-title="{ item }">
+        <strong>{{ item.title }}</strong>
+      </template>
 
-    <div class="card table-card">
-      <div class="card-header">Danh sách Menu trên Header</div>
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Thứ tự</th>
-            <th>Tiêu đề</th>
-            <th>Đường dẫn (URL)</th>
-            <th>Trạng thái</th>
-            <th class="text-center">Thao tác</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="menu in menus" :key="menu.id">
-            <td>{{ menu.positionOrder }}</td>
-            <td><strong>{{ menu.title }}</strong></td>
-            <td><code>{{ menu.url }}</code></td>
-            <td>
-              <span :class="['badge', menu.active ? 'badge-success' : 'badge-danger']">
-                {{ menu.active ? 'Bật' : 'Tắt' }}
-              </span>
-            </td>
-            <td class="actions">
-              <button @click="openEditModal(menu)" class="action-btn edit-btn">✎</button>
-              <button @click="deleteMenu(menu.id)" class="action-btn delete-btn">🗑</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+      <template #item-url="{ item }">
+        <code>{{ item.url }}</code>
+      </template>
+
+      <template #item-active="{ item }">
+        <span :class="['badge', item.active ? 'badge-success' : 'badge-danger']">
+          {{ item.active ? 'Bật' : 'Tắt' }}
+        </span>
+      </template>
+    </DataTable>
 
     <!-- Modal Form -->
     <div v-if="showModal" class="modal-overlay">
@@ -77,16 +64,43 @@
 
 <script>
 import AdminService from '@/apps/Admin/services/admin.service'
+import DataTable from '@/shared/components/DataTable.vue'
+import { alertConfirm, toastSuccess, toastError } from '@/shared/utils/swal'
 
 export default {
   name: 'MenuConfig',
+  components: { DataTable },
   data() {
     return {
       menus: [],
       loading: false,
+      keyword: '',
+      pageSize: 10,
+      currentPage: 1,
       showModal: false,
       isEditing: false,
+      headers: [
+        { text: 'Thứ tự', value: 'positionOrder', sortable: true, width: '100px' },
+        { text: 'Tiêu đề', value: 'title', sortable: true },
+        { text: 'Đường dẫn (URL)', value: 'url', sortable: true },
+        { text: 'Trạng thái', value: 'active', sortable: true, width: '120px' }
+      ],
       form: { id: null, title: '', url: '', positionOrder: 0, active: true }
+    }
+  },
+  computed: {
+    filteredMenus() {
+      if (!this.keyword) return this.menus
+      const k = this.keyword.toLowerCase()
+      return this.menus.filter(m => 
+        (m.title && m.title.toLowerCase().includes(k)) ||
+        (m.url && m.url.toLowerCase().includes(k))
+      )
+    },
+    displayMenus() {
+      const start = (this.currentPage - 1) * this.pageSize
+      const end = start + this.pageSize
+      return this.filteredMenus.slice(start, end)
     }
   },
   mounted() {
@@ -99,6 +113,10 @@ export default {
       this.menus = response.data
       this.loading = false
     },
+    handleSearch(k) {
+      this.keyword = k
+      this.currentPage = 1
+    },
     openAddModal() {
       this.resetForm()
       this.showModal = true
@@ -109,18 +127,30 @@ export default {
       this.showModal = true
     },
     async handleSubmit() {
-      if (this.isEditing) {
-        await AdminService.updateMenu(this.form.id, this.form)
-      } else {
-        await AdminService.createMenu(this.form)
-      }
-      this.showModal = false
-      this.fetchMenus()
-    },
-    async deleteMenu(id) {
-      if (confirm('Xác nhận xóa menu này?')) {
-        await AdminService.deleteMenu(id)
+      try {
+        if (this.isEditing) {
+          await AdminService.updateMenu(this.form.id, this.form)
+          toastSuccess('Cập nhật menu thành công')
+        } else {
+          await AdminService.createMenu(this.form)
+          toastSuccess('Thêm menu thành công')
+        }
+        this.showModal = false
         this.fetchMenus()
+      } catch (error) {
+        toastError('Lỗi khi lưu dữ liệu')
+      }
+    },
+    async deleteMenu(item) {
+      const result = await alertConfirm('Xóa menu', `Bạn có chắc chắn muốn xóa menu "${item.title}"?`)
+      if (result.isConfirmed) {
+        try {
+          await AdminService.deleteMenu(item.id)
+          toastSuccess('Đã xóa menu')
+          this.fetchMenus()
+        } catch (error) {
+          toastError('Lỗi khi xóa menu')
+        }
       }
     },
     resetForm() {
@@ -132,24 +162,10 @@ export default {
 </script>
 
 <style scoped>
-.filter-card { padding: 1.5rem; margin-bottom: 1.5rem; }
-.filter-row { display: flex; align-items: flex-end; gap: 2rem; }
-.filter-item { flex: 1; }
-.filter-item label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
-.filter-item input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; }
-.btn-search { background: #34495e; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; }
-.btn-add { background: #27ae60; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
-.table-card { padding: 0; }
-.data-table { width: 100%; border-collapse: collapse; }
-.data-table th { background: #f8f9fa; padding: 1rem; text-align: left; border-bottom: 2px solid #eee; }
-.data-table td { padding: 1rem; border-bottom: 1px solid #eee; }
 .badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
 .badge-success { background: #d4edda; color: #155724; }
 .badge-danger { background: #f8d7da; color: #721c24; }
-.actions { text-align: center; display: flex; justify-content: center; gap: 10px; }
-.action-btn { width: 32px; height: 32px; border: none; border-radius: 4px; cursor: pointer; }
-.edit-btn { background: #e3f2fd; color: #1976d2; }
-.delete-btn { background: #ffebee; color: #c62828; }
+
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
 .modal-card { background: white; width: 450px; border-radius: 8px; }
 .admin-form { padding: 1.5rem; }
@@ -162,3 +178,4 @@ export default {
 .btn-save { background: #27ae60; color: white; border: none; padding: 0.75rem 2rem; border-radius: 4px; cursor: pointer; }
 .btn-cancel { background: #95a5a6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; }
 </style>
+

@@ -61,6 +61,16 @@ const routes = [
         path: 'threads/create',
         name: 'Đăng bài mới',
         component: AdminCreateThread
+      },
+      {
+        path: 'threads/edit/:id',
+        name: 'Chỉnh sửa bài viết',
+        component: AdminCreateThread
+      },
+      {
+        path: 'threads/view/:id',
+        name: 'Xem bài viết',
+        component: AdminCreateThread
       }
     ]
   }

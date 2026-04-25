@@ -1,0 +1,122 @@
+.textHeader {
+    line-height: 25px!important;
+    color: var(--primary) !important;
+    font-weight: 700;
+    font-size: 18px !important;
+    text-align: start !important;
+    padding-left: 0;
+    margin-bottom: 1rem;
+}
+
+.customize-table {
+    font-weight: 500;
+    border: unset;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.customize-table thead {
+    background-color: #E5F4FF;
+}
+
+.customize-table thead th {
+    color: var(--primary);
+    padding: 12px 10px !important;
+    border: solid 1px #cccccc;
+    background-color: #E5F4FF !important;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+}
+
+.customize-table td {
+    padding: 8px 10px;
+    vertical-align: middle;
+    border: solid 1px #cccccc;
+    border-top: none;
+}
+
+.customize-table thead th:not(:first-child) {
+    border-left: none;
+}
+
+.customize-table td:not(:first-child) {
+    border-left: none;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: #F9F9F9;
+}
+
+.tablerounededCorner {
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-radius: 8px;
+    border: 1px solid #cccccc;
+}
+
+.search-input {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    flex: 1;
+}
+
+.btn-primary-custom {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.sort-icon {
+    display: inline-block;
+    margin-left: 5px;
+    cursor: pointer;
+}
+
+.th-label {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 2px 5px;
+    transition: transform 0.2s;
+}
+
+.action-btn:hover {
+    transform: scale(1.2);
+}
+
+.view-btn { color: #2196f3; }
+.edit-btn { color: #ffc107; }
+.delete-btn { color: #f44336; }
+
+.table-empty-no-data {
+    padding: 3rem;
+    text-align: center;
+    color: #999;
+}
+
+/* Alignment Utilities */
+.text-left {
+    text-align: left !important;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.text-right {
+    text-align: right !important;
+}
