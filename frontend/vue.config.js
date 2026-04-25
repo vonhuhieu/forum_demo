@@ -17,6 +17,11 @@ module.exports = defineConfig({
         changeOrigin: true,
         secure: false,
         logLevel: 'debug'
+      },
+      '/uploads': {
+        target: process.env.VUE_APP_PROXY_TARGET || 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false
       }
     }
   }

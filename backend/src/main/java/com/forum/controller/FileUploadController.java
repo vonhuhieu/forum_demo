@@ -1,5 +1,6 @@
 package com.forum.controller;
 
+import com.forum.dto.ResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,7 +31,7 @@ public class FileUploadController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ResponseDTO<Map<String, String>>> uploadFile(@RequestParam("file") MultipartFile file) {
         try {
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest().build();
@@ -48,14 +49,14 @@ public class FileUploadController {
             Path targetLocation = Paths.get(uploadDir).resolve(fileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
-            // Trả về URL của file
+            // Trả về URL của file (tương đối)
             String fileUrl = "/uploads/" + fileName;
-            Map<String, String> response = new HashMap<>();
-            response.put("url", fileUrl);
-            response.put("name", originalFilename);
-            response.put("type", file.getContentType());
+            Map<String, String> data = new HashMap<>();
+            data.put("url", fileUrl);
+            data.put("name", originalFilename);
+            data.put("type", file.getContentType());
 
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(ResponseDTO.success(data));
         } catch (IOException ex) {
             return ResponseEntity.internalServerError().build();
         }
