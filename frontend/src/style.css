@@ -307,236 +307,6 @@ body {
   }
 }
 
-/* Quill Custom Font Sizes */
-.ql-snow .ql-picker.ql-size .ql-picker-label::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item::before {
-  content: attr(data-value) !important;
-}
-
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="12px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before { content: '12px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="14px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before { content: '14px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="16px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="16px"]::before { content: '16px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="18px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before { content: '18px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="20px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="20px"]::before { content: '20px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="24px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before { content: '24px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="32px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="32px"]::before { content: '32px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="48px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="48px"]::before { content: '48px' !important; }
-
-/* Quill Custom Font Families */
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="roboto"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="roboto"]::before { content: 'Roboto' !important; font-family: 'Roboto', sans-serif; }
-
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="arial"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="arial"]::before { content: 'Arial' !important; font-family: Arial, sans-serif; }
-
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="times-new-roman"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="times-new-roman"]::before { content: 'Times New Roman' !important; font-family: 'Times New Roman', serif; }
-
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="georgia"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="georgia"]::before { content: 'Georgia' !important; font-family: Georgia, serif; }
-
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="courier-new"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="courier-new"]::before { content: 'Courier New' !important; font-family: 'Courier New', monospace; }
-
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="verdana"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="verdana"]::before { content: 'Verdana' !important; font-family: Verdana, sans-serif; }
-
-/* Font definitions for the editor */
-.ql-font-roboto { font-family: 'Roboto', sans-serif; }
-.ql-font-arial { font-family: Arial, sans-serif; }
-.ql-font-times-new-roman { font-family: 'Times New Roman', serif; }
-.ql-font-georgia { font-family: Georgia, serif; }
-.ql-font-courier-new { font-family: 'Courier New', monospace; }
-.ql-font-verdana { font-family: Verdana, sans-serif; }
-
-/* Tùy chỉnh link đính kèm trong bài viết */
-.attachment-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 10px;
-  background: #f1f3f4;
-  border: 1px solid #dadce0;
-  border-radius: 4px;
-  text-decoration: none;
-  color: #3c4043;
-  font-weight: 500;
-  margin: 5px 0;
-  transition: background 0.2s;
-}
-.category-select-item:hover {
-  background-color: #f8f9fa;
-  color: #007bff;
-}
-
-.category-select-item strong {
-  display: block;
-}
-
-.dot {
-  margin: 0 5px;
-  color: #999;
-}
-
-/* Modal Global Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.modal-card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-  overflow: hidden;
-  animation: modalFadeIn 0.3s ease;
-}
-
-@keyframes modalFadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.card-header {
-  background-color: #1a507a;
-  color: white;
-  padding: 1rem 1.5rem;
-  font-weight: bold;
-}
-
-
-
-
-/* Thread List */
-.thread-row {
-  display: flex;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f0f2f5;
-  align-items: center;
-}
-
-.thread-avatar {
-  width: 45px;
-  height: 45px;
-  background-color: #e1e8ed;
-  border-radius: 4px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  color: #1a507a;
-  font-size: 1.2rem;
-}
-
-.badge-pinned {
-  background: #fff3cd;
-  color: #856404;
-  font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 3px;
-  margin-right: 8px;
-  border: 1px solid #ffeeba;
-  vertical-align: middle;
-}
-
-.thread-main {
-  flex: 1;
-}
-
-.thread-title {
-  font-weight: 500;
-  font-size: 1rem;
-  color: #1a507a;
-  display: block;
-  margin-bottom: 2px;
-}
-
-.thread-meta {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.label-video {
-  background-color: #4CAF50;
-  color: white;
-  padding: 1px 4px;
-  border-radius: 2px;
-  font-size: 0.7rem;
-  margin-right: 4px;
-  font-weight: bold;
-}
-
-@media (max-width: 992px) {
-  .content-right {
-    display: none;
-  }
-}
-
-/* Quill Custom Font Sizes */
-.ql-snow .ql-picker.ql-size .ql-picker-label::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item::before {
-  content: attr(data-value) !important;
-}
-
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="12px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before { content: '12px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="14px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before { content: '14px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="16px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="16px"]::before { content: '16px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="18px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before { content: '18px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="20px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="20px"]::before { content: '20px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="24px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before { content: '24px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="32px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="32px"]::before { content: '32px' !important; }
-.ql-snow .ql-picker.ql-size .ql-picker-label[data-value="48px"]::before,
-.ql-snow .ql-picker.ql-size .ql-picker-item[data-value="48px"]::before { content: '48px' !important; }
-
-/* Quill Custom Font Families */
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="roboto"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="roboto"]::before { content: 'Roboto' !important; font-family: 'Roboto', sans-serif; }
-
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="arial"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="arial"]::before { content: 'Arial' !important; font-family: Arial, sans-serif; }
-
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="times-new-roman"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="times-new-roman"]::before { content: 'Times New Roman' !important; font-family: 'Times New Roman', serif; }
-
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="georgia"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="georgia"]::before { content: 'Georgia' !important; font-family: Georgia, serif; }
-
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="courier-new"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="courier-new"]::before { content: 'Courier New' !important; font-family: 'Courier New', monospace; }
-
-.ql-snow .ql-picker.ql-font .ql-picker-label[data-value="verdana"]::before,
-.ql-snow .ql-picker.ql-font .ql-picker-item[data-value="verdana"]::before { content: 'Verdana' !important; font-family: Verdana, sans-serif; }
-
-/* Font definitions for the editor */
-.ql-font-roboto { font-family: 'Roboto', sans-serif; }
-.ql-font-arial { font-family: Arial, sans-serif; }
-.ql-font-times-new-roman { font-family: 'Times New Roman', serif; }
-.ql-font-georgia { font-family: Georgia, serif; }
-.ql-font-courier-new { font-family: 'Courier New', monospace; }
-.ql-font-verdana { font-family: Verdana, sans-serif; }
 
 /* Tùy chỉnh link đính kèm trong bài viết */
 .attachment-link {
@@ -557,105 +327,44 @@ body {
   background: #e8eaed;
 }
 
-/* Fix video container responsive */
-.ql-video {
+/* CKEditor Content Styles */
+.ck-content {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.ck-content table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.ck-content table td, 
+.ck-content table th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.ck-content figure.image {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.ck-content figure.image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.ck-content figure.media {
+  margin: 1rem 0;
   width: 100%;
   aspect-ratio: 16 / 9;
 }
 
-/* Fix Quill Tooltip (Link popup) positioning and visibility */
-.ql-snow .ql-tooltip,
-body > .ql-tooltip {
-  z-index: 10000 !important;
-  border-radius: 4px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.25) !important;
-  background-color: white !important;
-  border: 1px solid #ddd !important;
-  padding: 10px 15px;
-}
-
-/* Force centering when editing link in the middle of the screen */
-.ql-snow .ql-tooltip.ql-editing,
-body > .ql-tooltip.ql-editing {
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  margin: 0 !important;
-}
-
-.ql-snow .ql-tooltip input[type=text] {
-  border-radius: 3px;
-  border: 1px solid #ccc;
-  padding: 5px 10px;
-  width: 300px !important;
-}
-
-/* Ẩn text gốc của Quill và thay thế bằng tiếng Việt */
-.ql-snow .ql-tooltip::before {
-  content: 'Liên kết: ' !important;
-  font-weight: bold;
-}
-
-.ql-snow .ql-tooltip.ql-editing::before {
-  content: 'Nhập địa chỉ: ' !important;
-}
-
-.ql-snow .ql-tooltip a.ql-action {
-  font-size: 0 !important;
-  text-decoration: none !important;
-  display: inline-block;
-  min-width: 40px;
-  min-height: 24px;
-  vertical-align: middle;
-  cursor: pointer;
-}
-
-.ql-snow .ql-tooltip a.ql-action::before {
-  content: 'Lưu' !important;
-  font-size: 13px !important;
-  background: #3498db;
-  color: white !important;
-  padding: 4px 12px;
-  border-radius: 3px;
-  display: block;
-  line-height: 1.4;
-  text-align: center;
-}
-
-.ql-snow .ql-tooltip a.ql-remove {
-  font-size: 0 !important;
-  text-decoration: none !important;
-  margin-left: 15px;
-  display: inline-block;
-  min-width: 50px;
-  min-height: 24px;
-  vertical-align: middle;
-  cursor: pointer;
-}
-
-.ql-snow .ql-tooltip a.ql-remove::before {
-  content: 'Gỡ bỏ' !important;
-  font-size: 13px !important;
-  color: #e74c3c !important;
-  display: block;
-  text-align: center;
-}
-
-/* Việt hóa nút "Sửa" trong tooltip */
-.ql-snow .ql-tooltip:not(.ql-editing) a.ql-action::before {
-  content: 'Sửa' !important;
-  font-size: 13px !important;
-  background: #f39c12;
-  color: white !important;
-  padding: 3px 10px;
-  border-radius: 3px;
-  margin-left: 5px;
-  display: inline-block;
-}
-
-/* Việt hóa label "Visit URL" */
-.ql-snow .ql-tooltip .ql-preview {
-  margin-right: 10px;
+.ck-content figure.media oembed,
+.ck-content figure.media iframe {
+  width: 100%;
+  height: 100%;
 }
 
