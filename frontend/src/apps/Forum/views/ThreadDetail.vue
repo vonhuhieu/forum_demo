@@ -52,7 +52,19 @@ export default {
     async fetchThread() {
       try {
         const response = await api.get(`/threads/${this.$route.params.id}`)
-        this.thread = response.data
+        let content = response.data.content || ''
+        
+        // Transform <oembed> tags (legacy CKEditor format) to <iframe>
+        content = content.replace(/<oembed\s+url="([^"]+)"><\/oembed>/gi, (match, url) => {
+          const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
+          const ytMatch = url.match(youtubeRegex)
+          if (ytMatch && ytMatch[1]) {
+            return `<iframe width="100%" height="450" src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+          }
+          return `<a href="${url}" target="_blank">${url}</a>`
+        })
+
+        this.thread = { ...response.data, content }
       } catch (error) {
         console.error('Lỗi khi tải chi tiết bài viết:', error)
       } finally {

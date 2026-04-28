@@ -141,6 +141,9 @@ export default {
       editor: ClassicEditor,
       editorConfig: {
         licenseKey: 'GPL',
+        mediaEmbed: {
+          previewsInData: true
+        },
         fontSize: {
           options: [
             9, 10, 11, 12, 13, 'default', 15, 16, 18, 20, 22, 24, 28, 32, 36
@@ -215,9 +218,21 @@ export default {
       try {
         const response = await api.get(`/threads/${this.threadId}`)
         const thread = response.data
+        let content = thread.content || ''
+        
+        // Transform <oembed> tags (legacy CKEditor format) to <iframe>
+        content = content.replace(/<oembed\s+url="([^"]+)"><\/oembed>/gi, (match, url) => {
+          const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
+          const ytMatch = url.match(youtubeRegex)
+          if (ytMatch && ytMatch[1]) {
+            return `<iframe width="100%" height="450" src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+          }
+          return `<a href="${url}" target="_blank">${url}</a>`
+        })
+
         this.form = {
           title: thread.title,
-          content: thread.content || '',
+          content: content,
           categoryId: thread.category ? thread.category.id : '',
           pinned: thread.pinned || false
         }
