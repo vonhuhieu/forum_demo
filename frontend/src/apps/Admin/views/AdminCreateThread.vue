@@ -67,7 +67,32 @@
 
 <script>
 import { Ckeditor } from '@ckeditor/ckeditor5-vue'
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
+import {
+  ClassicEditor,
+  Essentials,
+  Paragraph,
+  Heading,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  Font,
+  Alignment,
+  Link,
+  List,
+  Indent,
+  IndentBlock,
+  Image,
+  ImageUpload,
+  Table,
+  MediaEmbed,
+  BlockQuote,
+  FileRepository,
+  TableToolbar,
+  TableColumnResize,
+  Undo
+} from 'ckeditor5'
+import 'ckeditor5/ckeditor5.css'
 import api from '@/shared/services/api.service'
 import AdminService from '@/apps/Admin/services/admin.service'
 import { alertSuccess, alertError } from '@/shared/utils/swal'
@@ -115,12 +140,27 @@ export default {
       form: { title: '', content: '', categoryId: '', pinned: false },
       editor: ClassicEditor,
       editorConfig: {
-        extraPlugins: [MyCustomUploadAdapterPlugin],
+        licenseKey: 'GPL',
+        fontSize: {
+          options: [
+            9, 10, 11, 12, 13, 'default', 15, 16, 18, 20, 22, 24, 28, 32, 36
+          ]
+        },
+        plugins: [
+          Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
+          Font, Alignment, Link, List, Indent, IndentBlock, Image, ImageUpload, Table,
+          MediaEmbed, BlockQuote, FileRepository, TableToolbar, TableColumnResize, Undo,
+          MyCustomUploadAdapterPlugin
+        ],
         toolbar: {
           items: [
             'heading',
             '|',
             'bold', 'italic', 'underline', 'strikethrough',
+            '|',
+            'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor',
+            '|',
+            'alignment',
             '|',
             'bulletedList', 'numberedList',
             '|',

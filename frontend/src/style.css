@@ -333,6 +333,20 @@ body {
   line-height: 1.6;
 }
 
+.ck-content ul,
+.ck-content ol {
+  padding-left: 2rem;
+  margin-bottom: 1rem;
+}
+
+.ck-content ul {
+  list-style-type: disc;
+}
+
+.ck-content ol {
+  list-style-type: decimal;
+}
+
 .ck-content table {
   border-collapse: collapse;
   margin: 1rem 0;
