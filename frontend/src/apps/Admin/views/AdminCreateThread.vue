@@ -96,38 +96,7 @@ import 'ckeditor5/ckeditor5.css'
 import api from '@/shared/services/api.service'
 import AdminService from '@/apps/Admin/services/admin.service'
 import { alertSuccess, alertError } from '@/shared/utils/swal'
-
-// Custom Upload Adapter for CKEditor 5
-class MyUploadAdapter {
-  constructor(loader) {
-    this.loader = loader
-  }
-
-  upload() {
-    return this.loader.file.then(file => new Promise((resolve, reject) => {
-      const formData = new FormData()
-      formData.append('file', file)
-      
-      api.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-      .then(res => {
-        resolve({ default: res.data.url })
-      })
-      .catch(err => {
-        reject(err)
-      })
-    }))
-  }
-
-  abort() {}
-}
-
-function MyCustomUploadAdapterPlugin(editor) {
-  editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
-    return new MyUploadAdapter(loader)
-  }
-}
+import { MyCustomUploadAdapterPlugin, CustomUploadPlugin } from '@/shared/utils/ckeditorPlugins'
 
 export default {
   name: 'AdminCreateThread',
@@ -142,7 +111,17 @@ export default {
       editorConfig: {
         licenseKey: 'GPL',
         mediaEmbed: {
-          previewsInData: true
+          previewsInData: true,
+          extraProviders: [
+            {
+              name: 'uploaded-video',
+              url: /^.*\.(mp4|webm|ogg|avi|mov)(\?.*)?$/,
+              html: match => {
+                const url = match[0];
+                return `<div style="position: relative; padding-bottom: 56.2493%; height: 0;"><video controls style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;" src="${url}"></video></div>`;
+              }
+            }
+          ]
         },
         fontSize: {
           options: [
@@ -153,7 +132,7 @@ export default {
           Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
           Font, Alignment, Link, List, Indent, IndentBlock, Image, ImageUpload, Table,
           MediaEmbed, BlockQuote, FileRepository, TableToolbar, TableColumnResize, Undo,
-          MyCustomUploadAdapterPlugin
+          MyCustomUploadAdapterPlugin, CustomUploadPlugin
         ],
         toolbar: {
           items: [
@@ -169,7 +148,7 @@ export default {
             '|',
             'outdent', 'indent',
             '|',
-            'link', 'imageUpload', 'insertTable', 'mediaEmbed', 'blockQuote',
+            'link', 'imageUpload', 'customUpload', 'insertTable', 'mediaEmbed', 'blockQuote',
             '|',
             'undo', 'redo'
           ]

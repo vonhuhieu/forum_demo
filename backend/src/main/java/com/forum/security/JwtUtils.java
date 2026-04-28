@@ -7,13 +7,24 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 
+import org.springframework.beans.factory.annotation.Value;
+import jakarta.annotation.PostConstruct;
+
 @Component
 public class JwtUtils {
 
-    private final String jwtSecret = "htxhs_secret_key_for_jwt_token_generation_2024_spring_boot";
-    private final int jwtExpirationMs = 86400000; // 24 hours
+    @Value("${app.jwt.secret}")
+    private String jwtSecret;
 
-    private final Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    @Value("${app.jwt.expirationMs}")
+    private int jwtExpirationMs;
+
+    private Key key;
+
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    }
 
     public String generateJwtToken(String username) {
         return Jwts.builder()
