@@ -61,6 +61,16 @@ export default {
           if (ytMatch && ytMatch[1]) {
             return `<iframe width="100%" height="450" src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
           }
+          
+          if (url.match(/\.(mp4|webm|ogg|avi|mov)(\?.*)?$/i)) {
+             let fixedUrl = url;
+             const uploadsIndex = fixedUrl.indexOf('/uploads/');
+             if (uploadsIndex !== -1) {
+                 fixedUrl = fixedUrl.substring(uploadsIndex);
+             }
+             return `<figure class="media"><video controls style="width: 100%; max-height: 500px; object-fit: contain; background: #000;" src="${fixedUrl}"></video></figure>`
+          }
+
           return `<a href="${url}" target="_blank">${url}</a>`
         })
 
@@ -111,7 +121,7 @@ export default {
   border: none; padding: 10px 25px;
   border-radius: 4px; font-weight: bold; cursor: pointer;
 }
-:deep(.ql-editor img), :deep(.ql-editor video) { max-width: 100%; height: auto; }
+:deep(.ql-editor img), :deep(.ql-editor video) { max-width: 100%; height: auto; min-width: 100% !important }
 :deep(.ql-editor table) { border-collapse: collapse; width: 100%; margin: 1rem 0; }
 :deep(.ql-editor td) { border: 1px solid #ccc; padding: 8px; }
 </style>

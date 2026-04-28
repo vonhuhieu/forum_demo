@@ -9,15 +9,11 @@
       <div class="card-header">ĐĂNG BÀI</div>
       <div class="post-form" style="padding: 2rem;">
         <div class="form-group" style="margin-bottom: 1.5rem;">
-          <input v-model="title" class="title-input" placeholder="Tiêu đề bài viết..." required>
+          <input v-model="form.title" class="title-input" placeholder="Tiêu đề bài viết..." required>
         </div>
 
         <div class="editor-container" style="margin-bottom: 1.5rem;">
-          <ckeditor 
-            :editor="editor" 
-            v-model="content" 
-            :config="editorConfig"
-          ></ckeditor>
+          <CustomEditor v-model="form.content" />
         </div>
 
         <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -30,86 +26,20 @@
 </template>
 
 <script>
-import { Ckeditor } from '@ckeditor/ckeditor5-vue'
-import {
-  ClassicEditor,
-  Essentials,
-  Paragraph,
-  Heading,
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Font,
-  Alignment,
-  Link,
-  List,
-  Indent,
-  IndentBlock,
-  Image,
-  ImageUpload,
-  Table,
-  MediaEmbed,
-  BlockQuote,
-  FileRepository,
-  TableToolbar,
-  TableColumnResize,
-  Undo
-} from 'ckeditor5'
-import 'ckeditor5/ckeditor5.css'
 import api from '@/shared/services/api.service'
-import { MyCustomUploadAdapterPlugin, CustomUploadPlugin } from '@/shared/utils/ckeditorPlugins'
+import { alertSuccess, alertError } from '@/shared/utils/swal'
+import CustomEditor from '@/shared/components/CustomEditor.vue'
 
 export default {
   name: 'CreateThread',
   components: {
-    ckeditor: Ckeditor
+    CustomEditor
   },
   data() {
     return {
       catId: this.$route.query.catId,
       category: null,
-      title: '',
-      content: '',
-      editor: ClassicEditor,
-      editorConfig: {
-        licenseKey: 'GPL',
-        mediaEmbed: {
-          previewsInData: true,
-          extraProviders: [
-            {
-              name: 'uploaded-video',
-              url: /^.*\.(mp4|webm|ogg|avi|mov)(\?.*)?$/,
-              html: match => {
-                const url = match[0];
-                return `<div style="position: relative; padding-bottom: 56.2493%; height: 0;"><video controls style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;" src="${url}"></video></div>`;
-              }
-            }
-          ]
-        },
-        fontSize: {
-          options: [
-            9, 10, 11, 12, 13, 'default', 15, 16, 18, 20, 22, 24, 28, 32, 36
-          ]
-        },
-        plugins: [
-          Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
-          Font, Alignment, Link, List, Indent, IndentBlock, Image, ImageUpload, Table,
-          MediaEmbed, BlockQuote, FileRepository, TableToolbar, TableColumnResize, Undo,
-          MyCustomUploadAdapterPlugin, CustomUploadPlugin
-        ],
-        toolbar: {
-          items: [
-            'heading', '|', 'bold', 'italic', 'underline', 'strikethrough', '|',
-            'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
-            'alignment', '|',
-            'link', 'bulletedList', 'numberedList', '|',
-            'outdent', 'indent', '|', 'imageUpload', 'customUpload', 'insertTable', 'mediaEmbed', 'blockQuote', '|',
-            'undo', 'redo'
-          ]
-        },
-        language: 'vi'
-      }
+      form: { title: '', content: '', categoryId: '' }
     }
   },
   mounted() {
@@ -126,19 +56,19 @@ export default {
       }
     },
     async handlePost() {
-      if (!this.title || !this.content) {
-        alert('Vui lòng nhập đầy đủ tiêu đề và nội dung')
+      if (!this.form.title || !this.form.content) {
+        alertError('Vui lòng nhập đầy đủ tiêu đề và nội dung')
         return
       }
       try {
         await api.post('/threads', {
-          title: this.title,
-          content: this.content,
+          title: this.form.title,
+          content: this.form.content,
           category: { id: this.catId }
         })
         this.$router.push('/')
       } catch (error) {
-        alert('Lỗi khi đăng bài')
+        alertError('Lỗi khi đăng bài')
       }
     }
   }

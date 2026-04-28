@@ -93,6 +93,11 @@ export function CustomUploadPlugin(editor) {
                 
                 // Cập nhật vị trí chèn cho phần tử tiếp theo (ngay sau phần tử vừa chèn)
                 insertPosition = writer.createPositionAfter(elementToInsert);
+
+                // Thêm một dòng trống (paragraph rỗng) để tạo khoảng cách và dễ nhập liệu
+                const spacer = writer.createElement('paragraph');
+                writer.insert(spacer, insertPosition);
+                insertPosition = writer.createPositionAfter(spacer);
               });
               
               // Đặt lại con trỏ chuột xuống cuối để người dùng tiếp tục gõ

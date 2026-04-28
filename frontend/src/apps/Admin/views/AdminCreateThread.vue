@@ -41,13 +41,10 @@
         <div class="form-group">
           <label>Nội dung bài viết:</label>
           <div class="editor-wrapper" :class="{ 'disabled-editor': isViewMode }">
-            <ckeditor 
+            <CustomEditor 
               v-if="!isViewMode"
-              :editor="editor" 
               v-model="form.content" 
-              :config="editorConfig"
-              @ready="onEditorReady"
-            ></ckeditor>
+            />
             <div v-else class="ck-content readonly-content" v-html="form.content"></div>
           </div>
         </div>
@@ -66,100 +63,20 @@
 </template>
 
 <script>
-import { Ckeditor } from '@ckeditor/ckeditor5-vue'
-import {
-  ClassicEditor,
-  Essentials,
-  Paragraph,
-  Heading,
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Font,
-  Alignment,
-  Link,
-  List,
-  Indent,
-  IndentBlock,
-  Image,
-  ImageUpload,
-  Table,
-  MediaEmbed,
-  BlockQuote,
-  FileRepository,
-  TableToolbar,
-  TableColumnResize,
-  Undo
-} from 'ckeditor5'
-import 'ckeditor5/ckeditor5.css'
-import api from '@/shared/services/api.service'
 import AdminService from '@/apps/Admin/services/admin.service'
 import { alertSuccess, alertError } from '@/shared/utils/swal'
-import { MyCustomUploadAdapterPlugin, CustomUploadPlugin } from '@/shared/utils/ckeditorPlugins'
+import api from '@/shared/services/api.service'
+import CustomEditor from '@/shared/components/CustomEditor.vue'
 
 export default {
   name: 'AdminCreateThread',
   components: {
-    ckeditor: Ckeditor
+    CustomEditor
   },
   data() {
     return {
       categories: [],
-      form: { title: '', content: '', categoryId: '', pinned: false },
-      editor: ClassicEditor,
-      editorConfig: {
-        licenseKey: 'GPL',
-        mediaEmbed: {
-          previewsInData: true,
-          extraProviders: [
-            {
-              name: 'uploaded-video',
-              url: /^.*\.(mp4|webm|ogg|avi|mov)(\?.*)?$/,
-              html: match => {
-                const url = match[0];
-                return `<div style="position: relative; padding-bottom: 56.2493%; height: 0;"><video controls style="position: absolute; width: 100%; height: 100%; top: 0; left: 0;" src="${url}"></video></div>`;
-              }
-            }
-          ]
-        },
-        fontSize: {
-          options: [
-            9, 10, 11, 12, 13, 'default', 15, 16, 18, 20, 22, 24, 28, 32, 36
-          ]
-        },
-        plugins: [
-          Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
-          Font, Alignment, Link, List, Indent, IndentBlock, Image, ImageUpload, Table,
-          MediaEmbed, BlockQuote, FileRepository, TableToolbar, TableColumnResize, Undo,
-          MyCustomUploadAdapterPlugin, CustomUploadPlugin
-        ],
-        toolbar: {
-          items: [
-            'heading',
-            '|',
-            'bold', 'italic', 'underline', 'strikethrough',
-            '|',
-            'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor',
-            '|',
-            'alignment',
-            '|',
-            'bulletedList', 'numberedList',
-            '|',
-            'outdent', 'indent',
-            '|',
-            'link', 'imageUpload', 'customUpload', 'insertTable', 'mediaEmbed', 'blockQuote',
-            '|',
-            'undo', 'redo'
-          ]
-        },
-        table: {
-          contentToolbar: [
-            'tableColumn', 'tableRow', 'mergeTableCells'
-          ]
-        },
-        language: 'vi'
-      }
+      form: { title: '', content: '', categoryId: '', pinned: false }
     }
   },
   computed: {
@@ -199,15 +116,33 @@ export default {
         const thread = response.data
         let content = thread.content || ''
         
-        // Transform <oembed> tags (legacy CKEditor format) to <iframe>
-        content = content.replace(/<oembed\s+url="([^"]+)"><\/oembed>/gi, (match, url) => {
-          const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
-          const ytMatch = url.match(youtubeRegex)
-          if (ytMatch && ytMatch[1]) {
-            return `<iframe width="100%" height="450" src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
-          }
-          return `<a href="${url}" target="_blank">${url}</a>`
-        })
+        // Trong chế độ View, cần parse <oembed> ra HTML để v-html hiển thị được
+        if (this.isViewMode) {
+          content = content.replace(/<oembed\s+url="([^"]+)"><\/oembed>/gi, (match, url) => {
+            const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
+            const ytMatch = url.match(youtubeRegex)
+            if (ytMatch && ytMatch[1]) {
+              return `<iframe width="100%" height="450" src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+            }
+            
+            // Render video tải lên
+            if (url.match(/\.(mp4|webm|ogg|avi|mov)(\?.*)?$/i)) {
+               let fixedUrl = url;
+               const uploadsIndex = fixedUrl.indexOf('/uploads/');
+               if (uploadsIndex !== -1) {
+                   fixedUrl = fixedUrl.substring(uploadsIndex);
+               }
+               return `<figure class="media"><video controls style="width: 100%; max-height: 500px; object-fit: contain; background: #000;" src="${fixedUrl}"></video></figure>`
+            }
+
+            return `<a href="${url}" target="_blank">${url}</a>`
+          })
+        } else {
+          // Trong chế độ Edit, migration các bài cũ:
+          content = content.replace(/<oembed\s+url="https:\/\/uploads\/([^"]+)"><\/oembed>/gi, '<figure class="media"><oembed url="/uploads/$1"></oembed></figure>')
+          content = content.replace(/<div[^>]*>\s*<video[^>]*src="([^"]+)"[^>]*><\/video>\s*<\/div>/gi, '<figure class="media"><oembed url="$1"></oembed></figure>')
+          content = content.replace(/<video[^>]*src="([^"]+)"[^>]*><\/video>/gi, '<figure class="media"><oembed url="$1"></oembed></figure>')
+        }
 
         this.form = {
           title: thread.title,
@@ -244,10 +179,6 @@ export default {
       } catch (error) {
         alertError(this.isEditMode ? 'Lỗi khi cập nhật bài viết' : 'Lỗi khi đăng bài')
       }
-    },
-    onEditorReady(editor) {
-      // CKEditor initialization logic if needed
-      console.log('CKEditor 5 is ready!', editor)
     }
   }
 }

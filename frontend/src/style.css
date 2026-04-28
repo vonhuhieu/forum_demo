@@ -343,8 +343,42 @@ body {
   list-style-type: disc;
 }
 
-.ck-content ol {
-  list-style-type: decimal;
+.ck-content ol li {
+  list-style-type: decimal !important;
+  margin-left: 1.5rem !important;
+}
+
+.ck-content p {
+  margin-bottom: 1em !important;
+}
+
+.ck-content figure.image,
+.ck-content figure.media {
+  margin: 2em 0 !important;
+  display: block !important;
+  width: 100%;
+}
+
+.ck-content figure.image img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ck-content figure.media video,
+.ck-content figure.media iframe {
+  width: 100% !important;
+  height: auto;
+}
+
+/* Allow clicking the video inside the editor to play it */
+.ck-editor__editable .ck-widget video {
+  pointer-events: auto !important;
+}
+
+.ck-editor__editable .ck-media__wrapper::after {
+  pointer-events: none !important;
+  display: none !important;
 }
 
 .ck-content table {
