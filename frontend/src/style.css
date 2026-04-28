@@ -372,7 +372,8 @@ body {
 }
 
 /* Allow clicking the video inside the editor to play it */
-.ck-editor__editable .ck-widget video {
+.ck-editor__editable .ck-widget video,
+.ck-editor__editable .ck-widget iframe {
   pointer-events: auto !important;
 }
 

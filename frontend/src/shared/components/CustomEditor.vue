@@ -165,7 +165,8 @@ export default {
   display: none !important;
   pointer-events: none !important;
 }
-:deep(.ck-editor__editable .ck-media__wrapper video) {
+:deep(.ck-editor__editable .ck-media__wrapper video),
+:deep(.ck-editor__editable .ck-media__wrapper iframe) {
   pointer-events: auto !important;
   z-index: 1000 !important;
 }
