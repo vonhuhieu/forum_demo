@@ -69,10 +69,10 @@ export function CustomUploadPlugin(editor) {
           
           if (validResults.length > 0) {
             editor.model.change(writer => {
-              // Lấy vị trí trỏ chuột hiện tại để chèn
-              let insertPosition = editor.model.document.selection.getFirstPosition();
+              const selection = editor.model.document.selection;
+              let insertPosition = selection.getFirstPosition();
 
-              validResults.forEach(result => {
+              validResults.forEach((result, index) => {
                 let elementToInsert;
                 const fileType = result.type || '';
                 const fileUrl = result.url;
@@ -83,6 +83,7 @@ export function CustomUploadPlugin(editor) {
                 } else if (fileType.startsWith('video/')) {
                   elementToInsert = writer.createElement('media', { url: fileUrl });
                 } else {
+                  // Đối với tài liệu (.docx, .pdf...), tạo một đoạn văn chứa icon và link
                   elementToInsert = writer.createElement('paragraph');
                   const linkedText = writer.createText(`📎 ${fileName}`, { linkHref: fileUrl });
                   writer.insert(linkedText, elementToInsert, 'end');
@@ -91,16 +92,18 @@ export function CustomUploadPlugin(editor) {
                 // Chèn phần tử vào vị trí hiện tại
                 writer.insert(elementToInsert, insertPosition);
                 
-                // Cập nhật vị trí chèn cho phần tử tiếp theo (ngay sau phần tử vừa chèn)
+                // Vị trí tiếp theo là ngay sau phần tử vừa chèn
                 insertPosition = writer.createPositionAfter(elementToInsert);
 
-                // Thêm một dòng trống (paragraph rỗng) để tạo khoảng cách và dễ nhập liệu
-                const spacer = writer.createElement('paragraph');
-                writer.insert(spacer, insertPosition);
-                insertPosition = writer.createPositionAfter(spacer);
+                // Nếu là phần tử cuối cùng, thêm một dòng trống để dễ soạn thảo tiếp
+                if (index === validResults.length - 1) {
+                  const spacer = writer.createElement('paragraph');
+                  writer.insert(spacer, insertPosition);
+                  insertPosition = writer.createPositionAt(spacer, 0);
+                }
               });
               
-              // Đặt lại con trỏ chuột xuống cuối để người dùng tiếp tục gõ
+              // Đặt con trỏ vào vị trí mới cuối cùng
               writer.setSelection(insertPosition);
             });
           }

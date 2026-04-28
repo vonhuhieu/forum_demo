@@ -139,6 +139,13 @@ export default {
                 target: '_blank',
                 rel: 'noopener noreferrer'
               }
+            },
+            downloadable: {
+              mode: 'automatic',
+              callback: url => url.match(/\.(pdf|docx|xls|xlsx|doc|txt|zip|rar)$/i),
+              attributes: {
+                download: 'file'
+              }
             }
           }
         },
