@@ -3,7 +3,6 @@
     <!-- Sidebar -->
     <aside class="admin-sidebar">
       <div class="sidebar-brand">
-        <div class="brand-icon">HTX</div>
         <span>QUẢN TRỊ HỆ THỐNG</span>
       </div>
       
