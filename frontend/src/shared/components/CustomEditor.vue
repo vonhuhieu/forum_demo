@@ -39,7 +39,7 @@ import {
   Undo
 } from 'ckeditor5'
 import 'ckeditor5/ckeditor5.css'
-import { MyCustomUploadAdapterPlugin, CustomUploadPlugin } from '@/shared/utils/ckeditorPlugins'
+import { MyCustomUploadAdapterPlugin, CustomUploadPlugin, TabIndentPlugin, ClearPastedImageWidthPlugin } from '@/shared/utils/ckeditorPlugins'
 
 export default {
   name: 'CustomEditor',
@@ -104,7 +104,7 @@ export default {
           Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
           Font, Alignment, Link, List, Indent, IndentBlock, Image, ImageUpload, ImageResize, Table,
           MediaEmbed, BlockQuote, FileRepository, TableToolbar, TableColumnResize, Undo,
-          MyCustomUploadAdapterPlugin, CustomUploadPlugin
+          MyCustomUploadAdapterPlugin, CustomUploadPlugin, TabIndentPlugin, ClearPastedImageWidthPlugin
         ],
         toolbar: {
           items: [
@@ -129,6 +129,18 @@ export default {
           contentToolbar: [
             'tableColumn', 'tableRow', 'mergeTableCells'
           ]
+        },
+        link: {
+          decorators: {
+            openInNewTab: {
+              mode: 'automatic',
+              callback: url => true,
+              attributes: {
+                target: '_blank',
+                rel: 'noopener noreferrer'
+              }
+            }
+          }
         },
         language: 'vi'
       }

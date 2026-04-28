@@ -116,3 +116,50 @@ export function CustomUploadPlugin(editor) {
     return view;
   });
 }
+
+// Plugin hỗ trợ bấm phím Tab để thụt đầu dòng (insert 4 spaces)
+export function TabIndentPlugin(editor) {
+  editor.keystrokes.set('Tab', (keyEvtData, cancel) => {
+    const position = editor.model.document.selection.getFirstPosition();
+    if (!position) return;
+    
+    // Kiểm tra xem con trỏ đang ở trong danh sách hoặc bảng không
+    const ancestors = position.getAncestors();
+    const isList = ancestors.some(a => a.name === 'listItem');
+    const isTable = ancestors.some(a => a.name === 'tableCell');
+    
+    // Nếu đang ở trong danh sách hoặc bảng, để CKEditor tự xử lý (thụt lề list hoặc nhảy cell)
+    if (isList || isTable) {
+      return;
+    }
+    
+    // Ngăn chặn hành vi mặc định (chuyển focus ra khỏi editor hoặc nhảy widget)
+    cancel();
+    
+    // Chèn 4 dấu cách không ngắt dòng (Non-breaking space)
+    editor.model.change(writer => {
+      writer.insertText('\u00A0\u00A0\u00A0\u00A0', editor.model.document.selection.getAttributes(), position);
+    });
+  }, { priority: 'highest' });
+}
+
+// Plugin tự động xóa kích thước cứng (resizedWidth) của ảnh khi vừa được dán/chèn vào editor
+// Giúp mọi ảnh copy từ nguồn khác luôn ở trạng thái mặc định (bung full 100% chiều rộng)
+export function ClearPastedImageWidthPlugin(editor) {
+  editor.model.document.on('change', () => {
+    const changes = editor.model.document.differ.getChanges();
+    
+    editor.model.change(writer => {
+      for (const entry of changes) {
+        // Chỉ bắt sự kiện khi có một phần tử mới được chèn vào
+        if (entry.type === 'insert' && (entry.name === 'imageBlock' || entry.name === 'imageInline')) {
+          const item = entry.position.nodeAfter;
+          // Nếu ảnh có mang theo kích thước từ trang web cũ, xóa nó đi để ảnh bung 100%
+          if (item && item.hasAttribute('resizedWidth')) {
+            writer.removeAttribute('resizedWidth', item);
+          }
+        }
+      }
+    });
+  });
+}

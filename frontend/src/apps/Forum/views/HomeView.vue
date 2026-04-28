@@ -3,7 +3,7 @@
     <header>
       <div class="header-top">
         <div class="container">
-          <div class="logo">HTXHS</div>
+          <div class="logo">HTXSL</div>
         </div>
       </div>
       <div class="header-nav">
@@ -43,7 +43,7 @@
 
       <div class="home-action-bar container" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0;">
         <div class="forum-slogan" style="font-weight: bold; color: #1a507a; font-size: 1.1rem;">
-          HỢP TÁC XÃ HÓA SINH
+          HỢP TÁC XÃ SINH LÝ
         </div>
         <div v-if="isLoggedIn" class="user-actions">
           <button @click="openPostModal" class="btn-post-thread">Đăng bài...</button>
