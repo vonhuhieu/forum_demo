@@ -15,6 +15,7 @@
       @edit="editThread"
       @delete="deleteThread"
       @view="viewThread"
+      @sort="handleSort"
     >
       <template #extra-filters>
         <div class="filter-item-mini">
@@ -68,7 +69,9 @@ export default {
         { text: 'Chuyên mục', value: 'category.name', sortable: true, width: '15%' },
         { text: 'Ngày đăng', value: 'createdAt', sortable: true, width: '150px' },
         { text: 'Lượt xem', value: 'viewCount', sortable: true, width: '80px' }
-      ]
+      ],
+      sortField: '',
+      sortOrder: 'asc'
     }
   },
   computed: {
@@ -82,6 +85,20 @@ export default {
           (t.author && t.author.username && t.author.username.toLowerCase().includes(k)) ||
           (t.category && t.category.name && t.category.name.toLowerCase().includes(k))
         )
+      }
+      
+      if (this.sortField) {
+        result = [...result].sort((a, b) => {
+          let valA = this.getNestedValue(a, this.sortField)
+          let valB = this.getNestedValue(b, this.sortField)
+          
+          if (typeof valA === 'string') valA = valA.toLowerCase()
+          if (typeof valB === 'string') valB = valB.toLowerCase()
+
+          if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1
+          if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1
+          return 0
+        })
       }
       
       return result
@@ -113,6 +130,14 @@ export default {
     handleSearch(keyword) {
       this.filter.keyword = keyword
       this.currentPage = 1
+    },
+    handleSort({ field, order }) {
+      this.sortField = field
+      this.sortOrder = order
+    },
+    getNestedValue(obj, path) {
+      if (!path) return ''
+      return path.split('.').reduce((acc, part) => acc && acc[part], obj)
     },
     editThread(item) {
       this.$router.push(`/admin/threads/edit/${item.id}`)

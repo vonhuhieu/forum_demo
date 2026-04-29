@@ -15,6 +15,7 @@
       @edit="openEditModal"
       @delete="deleteMenu"
       @view="openEditModal"
+      @sort="handleSort"
     >
       <template #item-title="{ item }">
         <strong>{{ item.title }}</strong>
@@ -85,17 +86,33 @@ export default {
         { text: 'Đường dẫn (URL)', value: 'url', sortable: true },
         { text: 'Trạng thái', value: 'active', sortable: true, width: '120px' }
       ],
-      form: { id: null, title: '', url: '', positionOrder: 0, active: true }
+      form: { id: null, title: '', url: '', positionOrder: 0, active: true },
+      sortField: '',
+      sortOrder: 'asc'
     }
   },
   computed: {
     filteredMenus() {
-      if (!this.keyword) return this.menus
-      const k = this.keyword.toLowerCase()
-      return this.menus.filter(m => 
-        (m.title && m.title.toLowerCase().includes(k)) ||
-        (m.url && m.url.toLowerCase().includes(k))
-      )
+      let result = this.menus
+      if (this.keyword) {
+        const k = this.keyword.toLowerCase()
+        result = result.filter(m => 
+          (m.title && m.title.toLowerCase().includes(k)) ||
+          (m.url && m.url.toLowerCase().includes(k))
+        )
+      }
+      if (this.sortField) {
+        result = [...result].sort((a, b) => {
+          let valA = a[this.sortField]
+          let valB = b[this.sortField]
+          if (typeof valA === 'string') valA = valA.toLowerCase()
+          if (typeof valB === 'string') valB = valB.toLowerCase()
+          if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1
+          if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1
+          return 0
+        })
+      }
+      return result
     },
     displayMenus() {
       const start = (this.currentPage - 1) * this.pageSize
@@ -116,6 +133,10 @@ export default {
     handleSearch(k) {
       this.keyword = k
       this.currentPage = 1
+    },
+    handleSort({ field, order }) {
+      this.sortField = field
+      this.sortOrder = order
     },
     openAddModal() {
       this.resetForm()

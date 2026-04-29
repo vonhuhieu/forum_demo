@@ -15,6 +15,7 @@
       @edit="openEditModal"
       @delete="deleteCategory"
       @view="openEditModal"
+      @sort="handleSort"
     >
       <template #item-name="{ item }">
         <strong>{{ item.name }}</strong>
@@ -77,17 +78,33 @@ export default {
         { text: 'Thứ tự', value: 'positionOrder', sortable: true, width: '100px' },
         { text: 'Trạng thái', value: 'active', sortable: true, width: '120px' }
       ],
-      form: { id: null, name: '', description: '', positionOrder: 0, active: true }
+      form: { id: null, name: '', description: '', positionOrder: 0, active: true },
+      sortField: '',
+      sortOrder: 'asc'
     }
   },
   computed: {
     filteredCategories() {
-      if (!this.keyword) return this.categories
-      const k = this.keyword.toLowerCase()
-      return this.categories.filter(c => 
-        (c.name && c.name.toLowerCase().includes(k)) ||
-        (c.description && c.description.toLowerCase().includes(k))
-      )
+      let result = this.categories
+      if (this.keyword) {
+        const k = this.keyword.toLowerCase()
+        result = result.filter(c => 
+          (c.name && c.name.toLowerCase().includes(k)) ||
+          (c.description && c.description.toLowerCase().includes(k))
+        )
+      }
+      if (this.sortField) {
+        result = [...result].sort((a, b) => {
+          let valA = a[this.sortField]
+          let valB = b[this.sortField]
+          if (typeof valA === 'string') valA = valA.toLowerCase()
+          if (typeof valB === 'string') valB = valB.toLowerCase()
+          if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1
+          if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1
+          return 0
+        })
+      }
+      return result
     },
     displayCategories() {
       const start = (this.currentPage - 1) * this.pageSize
@@ -108,6 +125,10 @@ export default {
     handleSearch(k) {
       this.keyword = k
       this.currentPage = 1
+    },
+    handleSort({ field, order }) {
+      this.sortField = field
+      this.sortOrder = order
     },
     openAddModal() {
       this.resetForm()
