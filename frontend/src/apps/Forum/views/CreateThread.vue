@@ -3,11 +3,24 @@
     <ForumHeader />
     
     <main class="container" style="padding-top: 2rem;">
+      <Breadcrumb :items="breadcrumbItems" />
+
       <div class="card">
         <div class="card-header">ĐĂNG BÀI</div>
         <div class="post-form" style="padding: 2rem;">
           <div class="form-group" style="margin-bottom: 1.5rem;">
-            <input v-model="form.title" class="title-input" placeholder="Tiêu đề bài viết..." required>
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #1a507a;">Tiêu đề bài viết:</label>
+            <input v-model="form.title" class="title-input" placeholder="Nhập tiêu đề bài viết..." required>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #1a507a;">Chuyên mục:</label>
+            <input 
+              :value="category ? category.name : 'Đang tải...'" 
+              class="title-input" 
+              style="background-color: #f5f5f5; color: #888; font-size: 1rem; cursor: not-allowed;" 
+              disabled
+            >
           </div>
 
           <div class="editor-container" style="margin-bottom: 1.5rem;">
@@ -29,18 +42,33 @@ import api from '@/shared/services/api.service'
 import { alertSuccess, alertError } from '@/shared/utils/swal'
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import CustomEditor from '@/shared/components/CustomEditor.vue'
+import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 
 export default {
   name: 'CreateThread',
   components: {
     ForumHeader,
-    CustomEditor
+    CustomEditor,
+    Breadcrumb
   },
   data() {
     return {
       catId: this.$route.query.catId,
       category: null,
       form: { title: '', content: '', categoryId: '' }
+    }
+  },
+  computed: {
+    breadcrumbItems() {
+      const items = [{ title: 'Trang chủ', to: { name: 'Home' } }]
+      if (this.category) {
+        items.push({ 
+          title: this.category.name, 
+          to: { name: 'CategoryDetail', params: { id: this.category.id } } 
+        })
+      }
+      items.push({ title: 'Đăng bài mới' })
+      return items
     }
   },
   mounted() {

@@ -40,8 +40,13 @@ public class ThreadService {
 
     public ResponseDTO<ThreadDTO> createThread(ThreadDTO threadDTO) {
         Thread thread = threadMapper.toEntity(threadDTO);
-        // Tạm thời gán author là admin (ID: 1)
-        userRepository.findById(1L).ifPresent(thread::setAuthor);
+        
+        // Lấy username từ SecurityContext
+        String username = (String) org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        
+        userRepository.findByUsername(username).ifPresent(thread::setAuthor);
+        
         Thread saved = threadRepository.save(thread);
         return ResponseDTO.success(threadMapper.toDTO(saved));
     }

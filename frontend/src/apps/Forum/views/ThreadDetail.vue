@@ -40,6 +40,7 @@
 import api from '@/shared/services/api.service'
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
+import { formatForumDate } from '@/shared/utils/date'
 
 export default {
   name: 'ThreadDetail',
@@ -105,8 +106,7 @@ export default {
       }
     },
     formatDate(dateStr) {
-      if (!dateStr) return ''
-      return new Date(dateStr).toLocaleString('vi-VN')
+      return formatForumDate(dateStr)
     }
   }
 }

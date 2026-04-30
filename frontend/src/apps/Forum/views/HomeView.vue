@@ -37,6 +37,27 @@
         </aside>
       </div>
     </main>
+
+    <!-- Modal chọn chuyên mục -->
+    <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
+      <div class="modal-card" style="width: 500px;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>CHỌN CHUYÊN MỤC ĐĂNG BÀI</span>
+          <button @click="showModal = false" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem;">&times;</button>
+        </div>
+        <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+          <div 
+            v-for="cat in categories" 
+            :key="cat.id" 
+            class="category-select-item"
+            @click="selectCategory(cat.id)"
+          >
+            <strong>{{ cat.name }}</strong>
+            <small style="color: #666;">{{ cat.description }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -55,7 +76,8 @@ export default {
     return {
       isLoggedIn: false,
       currentUser: null,
-      categories: []
+      categories: [],
+      showModal: false
     }
   },
   mounted() {
@@ -73,8 +95,17 @@ export default {
       }
     },
     async openPostModal() {
-      const response = await api.get('/categories')
-      this.categories = response.data
+      try {
+        const response = await api.get('/categories')
+        this.categories = response.data
+        this.showModal = true
+      } catch (error) {
+        console.error('Lỗi khi tải chuyên mục:', error)
+      }
+    },
+    selectCategory(catId) {
+      this.showModal = false
+      this.$router.push({ name: 'CreateThread', query: { catId } })
     }
   }
 }

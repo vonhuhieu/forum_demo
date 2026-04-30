@@ -18,9 +18,7 @@
             </div>
             <div class="thread-meta">
               <span class="author-name">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
-              <span class="dot">·</span>
               <span>{{ formatDate(thread.createdAt) }}</span>
-              <span class="dot">·</span>
               <span class="forum-tag">{{ cat.name }}</span>
             </div>
           </div>
@@ -55,6 +53,7 @@
 
 <script>
 import api from '@/shared/services/api.service'
+import { formatForumDate } from '@/shared/utils/date'
 
 export default {
   name: 'ForumHome',
@@ -85,8 +84,7 @@ export default {
       }
     },
     formatDate(dateStr) {
-      if (!dateStr) return ''
-      return new Date(dateStr).toLocaleDateString('vi-VN')
+      return formatForumDate(dateStr)
     }
   }
 }
