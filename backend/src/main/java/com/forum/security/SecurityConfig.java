@@ -30,6 +30,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/menus/**").permitAll() 
+                .requestMatchers("/api/statistics/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll() // Cho phép xem ảnh/video/tệp đính kèm
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/threads/**").permitAll()

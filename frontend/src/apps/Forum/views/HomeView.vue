@@ -29,9 +29,24 @@
             </div>
           </div>
           <div class="card">
-            <div class="card-header">Thống kê</div>
+            <div class="card-header">Thống kê diễn đàn</div>
             <div class="card-body" style="padding: 1rem;">
-              <p>Chủ đề: 226,842</p>
+              <div class="stat-item" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>Chuyên mục:</span>
+                <strong>{{ formatNumber(stats.totalCategories) }}</strong>
+              </div>
+              <div class="stat-item" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>Bài viết:</span>
+                <strong>{{ formatNumber(stats.totalPosts) }}</strong>
+              </div>
+              <div class="stat-item" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>Thành viên:</span>
+                <strong>{{ formatNumber(stats.totalMembers) }}</strong>
+              </div>
+              <div class="stat-item" style="display: flex; justify-content: space-between;">
+                <span>Thành viên mới nhất:</span>
+                <strong style="color: #1a507a;">{{ stats.latestMember }}</strong>
+              </div>
             </div>
           </div>
         </aside>
@@ -77,11 +92,19 @@ export default {
       isLoggedIn: false,
       currentUser: null,
       categories: [],
-      showModal: false
+      showModal: false,
+      stats: {
+        totalCategories: 0,
+        totalThreads: 0,
+        totalPosts: 0,
+        totalMembers: 0,
+        latestMember: ''
+      }
     }
   },
   mounted() {
     this.checkAuth()
+    this.fetchStatistics()
   },
   methods: {
     checkAuth() {
@@ -106,6 +129,20 @@ export default {
     selectCategory(catId) {
       this.showModal = false
       this.$router.push({ name: 'CreateThread', query: { catId } })
+    },
+    async fetchStatistics() {
+      try {
+        const response = await api.get('/statistics')
+        if (response.data) {
+          this.stats = response.data
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải thống kê:', error)
+      }
+    },
+    formatNumber(num) {
+      if (!num) return 0
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
     }
   }
 }
