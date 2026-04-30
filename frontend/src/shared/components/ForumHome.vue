@@ -13,11 +13,11 @@
           </div>
           <div class="thread-main">
             <div class="thread-title">
-              <span v-if="thread.pinned" class="badge-pinned">Ghim</span>
+              <span v-if="thread.pinned" class="badge-pinned">GHIM</span>
               <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }">{{ thread.title }}</router-link>
             </div>
             <div class="thread-meta">
-              <span>{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
+              <span class="author-name">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
               <span class="dot">·</span>
               <span>{{ formatDate(thread.createdAt) }}</span>
               <span class="dot">·</span>
@@ -25,14 +25,18 @@
             </div>
           </div>
           <div class="thread-stats">
-            <div class="stat-item">
-              <span class="stat-value">{{ thread.replyCount }}</span>
-              <span class="stat-label">Trả lời</span>
+            <div class="stat-block">
+              <span class="stat-label">Trả lời:</span>
+              <span class="stat-value">{{ thread.replyCount || 0 }}</span>
             </div>
-            <div class="stat-item">
-              <span class="stat-value">{{ thread.viewCount }}</span>
-              <span class="stat-label">Xem</span>
+            <div class="stat-block">
+              <span class="stat-label">Xem:</span>
+              <span class="stat-value">{{ thread.viewCount || 0 }}</span>
             </div>
+          </div>
+          <div class="thread-last-post">
+            <span class="last-post-time">{{ formatDate(thread.createdAt) }}</span>
+            <span class="last-post-author">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
           </div>
         </div>
 
