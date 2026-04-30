@@ -9,12 +9,19 @@ import Login from '@/apps/Auth/views/Login.vue'
 import Register from '@/apps/Auth/views/Register.vue'
 import CreateThread from '@/apps/Forum/views/CreateThread.vue'
 import ThreadDetail from '@/apps/Forum/views/ThreadDetail.vue'
+import CategoryView from '@/apps/Forum/views/CategoryView.vue'
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: HomeView
+    component: HomeView,
+    alias: '/trang-chu'
+  },
+  {
+    path: '/category/:id',
+    name: 'category-detail',
+    component: CategoryView
   },
   {
     path: '/thread/:id',

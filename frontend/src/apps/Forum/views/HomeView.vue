@@ -3,7 +3,7 @@
     <header>
       <div class="header-top">
         <div class="container">
-          <div class="logo">HTXSL</div>
+          <div class="logo" style="cursor: pointer;" @click="$router.push('/')">HTXSL</div>
         </div>
       </div>
       <div class="header-nav">

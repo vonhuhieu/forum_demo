@@ -7,7 +7,7 @@
       </div>
       
       <div class="thread-list">
-        <div v-for="thread in threadsByCategory[cat.id]" :key="thread.id" class="thread-row">
+        <div v-for="thread in threadsByCategory[cat.id]?.slice(0, 10)" :key="thread.id" class="thread-row">
           <div class="thread-avatar">
             {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
           </div>
@@ -42,8 +42,8 @@
         </div>
       </div>
       
-      <div style="padding: 1rem; text-align: center;">
-        <button style="background: #1a507a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Xem thêm...</button>
+      <div v-if="threadsByCategory[cat.id] && threadsByCategory[cat.id].length > 10" style="padding: 1rem; text-align: center;">
+        <button @click="$router.push('/category/' + cat.id)" style="background: #1a507a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Xem thêm...</button>
       </div>
     </div>
   </div>
