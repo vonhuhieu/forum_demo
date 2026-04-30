@@ -1,20 +1,6 @@
 <template>
   <div class="category-page app-wrapper">
-    <!-- Header from HomeView for consistency -->
-    <header>
-      <div class="header-top">
-        <div class="container">
-          <div class="logo" style="cursor: pointer;" @click="$router.push('/')">HTXSL</div>
-        </div>
-      </div>
-      <div class="header-nav">
-        <div class="container nav-container">
-          <nav class="nav-links">
-            <router-link to="/">Trang nhất</router-link>
-          </nav>
-        </div>
-      </div>
-    </header>
+    <ForumHeader />
 
     <main class="container" style="padding-top: 2rem;">
       <div v-if="loading" style="text-align: center; padding: 3rem;">Đang tải...</div>
@@ -38,7 +24,7 @@
               <div class="thread-main">
                 <div class="thread-title">
                   <span v-if="thread.pinned" class="badge-pinned">Ghim</span>
-                  <router-link :to="'/thread/' + thread.id">{{ thread.title }}</router-link>
+                  <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }">{{ thread.title }}</router-link>
                 </div>
                 <div class="thread-meta">
                   <span>{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
@@ -80,12 +66,14 @@
 
 <script>
 import api from '@/shared/services/api.service'
+import ForumHeader from '@/shared/components/ForumHeader.vue'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import ForumPagination from '@/shared/components/ForumPagination.vue'
 
 export default {
   name: 'CategoryView',
   components: {
+    ForumHeader,
     Breadcrumb,
     ForumPagination
   },
@@ -101,7 +89,7 @@ export default {
   computed: {
     breadcrumbItems() {
       return [
-        { title: 'Trang chủ', to: '/' },
+        { title: 'Trang chủ', to: { name: 'Home' } },
         { title: this.category ? this.category.name : 'Chuyên mục' }
       ]
     },

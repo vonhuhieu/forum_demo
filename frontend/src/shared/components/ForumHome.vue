@@ -14,7 +14,7 @@
           <div class="thread-main">
             <div class="thread-title">
               <span v-if="thread.pinned" class="badge-pinned">Ghim</span>
-              <router-link :to="'/thread/' + thread.id">{{ thread.title }}</router-link>
+              <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }">{{ thread.title }}</router-link>
             </div>
             <div class="thread-meta">
               <span>{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
@@ -43,7 +43,7 @@
       </div>
       
       <div v-if="threadsByCategory[cat.id] && threadsByCategory[cat.id].length > 10" style="padding: 1rem; text-align: center;">
-        <button @click="$router.push('/category/' + cat.id)" style="background: #1a507a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Xem thêm...</button>
+        <button @click="$router.push({ name: 'CategoryDetail', params: { id: cat.id } })" style="background: #1a507a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Xem thêm...</button>
       </div>
     </div>
   </div>

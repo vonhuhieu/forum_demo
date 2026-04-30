@@ -19,7 +19,7 @@
         <div v-if="success" class="success-msg">{{ success }}</div>
         <button type="submit" class="btn-login">ĐĂNG KÝ NGAY</button>
         <div style="margin-top: 1rem; text-align: center;">
-          Đã có tài khoản? <router-link to="/login">Đăng nhập</router-link>
+          Đã có tài khoản? <router-link :to="{ name: 'Login' }">Đăng nhập</router-link>
         </div>
       </form>
     </div>
@@ -53,7 +53,7 @@ export default {
         })
         this.success = 'Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập...'
         setTimeout(() => {
-          this.$router.push('/login')
+          this.$router.push({ name: 'Login' })
         }, 2000)
       } catch (err) {
         this.error = err.response?.data?.message || 'Đã có lỗi xảy ra'

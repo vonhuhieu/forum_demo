@@ -9,17 +9,17 @@
       <nav class="sidebar-nav">
         <div class="nav-group">
           <div class="nav-label">HỆ THỐNG</div>
-          <router-link to="/admin/menu" class="nav-item">
+          <router-link :to="{ name: 'AdminMenu' }" class="nav-item">
             <span class="icon">☰</span> Cấu hình Menu
           </router-link>
         </div>
         
         <div class="nav-group">
           <div class="nav-label">NỘI DUNG</div>
-          <router-link to="/admin/category" class="nav-item">
+          <router-link :to="{ name: 'AdminCategory' }" class="nav-item">
             <span class="icon">📁</span> Quản lý Chuyên mục
           </router-link>
-          <router-link to="/admin/threads" class="nav-item">
+          <router-link :to="{ name: 'AdminThreads' }" class="nav-item">
             <span class="icon">📝</span> Quản lý Bài viết
           </router-link>
         </div>
@@ -41,7 +41,7 @@
     <div class="admin-main">
       <header class="admin-header">
         <div class="breadcrumb">
-          <router-link to="/">Trang chủ</router-link> / 
+          <router-link :to="{ name: 'Home' }">Trang chủ</router-link> / 
           <span>{{ $route.name }}</span>
         </div>
         <div class="user-info">
@@ -63,7 +63,7 @@ export default {
     handleLogout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
-      this.$router.push('/login')
+      this.$router.push({ name: 'Login' })
     }
   }
 }

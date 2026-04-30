@@ -50,7 +50,7 @@
         </div>
 
         <div class="form-actions" style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: flex-end;">
-          <button @click="$router.push('/admin/threads')" class="btn-cancel">
+          <button @click="$router.push({ name: 'AdminThreads' })" class="btn-cancel">
             {{ isViewMode ? 'Quay lại' : 'Hủy bỏ' }}
           </button>
           <button v-if="!isViewMode" @click="handlePost" class="btn-save">
@@ -175,7 +175,7 @@ export default {
           await alertSuccess('Đăng bài viết thành công')
         }
         
-        this.$router.push('/admin/threads')
+        this.$router.push({ name: 'AdminThreads' })
       } catch (error) {
         alertError(this.isEditMode ? 'Lỗi khi cập nhật bài viết' : 'Lỗi khi đăng bài')
       }

@@ -1,40 +1,6 @@
 <template>
   <div class="app-wrapper">
-    <header>
-      <div class="header-top">
-        <div class="container">
-          <div class="logo" style="cursor: pointer;" @click="$router.push('/')">HTXSL</div>
-        </div>
-      </div>
-      <div class="header-nav">
-        <div class="container nav-container">
-          <nav class="nav-links">
-            <router-link
-              v-for="menu in menus"
-              :key="menu.id"
-              :to="menu.url"
-              active-class="active"
-            >
-              {{ menu.title }}
-            </router-link>
-          </nav>
-          <div class="nav-right">
-            <template v-if="isLoggedIn">
-              <span style="color: white; margin-right: 15px;">Chào, {{ currentUser.username }}</span>
-              <button @click="handleLogout" style="background: none; border: 1px solid white; color: white; padding: 2px 8px; border-radius: 4px; cursor: pointer;">Thoát</button>
-            </template>
-            <template v-else>
-              <router-link to="/login">Đăng nhập</router-link>
-              <router-link to="/register">Đăng ký</router-link>
-            </template>
-            <div class="btn-search">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <span>Tìm kiếm</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
+    <ForumHeader @logout="checkAuth" />
 
     <main class="container">
       <div class="banner-box" style="margin-top: 1rem;">
@@ -75,35 +41,25 @@
 </template>
 
 <script>
+import ForumHeader from '@/shared/components/ForumHeader.vue'
 import ForumHome from '@/shared/components/ForumHome.vue'
 import api from '@/shared/services/api.service'
 
 export default {
   name: 'HomeView',
   components: {
+    ForumHeader,
     ForumHome
   },
   data() {
     return {
-      menus: [],
       isLoggedIn: false,
       currentUser: null,
       categories: []
     }
   },
-  async mounted() {
+  mounted() {
     this.checkAuth()
-    try {
-      const response = await api.get('/menus')
-      this.menus = response.data
-    } catch (error) {
-      console.error('Lỗi khi tải menu:', error)
-      this.menus = [
-        { id: 1, title: 'Trang nhất', url: '/' },
-        { id: 2, title: 'Lều báo', url: '#' },
-        { id: 3, title: 'Quán con sò say', url: '#' }
-      ]
-    }
   },
   methods: {
     checkAuth() {
@@ -111,13 +67,10 @@ export default {
       if (user) {
         this.isLoggedIn = true
         this.currentUser = JSON.parse(user)
+      } else {
+        this.isLoggedIn = false
+        this.currentUser = null
       }
-    },
-    handleLogout() {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      this.isLoggedIn = false
-      this.currentUser = null
     },
     async openPostModal() {
       const response = await api.get('/categories')

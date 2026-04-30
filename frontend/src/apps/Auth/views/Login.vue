@@ -14,7 +14,7 @@
         <div v-if="error" class="error-msg">{{ error }}</div>
         <button type="submit" class="btn-login">VÀO HỆ THỐNG</button>
         <div style="margin-top: 1rem; text-align: center;">
-          <router-link to="/">Quay lại trang chủ</router-link>
+          <router-link :to="{ name: 'Home' }">Quay lại trang chủ</router-link>
         </div>
       </form>
     </div>
@@ -44,9 +44,9 @@ export default {
         localStorage.setItem('user', JSON.stringify(response.data))
         const roles = response.data.roles || []
         if (roles.includes('ROLE_ADMIN')) {
-          this.$router.push('/admin/menu')
+          this.$router.push({ name: 'AdminMenu' })
         } else {
-          this.$router.push('/')
+          this.$router.push({ name: 'Home' })
         }
       } catch (err) {
         this.error = 'Tài khoản hoặc mật khẩu không chính xác'

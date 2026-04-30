@@ -11,7 +11,7 @@
       v-model:currentPage="currentPage"
       :loading="loading"
       @search="handleSearch"
-      @add="$router.push('/admin/threads/create')"
+      @add="$router.push({ name: 'AdminThreadCreate' })"
       @edit="editThread"
       @delete="deleteThread"
       @view="viewThread"
@@ -140,10 +140,10 @@ export default {
       return path.split('.').reduce((acc, part) => acc && acc[part], obj)
     },
     editThread(item) {
-      this.$router.push(`/admin/threads/edit/${item.id}`)
+      this.$router.push({ name: 'AdminThreadEdit', params: { id: item.id } })
     },
     viewThread(item) {
-      this.$router.push(`/admin/threads/view/${item.id}`)
+      this.$router.push({ name: 'AdminThreadView', params: { id: item.id } })
     },
     async deleteThread(item) {
       const result = await alertConfirm('Xóa bài viết', `Bạn có chắc chắn muốn xóa bài viết "${item.title}"?`)

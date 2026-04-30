@@ -14,33 +14,33 @@ import CategoryView from '@/apps/Forum/views/CategoryView.vue'
 const routes = [
   {
     path: '/',
-    name: 'home',
+    name: 'Home',
     component: HomeView,
     alias: '/trang-chu'
   },
   {
     path: '/category/:id',
-    name: 'category-detail',
+    name: 'CategoryDetail',
     component: CategoryView
   },
   {
     path: '/thread/:id',
-    name: 'thread-detail',
+    name: 'ThreadDetail',
     component: ThreadDetail
   },
   {
     path: '/login',
-    name: 'login',
+    name: 'Login',
     component: Login
   },
   {
     path: '/register',
-    name: 'register',
+    name: 'Register',
     component: Register
   },
   {
     path: '/create-thread',
-    name: 'create-thread',
+    name: 'CreateThread',
     component: CreateThread,
     meta: { requiresAuth: true }
   },
@@ -51,32 +51,32 @@ const routes = [
     children: [
       {
         path: 'menu',
-        name: 'Quản lý Menu Header',
+        name: 'AdminMenu',
         component: MenuConfig
       },
       {
         path: 'category',
-        name: 'Quản lý Chuyên mục',
+        name: 'AdminCategory',
         component: CategoryConfig
       },
       {
         path: 'threads',
-        name: 'Quản lý Bài viết',
+        name: 'AdminThreads',
         component: ThreadManagement
       },
       {
         path: 'threads/create',
-        name: 'Đăng bài mới',
+        name: 'AdminThreadCreate',
         component: AdminCreateThread
       },
       {
         path: 'threads/edit/:id',
-        name: 'Chỉnh sửa bài viết',
+        name: 'AdminThreadEdit',
         component: AdminCreateThread
       },
       {
         path: 'threads/view/:id',
-        name: 'Xem bài viết',
+        name: 'AdminThreadView',
         component: AdminCreateThread
       }
     ]

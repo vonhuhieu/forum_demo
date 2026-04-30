@@ -1,38 +1,39 @@
 <template>
-  <div class="create-thread-page container">
-    <div class="breadcrumb" style="padding: 1rem 0;">
-      <router-link to="/">Trang nhất</router-link>
-      <span v-if="category"> » {{ category.name }}</span>
-    </div>
+  <div class="create-thread-page app-wrapper">
+    <ForumHeader />
+    
+    <main class="container" style="padding-top: 2rem;">
+      <div class="card">
+        <div class="card-header">ĐĂNG BÀI</div>
+        <div class="post-form" style="padding: 2rem;">
+          <div class="form-group" style="margin-bottom: 1.5rem;">
+            <input v-model="form.title" class="title-input" placeholder="Tiêu đề bài viết..." required>
+          </div>
 
-    <div class="card">
-      <div class="card-header">ĐĂNG BÀI</div>
-      <div class="post-form" style="padding: 2rem;">
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-          <input v-model="form.title" class="title-input" placeholder="Tiêu đề bài viết..." required>
-        </div>
+          <div class="editor-container" style="margin-bottom: 1.5rem;">
+            <CustomEditor v-model="form.content" />
+          </div>
 
-        <div class="editor-container" style="margin-bottom: 1.5rem;">
-          <CustomEditor v-model="form.content" />
-        </div>
-
-        <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px;">
-          <button @click="$router.push('/')" class="btn-cancel">Hủy bỏ</button>
-          <button @click="handlePost" class="btn-post">Đăng bài</button>
+          <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button @click="$router.push({ name: 'Home' })" class="btn-cancel">Hủy bỏ</button>
+            <button @click="handlePost" class="btn-post">Đăng bài</button>
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <script>
 import api from '@/shared/services/api.service'
 import { alertSuccess, alertError } from '@/shared/utils/swal'
+import ForumHeader from '@/shared/components/ForumHeader.vue'
 import CustomEditor from '@/shared/components/CustomEditor.vue'
 
 export default {
   name: 'CreateThread',
   components: {
+    ForumHeader,
     CustomEditor
   },
   data() {
@@ -66,7 +67,7 @@ export default {
           content: this.form.content,
           category: { id: this.catId }
         })
-        this.$router.push('/')
+        this.$router.push({ name: 'Home' })
       } catch (error) {
         alertError('Lỗi khi đăng bài')
       }

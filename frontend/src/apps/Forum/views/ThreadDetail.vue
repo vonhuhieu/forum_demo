@@ -1,32 +1,34 @@
 <template>
-  <div class="thread-detail-page container" v-if="!loading && thread">
-    <div class="breadcrumb" style="padding: 1rem 0;">
-      <router-link to="/">Trang nhất</router-link>
-      <span v-if="thread.category"> » {{ thread.category.name }}</span>
-    </div>
+  <div class="thread-detail-page app-wrapper" v-if="!loading && thread">
+    <ForumHeader />
 
-    <div class="thread-header card">
-      <h1 class="thread-title-full">{{ thread.title }}</h1>
-      <div class="thread-meta-bar">
-        <div class="author-info">
-          <div class="avatar-small">
-            {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
+    <main class="container" style="padding-top: 2rem;">
+      <Breadcrumb :items="breadcrumbItems" />
+
+      <div class="thread-header card">
+        <h1 class="thread-title-full">{{ thread.title }}</h1>
+        <div class="thread-meta-bar">
+          <div class="author-info">
+            <div class="avatar-small">
+              {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
+            </div>
+            <span class="author-name">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
           </div>
-          <span class="author-name">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
-        </div>
-        <div class="post-time">
-          Đăng lúc: {{ formatDate(thread.createdAt) }}
+          <div class="post-time">
+            Đăng lúc: {{ formatDate(thread.createdAt) }}
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="thread-content-card card">
-      <div class="content-body ql-editor" v-html="thread.content"></div>
-    </div>
+      <div class="thread-content-card card">
+        <div class="content-body ql-editor" v-html="thread.content"></div>
+      </div>
 
-    <div class="thread-actions" style="margin-top: 1rem; display: flex; gap: 10px;">
-      <button class="btn-reply">Trả lời</button>
-    </div>
+      <div class="thread-actions" style="margin-top: 1rem; display: flex; gap: 10px;">
+        <button class="btn-reply">Trả lời</button>
+        <button class="btn-back" @click="$router.back()">Quay lại</button>
+      </div>
+    </main>
   </div>
   
   <div v-else-if="loading" class="container" style="padding: 3rem; text-align: center;">
@@ -36,13 +38,34 @@
 
 <script>
 import api from '@/shared/services/api.service'
+import ForumHeader from '@/shared/components/ForumHeader.vue'
+import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 
 export default {
   name: 'ThreadDetail',
+  components: {
+    ForumHeader,
+    Breadcrumb
+  },
   data() {
     return {
       thread: null,
       loading: true
+    }
+  },
+  computed: {
+    breadcrumbItems() {
+      const items = [{ title: 'Trang nhất', to: { name: 'Home' } }]
+      if (this.thread && this.thread.category) {
+        items.push({ 
+          title: this.thread.category.name, 
+          to: { name: 'CategoryDetail', params: { id: this.thread.category.id } } 
+        })
+      }
+      if (this.thread) {
+        items.push({ title: this.thread.title })
+      }
+      return items
     }
   },
   async mounted() {
@@ -118,6 +141,11 @@ export default {
 .content-body { font-size: 1.1rem; line-height: 1.8; color: #333; }
 .btn-reply {
   background-color: #f39c12; color: white;
+  border: none; padding: 10px 25px;
+  border-radius: 4px; font-weight: bold; cursor: pointer;
+}
+.btn-back {
+  background-color: #6c757d; color: white;
   border: none; padding: 10px 25px;
   border-radius: 4px; font-weight: bold; cursor: pointer;
 }
