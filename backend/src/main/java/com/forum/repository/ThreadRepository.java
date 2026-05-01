@@ -14,5 +14,5 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
 
     List<Thread> findAllByCategoryIdOrderByPinnedDescCreatedAtDesc(Long categoryId);
     List<Thread> findAllByOrderByCreatedAtDesc();
-    List<Thread> findTop10ByActiveTrueOrderByCreatedAtDesc();
+    List<Thread> findTop10ByOrderByCreatedAtDesc();
 }

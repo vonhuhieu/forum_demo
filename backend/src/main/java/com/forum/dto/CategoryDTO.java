@@ -11,5 +11,7 @@ public class CategoryDTO {
     private boolean active;
     private Long categoryGroupId;
     private Long parentCategoryId;
+    private Long threadCount;
+    private Long postCount;
     private java.util.List<CategoryDTO> subCategories;
 }

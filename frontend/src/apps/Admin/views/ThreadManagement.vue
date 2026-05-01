@@ -19,9 +19,13 @@
     >
       <template #extra-filters>
         <div class="filter-item-mini">
-          <select v-model="filter.categoryId" @change="fetchThreads" class="mini-select">
-            <option value="">Tất cả chuyên mục</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+          <select v-model="filter.groupId" @change="onGroupChange" class="mini-select">
+            <option value="">Tất cả nhóm</option>
+            <option v-for="group in categoryGroups" :key="group.id" :value="group.id">{{ group.name }}</option>
+          </select>
+          <select v-model="filter.categoryId" @change="fetchThreads" class="mini-select" :disabled="!filter.groupId">
+            <option value="">{{ filter.groupId ? 'Chọn chuyên mục' : 'Vui lòng chọn nhóm chuyên mục' }}</option>
+            <option v-for="cat in filteredCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
           </select>
         </div>
       </template>
@@ -58,9 +62,9 @@ export default {
   data() {
     return {
       threads: [],
-      categories: [],
+      categoryGroups: [],
       loading: false,
-      filter: { categoryId: '', keyword: '' },
+      filter: { groupId: '', categoryId: '', keyword: '' },
       pageSize: 10,
       currentPage: 1,
       headers: [
@@ -101,7 +105,34 @@ export default {
         })
       }
       
+      if (this.filter.groupId && !this.filter.categoryId) {
+        const groupCatIds = this.filteredCategories.map(c => c.id)
+        result = result.filter(t => t.category && groupCatIds.includes(t.category.id))
+      }
+      
       return result
+    },
+    allCategories() {
+      if (!this.categoryGroups) return []
+      const cats = []
+      this.categoryGroups.forEach(group => {
+        if (group.categories) {
+          group.categories.forEach(cat => {
+            cats.push({ ...cat, categoryGroupId: group.id })
+          })
+        }
+      })
+      return cats
+    },
+    filteredCategories() {
+      let catsToFormat = [];
+      if (!this.filter.groupId) {
+        catsToFormat = this.allCategories;
+      } else {
+        const selectedGroup = this.categoryGroups.find(g => String(g.id) === String(this.filter.groupId));
+        catsToFormat = selectedGroup ? selectedGroup.categories : [];
+      }
+      return this.formatCategoriesHierarchy(catsToFormat);
     },
     displayThreads() {
       const start = (this.currentPage - 1) * this.pageSize
@@ -110,13 +141,58 @@ export default {
     }
   },
   mounted() {
+    this.fetchCategoryGroups()
     this.fetchCategories()
     this.fetchThreads()
   },
   methods: {
+    async fetchCategoryGroups() {
+      const response = await AdminService.getCategoryGroups()
+      this.categoryGroups = response.data
+    },
     async fetchCategories() {
-      const response = await AdminService.getCategories()
-      this.categories = response.data
+      // We use fetchCategoryGroups instead
+    },
+    onGroupChange() {
+      this.filter.categoryId = ''
+      this.fetchThreads()
+    },
+    formatCategoriesHierarchy(flatCategories) {
+      if (!flatCategories || flatCategories.length === 0) return [];
+      
+      const categoryMap = {};
+      const roots = [];
+      
+      // Clone and initialize map
+      flatCategories.forEach(cat => {
+        categoryMap[cat.id] = { ...cat, children: [] };
+      });
+      
+      // Build tree
+      flatCategories.forEach(cat => {
+        if (cat.parentCategoryId && categoryMap[cat.parentCategoryId]) {
+          categoryMap[cat.parentCategoryId].children.push(categoryMap[cat.id]);
+        } else {
+          roots.push(categoryMap[cat.id]);
+        }
+      });
+      
+      // Flatten with prefix
+      const result = [];
+      const flatten = (nodes, prefix = '') => {
+        nodes.forEach(node => {
+          result.push({
+            ...node,
+            name: prefix + node.name
+          });
+          if (node.children && node.children.length > 0) {
+            flatten(node.children, prefix + '\u00A0\u00A0\u00A0\u00A0└─ ');
+          }
+        });
+      };
+      
+      flatten(roots);
+      return result;
     },
     async fetchThreads() {
       this.loading = true

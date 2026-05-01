@@ -14,5 +14,5 @@ public class ThreadDTO {
     private int viewCount;
     private int replyCount;
     private boolean pinned;
-    private boolean active;
+    private boolean active = true;
 }

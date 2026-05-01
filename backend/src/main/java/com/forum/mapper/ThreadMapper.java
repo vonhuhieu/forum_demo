@@ -8,7 +8,7 @@ import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = {CategoryMapper.class})
 public interface ThreadMapper {
     ThreadMapper INSTANCE = Mappers.getMapper(ThreadMapper.class);
 

@@ -32,7 +32,7 @@ public class ThreadService {
     }
 
     public ResponseDTO<List<ThreadDTO>> getLatestThreads() {
-        return ResponseDTO.success(threadMapper.toDTOList(threadRepository.findTop10ByActiveTrueOrderByCreatedAtDesc()));
+        return ResponseDTO.success(threadMapper.toDTOList(threadRepository.findTop10ByOrderByCreatedAtDesc()));
     }
 
     public ResponseDTO<ThreadDTO> getThreadById(Long id) {

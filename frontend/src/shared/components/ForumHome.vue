@@ -46,7 +46,7 @@
       </div>
       
       <div class="card-footer">
-        <button class="btn-view-more" @click="$router.push({ name: 'AdminThreads' })">Xem thêm...</button>
+        <button class="btn-view-more" @click="$router.push({ name: 'LatestThreads' })">Xem thêm...</button>
       </div>
     </section>
 
@@ -96,13 +96,18 @@
           </div>
           <div class="category-last-thread">
             <div v-if="lastThreadByCat[cat.id]" class="last-thread-box">
-              <router-link :to="{ name: 'ThreadDetail', params: { id: lastThreadByCat[cat.id].id } }" class="last-thread-title">
-                {{ lastThreadByCat[cat.id].title }}
-              </router-link>
-              <div class="last-thread-meta">
-                <span>{{ formatDate(lastThreadByCat[cat.id].createdAt) }}</span>
-                <span class="dot">•</span>
-                <span class="author">{{ lastThreadByCat[cat.id].author?.username }}</span>
+              <div class="last-thread-avatar">
+                {{ lastThreadByCat[cat.id].author?.username?.charAt(0).toUpperCase() || 'A' }}
+              </div>
+              <div class="last-thread-info">
+                <router-link :to="{ name: 'ThreadDetail', params: { id: lastThreadByCat[cat.id].id } }" class="last-thread-title">
+                  {{ lastThreadByCat[cat.id].title }}
+                </router-link>
+                <div class="last-thread-meta">
+                  <span>{{ formatDate(lastThreadByCat[cat.id].createdAt) }}</span>
+                  <span class="dot">•</span>
+                  <span class="author">{{ lastThreadByCat[cat.id].author?.username }}</span>
+                </div>
               </div>
             </div>
             <div v-else class="no-thread">Chưa có bài viết</div>
@@ -129,6 +134,7 @@ export default {
   },
   computed: {
     activeGroups() {
+      if (!this.categoryGroups || !Array.isArray(this.categoryGroups)) return []
       return this.categoryGroups.filter(g => g.active && g.categories && g.categories.length > 0)
     }
   },
@@ -141,11 +147,11 @@ export default {
       try {
         // Fetch Mới ra lò
         const latestRes = await api.get('/threads/latest')
-        this.latestThreads = latestRes.data
+        this.latestThreads = latestRes.data || []
 
         // Fetch Groups with nested categories
         const groupRes = await api.get('/category-groups')
-        this.categoryGroups = groupRes.data
+        this.categoryGroups = groupRes.data || []
 
         // Fetch last thread for each category (this could be optimized in backend)
         for (const group of this.categoryGroups) {
@@ -269,20 +275,46 @@ export default {
 }
 
 .category-last-thread {
-  width: 250px;
+  width: 320px;
   padding-left: 15px;
   border-left: 1px solid #eee;
 }
 
+.last-thread-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.last-thread-avatar {
+  width: 36px;
+  height: 36px;
+  background: #5c6bc0;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.last-thread-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .last-thread-title {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 500;
   color: #1a507a;
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 2px;
 }
 
 .last-thread-meta {

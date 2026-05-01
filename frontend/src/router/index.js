@@ -11,6 +11,7 @@ import Register from '@/apps/Auth/views/Register.vue'
 import CreateThread from '@/apps/Forum/views/CreateThread.vue'
 import ThreadDetail from '@/apps/Forum/views/ThreadDetail.vue'
 import CategoryView from '@/apps/Forum/views/CategoryView.vue'
+import LatestThreadsView from '@/apps/Forum/views/LatestThreadsView.vue'
 
 const routes = [
   {
@@ -18,6 +19,11 @@ const routes = [
     name: 'Home',
     component: HomeView,
     alias: '/trang-chu'
+  },
+  {
+    path: '/latest',
+    name: 'LatestThreads',
+    component: LatestThreadsView
   },
   {
     path: '/category/:id',

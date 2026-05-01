@@ -16,15 +16,28 @@
 
         <div class="form-row" style="display: flex; gap: 2rem; margin-bottom: 1.5rem;">
           <div class="form-group" style="flex: 1;">
+            <label>Nhóm chuyên mục:</label>
+            <select 
+              v-model="selectedGroupId" 
+              @change="form.categoryId = ''"
+              class="admin-input" 
+              required
+              :disabled="isViewMode"
+            >
+              <option value="">-- Chọn nhóm chuyên mục --</option>
+              <option v-for="group in categoryGroups" :key="group.id" :value="group.id">{{ group.name }}</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex: 1;">
             <label>Chuyên mục:</label>
             <select 
               v-model="form.categoryId" 
               class="admin-input" 
               required
-              :disabled="isViewMode"
+              :disabled="isViewMode || !selectedGroupId"
             >
               <option value="">-- Chọn chuyên mục --</option>
-              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+              <option v-for="cat in filteredCategories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
             </select>
           </div>
           <div class="form-group" style="padding-top: 2rem;">
@@ -76,6 +89,8 @@ export default {
   data() {
     return {
       categories: [],
+      categoryGroups: [],
+      selectedGroupId: '',
       form: { title: '', content: '', categoryId: '', pinned: false }
     }
   },
@@ -93,15 +108,29 @@ export default {
       if (this.isViewMode) return 'XEM CHI TIẾT BÀI VIẾT'
       if (this.isEditMode) return 'CHỈNH SỬA BÀI VIẾT'
       return 'TẠO BÀI VIẾT MỚI'
+    },
+    filteredCategories() {
+      if (!this.selectedGroupId) return [];
+      const rawCategories = this.categories.filter(c => c.categoryGroupId == this.selectedGroupId);
+      return this.formatCategoriesHierarchy(rawCategories);
     }
   },
   async mounted() {
+    await this.fetchCategoryGroups()
     await this.fetchCategories()
     if (this.threadId) {
       await this.fetchThread()
     }
   },
   methods: {
+    async fetchCategoryGroups() {
+      try {
+        const response = await AdminService.getCategoryGroups()
+        this.categoryGroups = response.data
+      } catch (error) {
+        console.error('Error fetching groups:', error)
+      }
+    },
     async fetchCategories() {
       try {
         const response = await AdminService.getCategories()
@@ -109,6 +138,40 @@ export default {
       } catch (error) {
         console.error('Error fetching categories:', error)
       }
+    },
+    formatCategoriesHierarchy(flatCategories) {
+      if (!flatCategories || flatCategories.length === 0) return [];
+      
+      const categoryMap = {};
+      const roots = [];
+      
+      flatCategories.forEach(cat => {
+        categoryMap[cat.id] = { ...cat, children: [] };
+      });
+      
+      flatCategories.forEach(cat => {
+        if (cat.parentCategoryId && categoryMap[cat.parentCategoryId]) {
+          categoryMap[cat.parentCategoryId].children.push(categoryMap[cat.id]);
+        } else {
+          roots.push(categoryMap[cat.id]);
+        }
+      });
+      
+      const result = [];
+      const flatten = (nodes, prefix = '') => {
+        nodes.forEach(node => {
+          result.push({
+            ...node,
+            name: prefix + node.name
+          });
+          if (node.children && node.children.length > 0) {
+            flatten(node.children, prefix + '\u00A0\u00A0\u00A0\u00A0└─ ');
+          }
+        });
+      };
+      
+      flatten(roots);
+      return result;
     },
     async fetchThread() {
       try {
@@ -149,6 +212,11 @@ export default {
           content: content,
           categoryId: thread.category ? thread.category.id : '',
           pinned: thread.pinned || false
+        }
+        
+        // Tự động chọn nhóm chuyên mục dựa trên chuyên mục của bài viết
+        if (thread.category && thread.category.categoryGroupId) {
+          this.selectedGroupId = thread.category.categoryGroupId
         }
       } catch (error) {
         alertError('Không thể tải thông tin bài viết')
