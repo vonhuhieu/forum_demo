@@ -16,8 +16,8 @@
         
         <div class="nav-group">
           <div class="nav-label">NỘI DUNG</div>
-          <router-link :to="{ name: 'AdminCategory' }" class="nav-item">
-            <span class="icon">📁</span> Quản lý Chuyên mục
+          <router-link :to="{ name: 'AdminCategoryGroup' }" class="nav-item">
+            <span class="icon">📁</span> Quản lý Nhóm & Chuyên mục
           </router-link>
           <router-link :to="{ name: 'AdminThreads' }" class="nav-item">
             <span class="icon">📝</span> Quản lý Bài viết
@@ -66,7 +66,7 @@ export default {
     breadcrumbItems() {
       const mapping = {
         'AdminMenu': 'Cấu hình Menu',
-        'AdminCategory': 'Quản lý Chuyên mục',
+        'AdminCategoryGroup': 'Quản lý Nhóm & Chuyên mục',
         'AdminThreads': 'Quản lý Bài viết',
         'AdminThreadCreate': 'Thêm bài viết mới',
         'AdminThreadEdit': 'Cập nhật bài viết',

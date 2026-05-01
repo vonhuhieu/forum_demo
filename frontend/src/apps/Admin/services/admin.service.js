@@ -15,6 +15,20 @@ class AdminService {
     return api.delete(`/categories/${id}`)
   }
 
+  // Category Groups
+  getCategoryGroups() {
+    return api.get('/category-groups')
+  }
+  createCategoryGroup(data) {
+    return api.post('/category-groups', data)
+  }
+  updateCategoryGroup(id, data) {
+    return api.put(`/category-groups/${id}`, data)
+  }
+  deleteCategoryGroup(id) {
+    return api.delete(`/category-groups/${id}`)
+  }
+
   // Menus
   getMenus() {
     return api.get('/menus')

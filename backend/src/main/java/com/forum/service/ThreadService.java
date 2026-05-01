@@ -31,6 +31,10 @@ public class ThreadService {
         return ResponseDTO.success(threadMapper.toDTOList(threads));
     }
 
+    public ResponseDTO<List<ThreadDTO>> getLatestThreads() {
+        return ResponseDTO.success(threadMapper.toDTOList(threadRepository.findTop10ByActiveTrueOrderByCreatedAtDesc()));
+    }
+
     public ResponseDTO<ThreadDTO> getThreadById(Long id) {
         return threadRepository.findById(id).map(thread -> {
             thread.setViewCount(thread.getViewCount() + 1);

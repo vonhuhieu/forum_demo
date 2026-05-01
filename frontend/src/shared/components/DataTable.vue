@@ -76,6 +76,7 @@
               </td>
               <td v-if="showAction" class="text-center action-column">
                 <div class="action-buttons-wrapper">
+                  <slot name="extra-actions" :item="item"></slot>
                   <button class="action-btn view-btn" @click="$emit('view', item)" title="Xem chi tiết">👁</button>
                   <button class="action-btn edit-btn" @click="$emit('edit', item)" title="Chỉnh sửa">✏️</button>
                   <button class="action-btn delete-btn" @click="$emit('delete', item)" title="Xóa">🗑</button>

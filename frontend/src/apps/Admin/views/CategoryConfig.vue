@@ -45,6 +45,20 @@
             <label>Thứ tự hiển thị:</label>
             <input type="number" v-model="form.positionOrder">
           </div>
+          <div class="form-group">
+            <label>Nhóm chuyên mục:</label>
+            <select v-model="form.categoryGroupId" class="form-select">
+              <option :value="null">-- Không chọn --</option>
+              <option v-for="g in categoryGroups" :key="g.id" :value="g.id">{{ g.name }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Chuyên mục cha:</label>
+            <select v-model="form.parentCategoryId" class="form-select">
+              <option :value="null">-- Không chọn (Cấp cao nhất) --</option>
+              <option v-for="c in topLevelCategories" :key="c.id" :value="c.id" v-show="c.id !== form.id">{{ c.name }}</option>
+            </select>
+          </div>
           <div class="modal-footer">
             <button type="button" @click="showModal = false" class="btn-cancel">Đóng</button>
             <button type="submit" class="btn-save">{{ isEditing ? 'Cập nhật' : 'Lưu lại' }}</button>
@@ -78,8 +92,10 @@ export default {
         { text: 'Thứ tự', value: 'positionOrder', sortable: true, width: '100px' },
         { text: 'Trạng thái', value: 'active', sortable: true, width: '120px' }
       ],
-      form: { id: null, name: '', description: '', positionOrder: 0, active: true },
-      sortField: '',
+      form: { id: null, name: '', description: '', positionOrder: 0, active: true, categoryGroupId: null, parentCategoryId: null },
+      categoryGroups: [],
+      topLevelCategories: [],
+      sortField: 'positionOrder',
       sortOrder: 'asc'
     }
   },
@@ -118,9 +134,20 @@ export default {
   methods: {
     async fetchCategories() {
       this.loading = true
-      const response = await AdminService.getCategories()
-      this.categories = response.data
-      this.loading = false
+      try {
+        const response = await AdminService.getCategories()
+        this.categories = response.data
+        
+        // Fetch Groups and Top-level for dropdowns
+        const groupRes = await AdminService.getCategoryGroups()
+        this.categoryGroups = groupRes.data
+        
+        this.topLevelCategories = this.categories.filter(c => !c.parentCategoryId)
+      } catch (error) {
+        console.error('Lỗi khi tải dữ liệu:', error)
+      } finally {
+        this.loading = false
+      }
     },
     handleSearch(k) {
       this.keyword = k
@@ -167,7 +194,7 @@ export default {
       }
     },
     resetForm() {
-      this.form = { id: null, name: '', description: '', positionOrder: 0, active: true }
+      this.form = { id: null, name: '', description: '', positionOrder: 0, active: true, categoryGroupId: null, parentCategoryId: null }
       this.isEditing = false
     }
   }
@@ -184,7 +211,7 @@ export default {
 .admin-form { padding: 1.5rem; }
 .form-group { margin-bottom: 1rem; }
 .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
-.form-group input, .form-group textarea { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; }
+.form-group input, .form-group textarea, .form-select { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; background: white; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 1.5rem; }
 .btn-save { background: #27ae60; color: white; border: none; padding: 0.75rem 2rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
 .btn-cancel { background: #95a5a6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 4px; cursor: pointer; }

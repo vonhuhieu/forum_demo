@@ -25,4 +25,19 @@ public class Category {
     private Integer positionOrder;
 
     private boolean active = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_group_id")
+    private CategoryGroup categoryGroup;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Category parentCategory;
+
+    @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.ALL)
+    @OrderBy("positionOrder ASC")
+    private java.util.List<Category> subCategories = new java.util.ArrayList<>();
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE)
+    private java.util.List<Thread> threads = new java.util.ArrayList<>();
 }

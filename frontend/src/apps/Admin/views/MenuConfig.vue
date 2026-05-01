@@ -87,7 +87,7 @@ export default {
         { text: 'Trạng thái', value: 'active', sortable: true, width: '120px' }
       ],
       form: { id: null, title: '', url: '', positionOrder: 0, active: true },
-      sortField: '',
+      sortField: 'positionOrder',
       sortOrder: 'asc'
     }
   },

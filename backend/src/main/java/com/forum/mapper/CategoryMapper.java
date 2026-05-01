@@ -11,6 +11,8 @@ import java.util.List;
 public interface CategoryMapper {
     CategoryMapper INSTANCE = Mappers.getMapper(CategoryMapper.class);
 
+    @org.mapstruct.Mapping(target = "categoryGroupId", source = "categoryGroup.id")
+    @org.mapstruct.Mapping(target = "parentCategoryId", source = "parentCategory.id")
     CategoryDTO toDTO(Category category);
     
     Category toEntity(CategoryDTO categoryDTO);

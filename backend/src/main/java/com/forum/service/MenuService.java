@@ -20,7 +20,7 @@ public class MenuService {
     private final MenuMapper menuMapper;
 
     public ResponseDTO<List<MenuDTO>> getAllMenus() {
-        return ResponseDTO.success(menuMapper.toDTOList(menuRepository.findAll()));
+        return ResponseDTO.success(menuMapper.toDTOList(menuRepository.findAllByOrderByPositionOrderAsc()));
     }
 
     public ResponseDTO<MenuDTO> getMenuById(Long id) {

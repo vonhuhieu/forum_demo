@@ -9,4 +9,7 @@ public class CategoryDTO {
     private String description;
     private Integer positionOrder;
     private boolean active;
+    private Long categoryGroupId;
+    private Long parentCategoryId;
+    private java.util.List<CategoryDTO> subCategories;
 }

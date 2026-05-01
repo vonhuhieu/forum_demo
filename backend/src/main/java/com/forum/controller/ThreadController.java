@@ -21,6 +21,11 @@ public class ThreadController {
         return ResponseEntity.ok(threadService.getAllThreads(categoryId));
     }
 
+    @GetMapping("/latest")
+    public ResponseEntity<ResponseDTO<List<ThreadDTO>>> getLatestThreads() {
+        return ResponseEntity.ok(threadService.getLatestThreads());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ResponseDTO<ThreadDTO>> getThreadById(@PathVariable Long id) {
         try {

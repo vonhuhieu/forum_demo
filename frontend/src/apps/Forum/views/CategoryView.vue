@@ -15,6 +15,17 @@
             <span>{{ category ? category.name : 'Chuyên mục' }}</span>
             <span v-if="category" style="font-size: 0.8rem; font-weight: normal; opacity: 0.8;">{{ category.description }}</span>
           </div>
+
+          <!-- Sub-categories block (New) -->
+          <div v-if="category && category.subCategories && category.subCategories.length > 0" class="sub-categories-block">
+            <div class="sub-cat-grid">
+              <router-link v-for="sub in category.subCategories" :key="sub.id" 
+                :to="{ name: 'CategoryDetail', params: { id: sub.id } }" class="sub-cat-item">
+                <span class="sub-cat-icon">📁</span>
+                <span class="sub-cat-name">{{ sub.name }}</span>
+              </router-link>
+            </div>
+          </div>
           
           <div class="thread-list">
             <div v-for="thread in paginatedThreads" :key="thread.id" class="thread-row">
@@ -140,5 +151,42 @@ export default {
   display: flex;
   justify-content: flex-start;
   align-items: center;
+}
+
+.sub-categories-block {
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.sub-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.sub-cat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #1a507a;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.sub-cat-item:hover {
+  border-color: #1a507a;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.sub-cat-icon {
+  font-size: 1.2rem;
+  color: #f39c12;
 }
 </style>

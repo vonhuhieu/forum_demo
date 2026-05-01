@@ -12,9 +12,16 @@ export const formatForumDate = (dateStr) => {
   const dDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const dNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+
+  if (diffSec < 60) return 'Vài giây trước';
+  if (diffMin < 60) return `${diffMin} phút trước`;
+
   const diffTime = dNow.getTime() - dDate.getTime();
   const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-  
+
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const timeStr = `lúc ${hours}:${minutes}`;
