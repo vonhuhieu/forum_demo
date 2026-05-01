@@ -3,7 +3,7 @@
     <!-- Section 1: Mới ra lò -->
     <section id="moi-ra-lo" class="forum-section card">
       <div class="card-header section-header">
-        <a href="#moi-ra-lo" class="header-link">Mới ra lò</a>
+        <a @click="$router.push({ name: 'LatestThreads' })" class="header-link">Mới ra lò</a>
       </div>
       
       <div class="thread-list">

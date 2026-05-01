@@ -23,9 +23,35 @@
         
         <aside class="content-right">
           <div class="card">
-            <div class="card-header">Con sò mới</div>
-            <div class="card-body" style="padding: 1rem;">
-              <p style="font-size: 0.9rem; color: #666;">Danh sách bài viết mới...</p>
+            <div class="card-header section-header">
+              <a @click="$router.push({ name: 'LatestThreads' })" class="header-link">Con sò mới</a>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div v-if="loadingLatest" style="padding: 1rem; text-align: center; color: #666; font-size: 0.9rem;">
+                Đang tải...
+              </div>
+              <div v-else class="latest-threads-list">
+                <div v-for="thread in latestThreads" :key="thread.id" class="latest-thread-item">
+                  <div class="lt-avatar">
+                    <span v-if="!thread.author?.avatarUrl">{{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}</span>
+                    <img v-else :src="thread.author.avatarUrl" alt="Avatar" />
+                  </div>
+                  <div class="lt-content">
+                    <div class="lt-title">
+                      <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }" :title="thread.title">{{ thread.title }}</router-link>
+                    </div>
+                    <div class="lt-meta">
+                      Mới nhất: {{ thread.author ? thread.author.username : 'Ẩn danh' }} &middot; {{ formatDate(thread.createdAt) }}
+                    </div>
+                    <div class="lt-category">
+                      <router-link :to="{ name: 'CategoryDetail', params: { id: thread.category?.id } }">{{ thread.category?.name || 'Không rõ' }}</router-link>
+                    </div>
+                  </div>
+                </div>
+                <div v-if="latestThreads.length === 0" style="padding: 1rem; text-align: center; color: #999; font-size: 0.9rem;">
+                  Chưa có bài viết nào.
+                </div>
+              </div>
             </div>
           </div>
           <div class="card">
@@ -48,6 +74,9 @@
                 <strong style="color: #1a507a;">{{ stats.latestMember }}</strong>
               </div>
             </div>
+          </div>
+          <div class="banner-right" style="margin-top: 1rem;">
+            <img src="/banner_block_phai.jpg" alt="Banner" style="width: 100%; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" />
           </div>
         </aside>
       </div>
@@ -80,6 +109,7 @@
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import ForumHome from '@/shared/components/ForumHome.vue'
 import api from '@/shared/services/api.service'
+import { formatForumDate } from '@/shared/utils/date'
 
 export default {
   name: 'HomeView',
@@ -93,6 +123,8 @@ export default {
       currentUser: null,
       categories: [],
       showModal: false,
+      latestThreads: [],
+      loadingLatest: false,
       stats: {
         totalCategories: 0,
         totalThreads: 0,
@@ -105,6 +137,7 @@ export default {
   mounted() {
     this.checkAuth()
     this.fetchStatistics()
+    this.fetchLatestThreads()
   },
   methods: {
     checkAuth() {
@@ -143,7 +176,123 @@ export default {
     formatNumber(num) {
       if (!num) return 0
       return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    },
+    async fetchLatestThreads() {
+      this.loadingLatest = true
+      try {
+        const response = await api.get('/threads')
+        if (response.data) {
+          this.latestThreads = response.data.slice(0, 15)
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải bài viết mới nhất:', error)
+      } finally {
+        this.loadingLatest = false
+      }
+    },
+    formatDate(dateStr) {
+      return formatForumDate(dateStr)
     }
   }
 }
 </script>
+
+<style scoped>
+.header-link {
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+}
+.header-link:hover {
+  text-decoration: underline;
+}
+
+.latest-threads-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.latest-thread-item {
+  display: flex;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.latest-thread-item:last-child {
+  border-bottom: none;
+}
+
+.latest-thread-item:hover {
+  background-color: #f9f9f9;
+}
+
+.lt-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #555;
+  margin-right: 12px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.lt-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lt-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.lt-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  margin-bottom: 4px;
+  font-size: 0.95rem;
+}
+
+.lt-title a {
+  color: #2c3e50;
+  text-decoration: none;
+}
+
+.lt-title a:hover {
+  color: #1a507a;
+  text-decoration: underline;
+}
+
+.lt-meta {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lt-category {
+  font-size: 0.8rem;
+}
+
+.lt-category a {
+  color: #999;
+  text-decoration: none;
+}
+
+.lt-category a:hover {
+  color: #1a507a;
+  text-decoration: underline;
+}
+</style>
