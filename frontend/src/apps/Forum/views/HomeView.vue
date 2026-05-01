@@ -84,20 +84,52 @@
 
     <!-- Modal chọn chuyên mục -->
     <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
-      <div class="modal-card" style="width: 500px;">
-        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-          <span>CHỌN CHUYÊN MỤC ĐĂNG BÀI</span>
-          <button @click="showModal = false" style="background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem;">&times;</button>
+      <div class="modal-card" style="width: 750px; max-width: 95vw; background: #f5f8fa; padding: 0; border-radius: 6px; overflow: hidden;">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; background: #e6f2fa; color: #1a507a; padding: 12px 20px; border-bottom: 1px solid #d0e3f0;">
+          <span style="font-size: 1.15rem; font-weight: normal;">Đăng bài trong...</span>
+          <button @click="showModal = false" style="background: none; border: none; color: #7cb3db; cursor: pointer; font-size: 1.5rem; line-height: 1;">&times;</button>
         </div>
-        <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
-          <div 
-            v-for="cat in categories" 
-            :key="cat.id" 
-            class="category-select-item"
-            @click="selectCategory(cat.id)"
-          >
-            <strong>{{ cat.name }}</strong>
-            <small style="color: #666;">{{ cat.description }}</small>
+        <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 0;">
+          <div v-for="group in activeModalGroups" :key="group.id" class="modal-group" style="margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div class="modal-group-header">
+              {{ group.name }}
+            </div>
+            <div class="modal-category-list">
+              <template v-for="cat in group.categories.filter(c => !c.parentCategoryId)" :key="cat.id">
+                <!-- Parent -->
+                <div 
+                  class="modal-category-item"
+                  @click="selectCategory(cat.id)"
+                >
+                  <div class="modal-cat-info">
+                    <div class="modal-cat-name">{{ cat.name }}</div>
+                    <div v-if="cat.description" class="modal-cat-desc">{{ cat.description }}</div>
+                  </div>
+                  <div class="modal-cat-stats">
+                    <div class="modal-stat-label">Chủ đề</div>
+                    <div class="modal-stat-value">{{ formatNumber(cat.threadCount || 0) }}</div>
+                  </div>
+                </div>
+
+                <!-- Sub-categories -->
+                <div 
+                  v-for="sub in (cat.subCategories && cat.subCategories.length ? cat.subCategories : group.categories.filter(c => c.parentCategoryId === cat.id))" 
+                  :key="'sub-' + sub.id" 
+                  class="modal-category-item modal-sub-category"
+                  @click="selectCategory(sub.id)"
+                >
+                  <div class="modal-cat-info" style="padding-left: 30px; position: relative;">
+                    <div style="position: absolute; left: 10px; top: 12px; width: 15px; height: 15px; border-left: 2px solid #d0e3f0; border-bottom: 2px solid #d0e3f0; border-bottom-left-radius: 4px;"></div>
+                    <div class="modal-cat-name" style="font-size: 0.95rem;">{{ sub.name }}</div>
+                    <div v-if="sub.description" class="modal-cat-desc">{{ sub.description }}</div>
+                  </div>
+                  <div class="modal-cat-stats">
+                    <div class="modal-stat-label">Chủ đề</div>
+                    <div class="modal-stat-value">{{ formatNumber(sub.threadCount || 0) }}</div>
+                  </div>
+                </div>
+              </template>
+            </div>
           </div>
         </div>
       </div>
@@ -121,7 +153,7 @@ export default {
     return {
       isLoggedIn: false,
       currentUser: null,
-      categories: [],
+      categoryGroupsModal: [],
       showModal: false,
       latestThreads: [],
       loadingLatest: false,
@@ -132,6 +164,12 @@ export default {
         totalMembers: 0,
         latestMember: ''
       }
+    }
+  },
+  computed: {
+    activeModalGroups() {
+      if (!this.categoryGroupsModal || !Array.isArray(this.categoryGroupsModal)) return []
+      return this.categoryGroupsModal.filter(g => g.active && g.categories && g.categories.length > 0)
     }
   },
   mounted() {
@@ -152,11 +190,11 @@ export default {
     },
     async openPostModal() {
       try {
-        const response = await api.get('/categories')
-        this.categories = response.data
+        const response = await api.get('/category-groups')
+        this.categoryGroupsModal = response.data
         this.showModal = true
       } catch (error) {
-        console.error('Lỗi khi tải chuyên mục:', error)
+        console.error('Lỗi khi tải nhóm chuyên mục:', error)
       }
     },
     selectCategory(catId) {
@@ -294,5 +332,76 @@ export default {
 .lt-category a:hover {
   color: #1a507a;
   text-decoration: underline;
+}
+
+/* Modal Post Styles */
+.modal-group {
+  margin-bottom: 5px;
+}
+
+.modal-group-header {
+  background: #f0f7fb;
+  color: #3498db;
+  padding: 8px 20px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-bottom: 1px solid #e1eef7;
+}
+
+.modal-category-list {
+  background: #ffffff;
+}
+
+.modal-category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-category-item:hover {
+  background: #f9fbfc;
+}
+
+.modal-category-item:last-child {
+  border-bottom: none;
+}
+
+.modal-cat-name {
+  color: #3498db;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.modal-category-item:hover .modal-cat-name {
+  text-decoration: underline;
+}
+
+.modal-cat-desc {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 3px;
+}
+
+.modal-cat-stats {
+  text-align: right;
+  color: #666;
+  min-width: 60px;
+}
+
+.modal-stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #999;
+}
+
+.modal-stat-value {
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-top: 2px;
 }
 </style>
