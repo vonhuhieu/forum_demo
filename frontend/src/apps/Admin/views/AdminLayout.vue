@@ -39,15 +39,11 @@
 
     <!-- Main Content -->
     <div class="admin-main">
-      <header class="admin-header">
-        <div class="breadcrumb">
-          <router-link :to="{ name: 'Home' }">Trang chủ</router-link> / 
-          <span>{{ $route.name }}</span>
-        </div>
-        <div class="user-info">
-          <span>Chào, Admin</span>
-        </div>
-      </header>
+      <AdminHeader />
+
+      <div class="admin-breadcrumb-container">
+        <Breadcrumb :items="breadcrumbItems" />
+      </div>
 
       <div class="admin-content-wrapper">
         <router-view />
@@ -57,8 +53,39 @@
 </template>
 
 <script>
+import Breadcrumb from '@/shared/components/Breadcrumb.vue'
+import AdminHeader from '@/apps/Admin/components/AdminHeader.vue'
+
 export default {
   name: 'AdminLayout',
+  components: {
+    Breadcrumb,
+    AdminHeader
+  },
+  computed: {
+    breadcrumbItems() {
+      const mapping = {
+        'AdminMenu': 'Cấu hình Menu',
+        'AdminCategory': 'Quản lý Chuyên mục',
+        'AdminThreads': 'Quản lý Bài viết',
+        'AdminThreadCreate': 'Thêm bài viết mới',
+        'AdminThreadEdit': 'Cập nhật bài viết',
+        'AdminThreadView': 'Chi tiết bài viết'
+      }
+      
+      const items = []
+      const currentRouteName = this.$route.name
+      
+      if (mapping[currentRouteName]) {
+        items.push({ title: 'Quản trị', to: { path: '/admin/menu' } })
+        items.push({ title: mapping[currentRouteName] })
+      } else {
+        items.push({ title: currentRouteName })
+      }
+      
+      return items
+    }
+  },
   methods: {
     handleLogout() {
       localStorage.removeItem('token')
@@ -81,7 +108,9 @@ export default {
 .nav-item:hover, .nav-item.router-link-active { background-color: rgba(255,255,255,0.1); color: #ffd700; border-left: 4px solid #ffd700; }
 .sidebar-footer { padding: 1rem; border-top: 1px solid rgba(255,255,255,0.1); }
 .btn-logout { width: 100%; padding: 0.75rem; background: rgba(231, 76, 60, 0.2); color: #ff7675; border: 1px solid #ff7675; border-radius: 4px; cursor: pointer; }
-.admin-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.admin-header { height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.admin-content-wrapper { flex: 1; padding: 2rem; overflow-y: auto; }
+.admin-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background-color: #f0f2f5; }
+.admin-breadcrumb-container {
+  padding: 1rem 1.5rem 0 1.5rem;
+}
+.admin-content-wrapper { flex: 1; padding: 1.5rem; overflow-y: auto; }
 </style>
