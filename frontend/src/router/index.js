@@ -56,9 +56,19 @@ const routes = [
         component: MenuConfig
       },
       {
+        path: 'category',
+        name: 'AdminCategory',
+        component: CategoryConfig
+      },
+      {
         path: 'category-group',
         name: 'AdminCategoryGroup',
         component: CategoryGroupConfig
+      },
+      {
+        path: 'category-group/:groupId/categories',
+        name: 'AdminCategoryGroupDetail',
+        component: CategoryConfig
       },
       {
         path: 'threads',

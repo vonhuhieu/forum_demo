@@ -155,7 +155,7 @@ export default {
       return key.split('.').reduce((obj, k) => (obj ? obj[k] : ''), item)
     },
     handleSearch() {
-      this.$emit('search', this.keyword)
+      this.$emit('search', this.keyword.trim())
     },
     handleSort(field) {
       if (this.sortField === field) {

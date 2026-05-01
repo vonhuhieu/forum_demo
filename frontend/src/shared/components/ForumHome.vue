@@ -1,19 +1,9 @@
 <template>
   <div class="forum-home">
-    <!-- Anchor Navigation -->
-    <div class="anchor-nav">
-      <div class="container">
-        <a href="#moi-ra-lo" class="anchor-link">Mới ra lò</a>
-        <a v-for="group in activeGroups" :key="group.id" :href="'#group-' + group.id" class="anchor-link">
-          {{ group.name }}
-        </a>
-      </div>
-    </div>
-
     <!-- Section 1: Mới ra lò -->
     <section id="moi-ra-lo" class="forum-section card">
       <div class="card-header section-header">
-        <span class="header-title">Mới ra lò</span>
+        <a href="#moi-ra-lo" class="header-link">Mới ra lò</a>
       </div>
       
       <div class="thread-list">
@@ -63,24 +53,34 @@
     <!-- Grouped Sections -->
     <section v-for="group in activeGroups" :key="group.id" :id="'group-' + group.id" class="forum-section card">
       <div class="card-header section-header group-header">
-        <span class="header-title">{{ group.name }}</span>
+        <a :href="'#group-' + group.id" class="header-link">{{ group.name }}</a>
       </div>
       
       <div class="category-list">
-        <div v-for="cat in group.categories" :key="cat.id" class="category-row">
+        <div v-for="cat in group.categories.filter(c => !c.parentCategoryId)" :key="cat.id" class="category-row">
           <div class="category-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-msg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
           </div>
           <div class="category-info">
-            <router-link :to="{ name: 'CategoryDetail', params: { id: cat.id } }" class="category-name">
-              {{ cat.name }}
-            </router-link>
+            <div class="cat-name-row">
+              <router-link :to="{ name: 'CategoryDetail', params: { id: cat.id } }" class="category-name">
+                {{ cat.name }}
+              </router-link>
+            </div>
+            
             <div v-if="cat.subCategories && cat.subCategories.length > 0" class="sub-categories-trigger">
-              Chuyên mục con <span class="arrow">▼</span>
+              <span class="sub-trigger-text">Chuyên mục con</span>
+              <span class="arrow">▼</span>
+              
               <div class="sub-categories-dropdown">
-                <router-link v-for="sub in cat.subCategories" :key="sub.id" :to="{ name: 'CategoryDetail', params: { id: sub.id } }">
-                  {{ sub.name }}
-                </router-link>
+                <div class="dropdown-arrow-up"></div>
+                <div class="dropdown-header">Chuyên mục con</div>
+                <div class="dropdown-body">
+                  <router-link v-for="sub in cat.subCategories" :key="sub.id" :to="{ name: 'CategoryDetail', params: { id: sub.id } }" class="sub-item">
+                    <span class="sub-icon">💬</span>
+                    {{ sub.name }}
+                  </router-link>
+                </div>
               </div>
             </div>
           </div>
@@ -183,28 +183,19 @@ export default {
 </script>
 
 <style scoped>
-.anchor-nav {
-  background: white;
-  border-bottom: 1px solid #dee2e6;
-  padding: 10px 0;
-  margin-bottom: 1rem;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.anchor-link {
+.header-link {
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   text-decoration: none;
   color: #1a507a;
-  font-weight: 500;
-  margin-right: 20px;
-  font-size: 0.95rem;
-  transition: color 0.2s;
+  cursor: pointer;
+  display: inline-block;
 }
 
-.anchor-link:hover {
-  color: #f39c12;
+.header-link:hover {
+  text-decoration: underline;
 }
 
 .section-header {
@@ -216,13 +207,6 @@ export default {
 
 .group-header {
   background: #ebf2f7;
-}
-
-.header-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .card-footer {
@@ -307,12 +291,24 @@ export default {
 }
 
 .sub-categories-trigger {
-  font-size: 0.8rem;
-  color: #888;
+  font-size: 0.85rem;
+  color: #999;
   cursor: pointer;
   position: relative;
-  display: inline-block;
-  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  padding: 2px 4px;
+  transition: all 0.2s;
+}
+
+.sub-trigger-text {
+  font-weight: 400;
+}
+
+.sub-categories-trigger:hover {
+  color: #1a507a;
 }
 
 .sub-categories-trigger:hover .sub-categories-dropdown {
@@ -322,26 +318,84 @@ export default {
 .sub-categories-dropdown {
   display: none;
   position: absolute;
-  top: 100%;
+  top: calc(100% + 8px);
   left: 0;
   background: white;
-  border: 1px solid #ddd;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  min-width: 200px;
-  z-index: 10;
+  border: 1px solid #3498db;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+  min-width: 220px;
+  z-index: 100;
   border-radius: 4px;
+  animation: fadeIn 0.2s ease;
+}
+
+/* Cầu nối để không bị mất hover khi di chuột xuống */
+.sub-categories-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: 0;
+  right: 0;
+  height: 15px;
+  background: transparent;
+}
+
+.dropdown-arrow-up {
+  position: absolute;
+  top: -8px;
+  left: 20px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid #3498db;
+}
+
+.dropdown-header {
+  background: #ebf5fb;
+  padding: 8px 12px;
+  color: #2980b9;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-bottom: 1px solid #d4e6f1;
+  border-radius: 4px 4px 0 0;
+}
+
+.dropdown-body {
   padding: 5px 0;
 }
 
-.sub-categories-dropdown a {
-  display: block;
+.sub-item {
+  display: flex;
+  align-items: center;
   padding: 8px 15px;
-  color: #333;
+  color: #444;
   text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+  gap: 8px;
 }
 
-.sub-categories-dropdown a:hover {
+.sub-item:hover {
   background: #f8f9fa;
   color: #1a507a;
+}
+
+.sub-icon {
+  font-size: 0.8rem;
+  color: #f39c12;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.category-name {
+  font-weight: 700;
+  color: #1a507a;
+  text-decoration: none;
+  font-size: 1.1rem;
+  display: block;
 }
 </style>

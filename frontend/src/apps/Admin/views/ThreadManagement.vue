@@ -79,7 +79,7 @@ export default {
       let result = this.threads
       
       if (this.filter.keyword) {
-        const k = this.filter.keyword.toLowerCase()
+        const k = this.filter.keyword.trim().toLowerCase()
         result = result.filter(t => 
           (t.title && t.title.toLowerCase().includes(k)) ||
           (t.author && t.author.username && t.author.username.toLowerCase().includes(k)) ||

@@ -95,7 +95,7 @@ export default {
     filteredMenus() {
       let result = this.menus
       if (this.keyword) {
-        const k = this.keyword.toLowerCase()
+        const k = this.keyword.trim().toLowerCase()
         result = result.filter(m => 
           (m.title && m.title.toLowerCase().includes(k)) ||
           (m.url && m.url.toLowerCase().includes(k))
