@@ -54,14 +54,40 @@
         <div class="form-group">
           <label>Nội dung bài viết:</label>
           <div class="editor-wrapper" :class="{ 'disabled-editor': isViewMode }">
-            <CustomEditor 
-              v-if="!isViewMode"
-              ref="editor"
-              v-model="form.content" 
-              @image-uploaded="handleImageUploaded"
-            />
-            <ImageUploaderPanel v-if="!isViewMode" ref="uploaderPanel" @insert-images="handleInsertImages" />
-            <div v-else class="ck-content readonly-content" v-html="form.content"></div>
+
+            <!-- Tabs chỉ hiện khi không phải view mode -->
+            <div v-if="!isViewMode" class="post-type-tabs">
+              <button
+                :class="['tab-btn', postType === 'discussion' ? 'active' : '']"
+                @click="postType = 'discussion'"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                Thảo luận
+              </button>
+              <button
+                :class="['tab-btn', postType === 'poll' ? 'active' : '']"
+                @click="postType = 'poll'"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                Bình chọn
+              </button>
+            </div>
+
+            <div class="editor-inner">
+              <CustomEditor 
+                v-if="!isViewMode"
+                ref="editor"
+                v-model="form.content" 
+                @image-uploaded="handleImageUploaded"
+              />
+              <ImageUploaderPanel v-if="!isViewMode" ref="uploaderPanel" @insert-images="handleInsertImages" />
+              <div v-else class="ck-content readonly-content" v-html="form.content"></div>
+            </div>
+
+            <!-- Poll Form -->
+            <div v-if="!isViewMode && postType === 'poll'" style="margin-top: 0;">
+              <PollForm v-model="form.poll" />
+            </div>
           </div>
         </div>
 
@@ -84,19 +110,22 @@ import { alertSuccess, alertError } from '@/shared/utils/swal'
 import api from '@/shared/services/api.service'
 import CustomEditor from '@/shared/components/CustomEditor.vue'
 import ImageUploaderPanel from '@/shared/components/ImageUploaderPanel.vue'
+import PollForm from '@/shared/components/PollForm.vue'
 
 export default {
   name: 'AdminCreateThread',
   components: {
     CustomEditor,
-    ImageUploaderPanel
+    ImageUploaderPanel,
+    PollForm
   },
   data() {
     return {
       categories: [],
       categoryGroups: [],
       selectedGroupId: '',
-      form: { title: '', content: '', categoryId: '', pinned: false }
+      postType: 'discussion',
+      form: { title: '', content: '', categoryId: '', pinned: false, poll: null }
     }
   },
   computed: {
@@ -273,6 +302,47 @@ export default {
 .btn-save { background-color: #27ae60; color: white; border: none; padding: 12px 30px; border-radius: 4px; font-weight: bold; cursor: pointer; }
 .btn-cancel { background-color: #95a5a6; color: white; border: none; padding: 12px 20px; border-radius: 4px; cursor: pointer; }
 .form-group label { font-weight: bold; display: block; margin-bottom: 0.5rem; }
+
+.post-type-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 1;
+}
+
+.tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  background: #f5f5f5;
+  color: #666;
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 4px 4px 0 0;
+  transition: all 0.2s;
+  margin-right: 4px;
+}
+
+.tab-btn.active {
+  background: white;
+  color: #3498db;
+  border-color: #ddd;
+  font-weight: 600;
+  border-bottom-color: white;
+}
+
+.tab-btn:hover:not(.active) {
+  background: #ebebeb;
+}
+
+.editor-inner {
+  border-top: 1px solid #ddd;
+}
 
 .editor-wrapper {
   background: white;
