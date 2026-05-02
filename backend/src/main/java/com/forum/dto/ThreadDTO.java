@@ -15,4 +15,5 @@ public class ThreadDTO {
     private int replyCount;
     private boolean pinned;
     private boolean active = true;
+    private PollDTO poll;
 }

@@ -269,6 +269,10 @@ export default {
           pinned: this.form.pinned
         }
         
+        if (this.postType === 'poll' && this.form.poll) {
+          payload.poll = this.form.poll
+        }
+        
         if (this.isEditMode) {
           await api.put(`/threads/${this.threadId}`, payload)
           await alertSuccess('Cập nhật bài viết thành công')

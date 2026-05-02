@@ -162,10 +162,22 @@ export default {
       if (this.poll.expiryValue > 1) this.poll.expiryValue--
     },
     getPollData() {
-      const options = this.poll.options.filter(o => o.trim())
+      const options = this.poll.options.filter(o => o.trim()).map(o => ({ optionText: o }))
       let maxChoices = 1
       if (this.poll.maxChoiceType === 'unlimited') maxChoices = -1
       else if (this.poll.maxChoiceType === 'custom') maxChoices = this.poll.maxChoiceCustom
+
+      let closedAt = null
+      if (this.poll.hasExpiry) {
+        const date = new Date()
+        if (this.poll.expiryUnit === 'day') {
+          date.setDate(date.getDate() + this.poll.expiryValue)
+        } else if (this.poll.expiryUnit === 'hour') {
+          date.setHours(date.getHours() + this.poll.expiryValue)
+        }
+        // Format as ISO string for backend
+        closedAt = date.toISOString()
+      }
 
       return {
         question: this.poll.question,
@@ -174,8 +186,7 @@ export default {
         allowChangeVote: this.poll.allowChangeVote,
         publicVoting: this.poll.publicVoting,
         showResultWithoutVote: this.poll.showResultWithoutVote,
-        closedAfter: this.poll.hasExpiry ? this.poll.expiryValue : null,
-        closedAfterUnit: this.poll.hasExpiry ? this.poll.expiryUnit : null
+        closedAt: closedAt
       }
     },
     reset() {

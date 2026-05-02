@@ -29,12 +29,12 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/menus/**").permitAll() 
-                .requestMatchers("/api/statistics/**").permitAll()
+                .requestMatchers("/api/menus", "/api/menus/**").permitAll() 
+                .requestMatchers("/api/statistics", "/api/statistics/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll() // Cho phép xem ảnh/video/tệp đính kèm
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/category-groups/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/threads/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories", "/api/categories/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/category-groups", "/api/category-groups/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/threads", "/api/threads/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);

@@ -121,11 +121,16 @@ export default {
         return
       }
       try {
-        await api.post('/threads', {
+        const payload = {
           title: this.form.title,
           content: this.form.content,
           category: { id: this.catId }
-        })
+        }
+        if (this.postType === 'poll' && this.form.poll) {
+          payload.poll = this.form.poll
+        }
+        
+        await api.post('/threads', payload)
         this.$router.push({ name: 'Home' })
       } catch (error) {
         alertError('Lỗi khi đăng bài')

@@ -51,6 +51,13 @@ public class ThreadService {
         
         userRepository.findByUsername(username).ifPresent(thread::setAuthor);
         
+        if (thread.getPoll() != null) {
+            thread.getPoll().setThread(thread);
+            if (thread.getPoll().getOptions() != null) {
+                thread.getPoll().getOptions().forEach(opt -> opt.setPoll(thread.getPoll()));
+            }
+        }
+        
         Thread saved = threadRepository.save(thread);
         return ResponseDTO.success(threadMapper.toDTO(saved));
     }

@@ -41,4 +41,7 @@ public class Thread {
 
     private boolean pinned = false;
     private boolean active = true;
+
+    @OneToOne(mappedBy = "thread", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Poll poll;
 }
