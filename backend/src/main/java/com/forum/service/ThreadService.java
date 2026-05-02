@@ -72,6 +72,53 @@ public class ThreadService {
                 thread.setCategory(category);
             }
             thread.setPinned(threadDTO.isPinned());
+
+            // Xử lý cập nhật Poll
+            if (threadDTO.getPoll() != null) {
+                com.forum.entity.Poll existingPoll = thread.getPoll();
+                if (existingPoll == null) {
+                    com.forum.entity.Poll newPoll = threadMapper.toEntity(threadDTO).getPoll();
+                    newPoll.setThread(thread);
+                    if (newPoll.getOptions() != null) {
+                        newPoll.getOptions().forEach(opt -> opt.setPoll(newPoll));
+                    }
+                    thread.setPoll(newPoll);
+                } else {
+                    existingPoll.setQuestion(threadDTO.getPoll().getQuestion());
+                    existingPoll.setMaxChoices(threadDTO.getPoll().getMaxChoices());
+                    existingPoll.setAllowChangeVote(threadDTO.getPoll().isAllowChangeVote());
+                    existingPoll.setPublicVoting(threadDTO.getPoll().isPublicVoting());
+                    existingPoll.setShowResultWithoutVote(threadDTO.getPoll().isShowResultWithoutVote());
+                    existingPoll.setClosedAt(threadDTO.getPoll().getClosedAt());
+
+                    // Cập nhật Options
+                    if (threadDTO.getPoll().getOptions() != null) {
+                        java.util.List<Long> dtoOptionIds = threadDTO.getPoll().getOptions().stream()
+                                .filter(o -> o.getId() != null)
+                                .map(com.forum.dto.PollOptionDTO::getId)
+                                .collect(java.util.stream.Collectors.toList());
+
+                        // Xóa các option không còn tồn tại trong request mới (và có ID)
+                        existingPoll.getOptions().removeIf(opt -> opt.getId() != null && !dtoOptionIds.contains(opt.getId()));
+
+                        // Thêm mới hoặc cập nhật option
+                        for (com.forum.dto.PollOptionDTO optDto : threadDTO.getPoll().getOptions()) {
+                            if (optDto.getId() != null) {
+                                existingPoll.getOptions().stream()
+                                        .filter(o -> o.getId().equals(optDto.getId()))
+                                        .findFirst()
+                                        .ifPresent(o -> o.setOptionText(optDto.getOptionText()));
+                            } else {
+                                com.forum.entity.PollOption newOpt = new com.forum.entity.PollOption();
+                                newOpt.setOptionText(optDto.getOptionText());
+                                newOpt.setPoll(existingPoll);
+                                existingPoll.getOptions().add(newOpt);
+                            }
+                        }
+                    }
+                }
+            }
+
             return ResponseDTO.success(threadMapper.toDTO(threadRepository.save(thread)));
         }).orElseThrow(() -> new RuntimeException("Thread not found"));
     }

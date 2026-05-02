@@ -55,18 +55,18 @@
           <label>Nội dung bài viết:</label>
           <div class="editor-wrapper" :class="{ 'disabled-editor': isViewMode }">
 
-            <!-- Tabs chỉ hiện khi không phải view mode -->
-            <div v-if="!isViewMode" class="post-type-tabs">
+            <!-- Tabs (hiển thị để biết loại bài viết, disabled ở view mode) -->
+            <div class="post-type-tabs" :class="{ 'disabled-tabs': isViewMode }">
               <button
                 :class="['tab-btn', postType === 'discussion' ? 'active' : '']"
-                @click="postType = 'discussion'"
+                @click="!isViewMode && (postType = 'discussion')"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
                 Thảo luận
               </button>
               <button
                 :class="['tab-btn', postType === 'poll' ? 'active' : '']"
-                @click="postType = 'poll'"
+                @click="!isViewMode && (postType = 'poll')"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                 Bình chọn
@@ -80,13 +80,18 @@
                 v-model="form.content" 
                 @image-uploaded="handleImageUploaded"
               />
-              <ImageUploaderPanel v-if="!isViewMode" ref="uploaderPanel" @insert-images="handleInsertImages" />
-              <div v-else class="ck-content readonly-content" v-html="form.content"></div>
+              <ImageUploaderPanel ref="uploaderPanel" @insert-images="handleInsertImages" :disabled="isViewMode" />
+              <div v-if="isViewMode" class="ck-content readonly-content" v-html="form.content"></div>
             </div>
 
-            <!-- Poll Form -->
+            <!-- Poll Form (for Edit/Create) -->
             <div v-if="!isViewMode && postType === 'poll'" style="margin-top: 0;">
               <PollForm v-model="form.poll" />
+            </div>
+
+            <!-- Poll Config Display (cho View Mode) -->
+            <div v-if="isViewMode && form.poll" style="margin-top: 1.5rem;">
+              <PollForm :modelValue="form.poll" disabled />
             </div>
           </div>
         </div>
@@ -245,7 +250,14 @@ export default {
           title: thread.title,
           content: content,
           categoryId: thread.category ? thread.category.id : '',
-          pinned: thread.pinned || false
+          pinned: thread.pinned || false,
+          poll: thread.poll || null
+        }
+        
+        if (thread.poll) {
+          this.postType = 'poll'
+        } else {
+          this.postType = 'discussion'
         }
         
         // Tự động chọn nhóm chuyên mục dựa trên chuyên mục của bài viết
@@ -344,13 +356,22 @@ export default {
   background: #ebebeb;
 }
 
-.editor-inner {
-  border-top: 1px solid #ddd;
+.editor-wrapper {
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background: white;
 }
 
-.editor-wrapper {
-  background: white;
-  min-height: 400px;
+.disabled-tabs {
+  pointer-events: none;
+  opacity: 0.8;
+}
+.disabled-tabs .tab-btn:not(.active) {
+  opacity: 0.5;
+}
+
+.editor-inner {
+  border-top: 1px solid #ddd;
 }
 
 /* Custom styles for CKEditor content */

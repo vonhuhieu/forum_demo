@@ -8,6 +8,7 @@
           v-model="poll.question"
           class="poll-input"
           placeholder="Nhập câu hỏi bình chọn..."
+          :disabled="disabled"
         />
       </div>
     </div>
@@ -22,19 +23,20 @@
           class="option-item"
         >
           <input
-            v-model="poll.options[index]"
+            v-model="poll.options[index].text"
             class="poll-input"
             :placeholder="index < 2 ? `Lựa chọn ${index + 1}` : 'Lựa chọn...'"
             @keydown.enter.prevent="addOption"
+            :disabled="disabled"
           />
           <button
-            v-if="poll.options.length > 2"
+            v-if="poll.options.length > 2 && !disabled"
             class="btn-remove-option"
             @click="removeOption(index)"
             title="Xóa lựa chọn"
           >×</button>
         </div>
-        <button class="btn-add-option" @click="addOption">+ Thêm lựa chọn</button>
+        <button v-if="!disabled" class="btn-add-option" @click="addOption">+ Thêm lựa chọn</button>
       </div>
     </div>
 
@@ -44,15 +46,15 @@
       <div class="poll-field">
         <div class="max-choice-options">
           <label class="radio-label">
-            <input type="radio" v-model="poll.maxChoiceType" value="one" />
+            <input type="radio" v-model="poll.maxChoiceType" value="one" :disabled="disabled" />
             <span>Một lựa chọn</span>
           </label>
           <label class="radio-label">
-            <input type="radio" v-model="poll.maxChoiceType" value="unlimited" />
+            <input type="radio" v-model="poll.maxChoiceType" value="unlimited" :disabled="disabled" />
             <span>Vô số</span>
           </label>
           <label class="radio-label custom-count-label">
-            <input type="radio" v-model="poll.maxChoiceType" value="custom" />
+            <input type="radio" v-model="poll.maxChoiceType" value="custom" :disabled="disabled" />
             <div class="count-control" @click.stop>
               <input
                 v-model.number="poll.maxChoiceCustom"
@@ -60,10 +62,10 @@
                 class="count-input"
                 min="2"
                 :max="poll.options.length"
-                :disabled="poll.maxChoiceType !== 'custom'"
+                :disabled="poll.maxChoiceType !== 'custom' || disabled"
               />
-              <button class="btn-count" @click.prevent="incrementMax" :disabled="poll.maxChoiceType !== 'custom'">+</button>
-              <button class="btn-count" @click.prevent="decrementMax" :disabled="poll.maxChoiceType !== 'custom'">−</button>
+              <button v-if="!disabled" class="btn-count" @click.prevent="incrementMax" :disabled="poll.maxChoiceType !== 'custom'">+</button>
+              <button v-if="!disabled" class="btn-count" @click.prevent="decrementMax" :disabled="poll.maxChoiceType !== 'custom'">−</button>
             </div>
           </label>
         </div>
@@ -76,19 +78,19 @@
       <label class="poll-label">Tùy chọn:</label>
       <div class="poll-field">
         <label class="checkbox-label">
-          <input type="checkbox" v-model="poll.allowChangeVote" />
+          <input type="checkbox" v-model="poll.allowChangeVote" :disabled="disabled" />
           <span>Cho phép người dùng thay đổi đáp án</span>
         </label>
         <label class="checkbox-label">
-          <input type="checkbox" v-model="poll.publicVoting" />
+          <input type="checkbox" v-model="poll.publicVoting" :disabled="disabled" />
           <span>Hiển thị bình chọn công cộng</span>
         </label>
         <label class="checkbox-label">
-          <input type="checkbox" v-model="poll.showResultWithoutVote" />
+          <input type="checkbox" v-model="poll.showResultWithoutVote" :disabled="disabled" />
           <span>Cho phép hiển thị kết quả mà không cần bầu chọn</span>
         </label>
         <label class="checkbox-label">
-          <input type="checkbox" v-model="poll.hasExpiry" />
+          <input type="checkbox" v-model="poll.hasExpiry" :disabled="disabled" />
           <span>Đóng bình chọn này sau:</span>
         </label>
         <div v-if="poll.hasExpiry" class="expiry-control">
@@ -97,10 +99,11 @@
             type="number"
             class="count-input"
             min="1"
+            :disabled="disabled"
           />
-          <button class="btn-count" @click.prevent="poll.expiryValue++">+</button>
-          <button class="btn-count" @click.prevent="decrementExpiry">−</button>
-          <select v-model="poll.expiryUnit" class="expiry-select">
+          <button v-if="!disabled" class="btn-count" @click.prevent="poll.expiryValue++">+</button>
+          <button v-if="!disabled" class="btn-count" @click.prevent="decrementExpiry">−</button>
+          <select v-model="poll.expiryUnit" class="expiry-select" :disabled="disabled">
             <option value="day">Ngày</option>
             <option value="hour">Giờ</option>
           </select>
@@ -118,13 +121,17 @@ export default {
     modelValue: {
       type: Object,
       default: null
+    },
+    disabled: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
       poll: {
         question: '',
-        options: ['', '', ''],
+        options: [{id: null, text: ''}, {id: null, text: ''}, {id: null, text: ''}],
         maxChoiceType: 'one',
         maxChoiceCustom: 2,
         allowChangeVote: true,
@@ -133,36 +140,109 @@ export default {
         hasExpiry: false,
         expiryValue: 7,
         expiryUnit: 'day'
-      }
+      },
+      isInitialized: false,
+      isPopulating: false
     }
   },
   watch: {
     poll: {
       deep: true,
       handler(val) {
-        this.$emit('update:modelValue', this.getPollData())
+        if (!this.isPopulating) {
+          this.$emit('update:modelValue', this.getPollData())
+        }
+      }
+    },
+    modelValue: {
+      immediate: true,
+      handler(val) {
+        this.initFromProps(val)
       }
     }
   },
   methods: {
+    initFromProps(val) {
+      if (val && Object.keys(val).length > 0 && !this.isInitialized) {
+        this.isPopulating = true
+        
+        const options = val.options && val.options.length > 0 
+          ? val.options.map(o => ({ id: o.id || null, text: o.optionText || o })) 
+          : [{id: null, text: ''}, {id: null, text: ''}, {id: null, text: ''}]
+        
+        let maxChoiceType = 'one'
+        let maxChoiceCustom = 2
+        if (val.maxChoices === -1) {
+          maxChoiceType = 'unlimited'
+        } else if (val.maxChoices > 1) {
+          maxChoiceType = 'custom'
+          maxChoiceCustom = val.maxChoices
+        }
+
+        let hasExpiry = false
+        let expiryValue = 7
+        let expiryUnit = 'day'
+        
+        if (val.closedAt) {
+          hasExpiry = true
+          // Calculate roughly how many days/hours left or just use a default display for edit
+          const diff = new Date(val.closedAt) - new Date()
+          if (diff > 0) {
+            const diffDays = Math.round(diff / (1000 * 60 * 60 * 24))
+            if (diffDays >= 1) {
+              expiryValue = diffDays
+              expiryUnit = 'day'
+            } else {
+              expiryValue = Math.max(1, Math.round(diff / (1000 * 60 * 60)))
+              expiryUnit = 'hour'
+            }
+          }
+        }
+
+        this.poll = {
+          question: val.question || '',
+          options: options,
+          maxChoiceType,
+          maxChoiceCustom,
+          allowChangeVote: val.allowChangeVote !== undefined ? val.allowChangeVote : true,
+          publicVoting: val.publicVoting !== undefined ? val.publicVoting : false,
+          showResultWithoutVote: val.showResultWithoutVote !== undefined ? val.showResultWithoutVote : true,
+          hasExpiry,
+          expiryValue,
+          expiryUnit
+        }
+        
+        this.isInitialized = true
+        
+        this.$nextTick(() => {
+          this.isPopulating = false
+        })
+      }
+    },
     addOption() {
-      this.poll.options.push('')
+      if (!this.disabled) {
+        this.poll.options.push({id: null, text: ''})
+      }
     },
     removeOption(index) {
-      this.poll.options.splice(index, 1)
+      if (!this.disabled) {
+        this.poll.options.splice(index, 1)
+      }
     },
     incrementMax() {
-      const max = this.poll.options.filter(o => o.trim()).length
-      if (this.poll.maxChoiceCustom < max) this.poll.maxChoiceCustom++
+      if (!this.disabled) {
+        const max = this.poll.options.filter(o => o.text.trim()).length
+        if (this.poll.maxChoiceCustom < max) this.poll.maxChoiceCustom++
+      }
     },
     decrementMax() {
-      if (this.poll.maxChoiceCustom > 2) this.poll.maxChoiceCustom--
+      if (!this.disabled && this.poll.maxChoiceCustom > 2) this.poll.maxChoiceCustom--
     },
     decrementExpiry() {
-      if (this.poll.expiryValue > 1) this.poll.expiryValue--
+      if (!this.disabled && this.poll.expiryValue > 1) this.poll.expiryValue--
     },
     getPollData() {
-      const options = this.poll.options.filter(o => o.trim()).map(o => ({ optionText: o }))
+      const options = this.poll.options.filter(o => o.text.trim()).map(o => ({ id: o.id, optionText: o.text }))
       let maxChoices = 1
       if (this.poll.maxChoiceType === 'unlimited') maxChoices = -1
       else if (this.poll.maxChoiceType === 'custom') maxChoices = this.poll.maxChoiceCustom
@@ -192,7 +272,7 @@ export default {
     reset() {
       this.poll = {
         question: '',
-        options: ['', '', ''],
+        options: [{id: null, text: ''}, {id: null, text: ''}, {id: null, text: ''}],
         maxChoiceType: 'one',
         maxChoiceCustom: 2,
         allowChangeVote: true,

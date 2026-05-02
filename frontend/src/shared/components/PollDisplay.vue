@@ -6,26 +6,24 @@
     </div>
 
     <div class="poll-body">
-      <!-- State 1: Hiện kết quả (khi đã vote, hoặc poll đóng, hoặc chọn xem kết quả) -->
+      <!-- State 1: Hiện kết quả (khi đã vote, hoặc poll đóng, hoặc chọn xem kết quả, hoặc chưa đăng nhập và poll cho phép) -->
       <div v-if="showResults" class="poll-results">
         <div 
           v-for="option in poll.options" 
           :key="option.id" 
           class="result-item"
         >
-          <div class="result-info">
-            <div class="option-name">
-              <!-- Dấu check nếu user đã vote cho option này -->
-              <svg v-if="hasVotedFor(option.id)" class="voted-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              <span :class="{ 'voted-text': hasVotedFor(option.id) }">{{ option.optionText }}</span>
-            </div>
-            <div class="vote-stats">
-              <span class="vote-count">Số phiếu: {{ option.voteCount }}</span>
-              <span class="vote-percent">{{ option.percentage.toFixed(1) }}%</span>
-            </div>
+          <div class="option-name">
+            <!-- Dấu check nếu user đã vote cho option này -->
+            <svg v-if="hasVotedFor(option.id)" class="voted-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <span :class="{ 'voted-text': hasVotedFor(option.id) }">{{ option.optionText }}</span>
           </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" :style="{ width: option.percentage + '%' }"></div>
+          <div class="vote-stats">
+            <span class="vote-count">Số phiếu: {{ option.voteCount }}</span>
+            <span class="vote-percent">{{ option.percentage.toFixed(1) }}%</span>
+          </div>
+          <div class="progress-col">
+            <div v-if="option.percentage > 0" class="progress-bar-fill" :style="{ width: option.percentage + '%' }"></div>
           </div>
         </div>
       </div>
@@ -36,17 +34,22 @@
           v-for="option in poll.options" 
           :key="option.id" 
           class="vote-option-label"
+          :class="{ 'disabled-label': !isLoggedIn }"
         >
           <input 
             :type="inputType" 
             :value="option.id" 
             v-model="selectedOptions"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || !isLoggedIn"
           />
           <span>{{ option.optionText }}</span>
         </label>
         <div v-if="poll.maxChoices > 1" class="max-choice-hint">
           Bạn có thể chọn tối đa {{ poll.maxChoices }} đáp án.
+        </div>
+        <div v-if="!isLoggedIn" class="login-prompt">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+          Vui lòng <router-link to="/login">đăng nhập</router-link> để tham gia bầu chọn.
         </div>
       </div>
     </div>
@@ -144,6 +147,9 @@ export default {
     }
   },
   computed: {
+    isLoggedIn() {
+      return !!localStorage.getItem('token')
+    },
     hasVoted() {
       return this.poll && this.poll.userVotedOptionIds && this.poll.userVotedOptionIds.length > 0
     },
@@ -155,14 +161,14 @@ export default {
       if (this.isClosed) return true
       if (this.hasVoted) return true
       if (this.viewResultsOnly) return true
-      // Nếu không public và chưa vote, không cho xem trừ khi click Hiện kết quả (nếu allow)
+      if (!this.isLoggedIn && this.poll.showResultWithoutVote) return true
       return false
     },
     canVote() {
-      return !this.hasVoted && !this.isClosed
+      return this.isLoggedIn && !this.hasVoted && !this.isClosed
     },
     canChangeVote() {
-      return this.hasVoted && this.poll.allowChangeVote && !this.isClosed
+      return this.isLoggedIn && this.hasVoted && this.poll.allowChangeVote && !this.isClosed
     },
     inputType() {
       if (!this.poll) return 'radio'
@@ -302,25 +308,24 @@ export default {
 .poll-results {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 .result-item {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f1f1;
 }
 
-.result-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
+.result-item:last-child {
+  border-bottom: none;
 }
 
 .option-name {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 1rem;
 }
 
@@ -334,9 +339,11 @@ export default {
 
 .vote-stats {
   display: flex;
-  gap: 15px;
-  font-size: 0.9rem;
-  color: #333;
+  gap: 20px;
+  font-size: 0.95rem;
+  color: #555;
+  min-width: 150px;
+  justify-content: flex-end;
 }
 
 .vote-count {
@@ -344,22 +351,42 @@ export default {
 }
 
 .vote-percent {
-  font-weight: 600;
   min-width: 45px;
   text-align: right;
 }
 
-.progress-bar-bg {
-  height: 12px;
-  background: #eee;
-  border-radius: 6px;
-  overflow: hidden;
+.progress-col {
+  width: 250px;
+  height: 14px;
+  margin-left: 15px;
 }
 
 .progress-bar-fill {
   height: 100%;
   background: #f39c12;
+  border-radius: 2px;
   transition: width 0.5s ease;
+}
+
+.login-prompt {
+  margin-top: 10px;
+  padding: 10px;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.login-prompt a {
+  color: #1a507a;
+  font-weight: bold;
+}
+.disabled-label {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 /* Footer */
