@@ -6,6 +6,7 @@
       @update:model-value="$emit('update:modelValue', $event)"
       :config="editorConfig"
       :disabled="disabled"
+      @ready="onEditorReady"
     ></ckeditor>
   </div>
 </template>
@@ -32,6 +33,10 @@ import {
   ImageUpload,
   ImageInsert,
   ImageResize,
+  ImageStyle,
+  ImageToolbar,
+  ImageCaption,
+  ImageTextAlternative,
   Table,
   MediaEmbed,
   BlockQuote,
@@ -58,9 +63,10 @@ export default {
       default: false
     }
   },
-  emits: ['update:modelValue'],
+  emits: ['update:modelValue', 'ready'],
   data() {
     return {
+      editorInstance: null,
       editor: ClassicEditor,
       editorConfig: {
         licenseKey: 'GPL',
@@ -91,10 +97,15 @@ export default {
             { name: 'resizeImage:50', value: '50', label: '50%' },
             { name: 'resizeImage:75', value: '75', label: '75%' }
           ],
+          styles: [
+            'alignLeft',
+            'alignCenter',
+            'alignRight'
+          ],
           toolbar: [
-            'imageStyle:inline',
-            'imageStyle:block',
-            'imageStyle:side',
+            'imageStyle:alignLeft',
+            'imageStyle:alignCenter',
+            'imageStyle:alignRight',
             '|',
             'toggleImageCaption',
             'imageTextAlternative',
@@ -104,7 +115,7 @@ export default {
         },
         plugins: [
           Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
-          Font, Alignment, Link, List, Indent, IndentBlock, Image, ImageUpload, ImageInsert, ImageResize, Table,
+          Font, Alignment, Link, List, Indent, IndentBlock, Image, ImageUpload, ImageInsert, ImageResize, ImageStyle, ImageToolbar, ImageCaption, ImageTextAlternative, Table,
           MediaEmbed, BlockQuote, FileRepository, TableToolbar, TableColumnResize, Undo,
           MyCustomUploadAdapterPlugin, CustomUploadPlugin, TabIndentPlugin, ClearPastedImageWidthPlugin
         ],
@@ -163,6 +174,35 @@ export default {
         ]
       }
     }
+  },
+  methods: {
+    onEditorReady(editor) {
+      this.editorInstance = editor;
+      this.$emit('ready', editor);
+    },
+    insertImages(urls) {
+      if (!this.editorInstance) return;
+      
+      this.editorInstance.model.change(writer => {
+        const selection = this.editorInstance.model.document.selection;
+        let insertPosition = selection.getFirstPosition();
+
+        urls.forEach((url, index) => {
+          const imageElement = writer.createElement('imageBlock', { src: url });
+          writer.insert(imageElement, insertPosition);
+          
+          insertPosition = writer.createPositionAfter(imageElement);
+
+          if (index === urls.length - 1) {
+            const spacer = writer.createElement('paragraph');
+            writer.insert(spacer, insertPosition);
+            insertPosition = writer.createPositionAt(spacer, 0);
+          }
+        });
+        
+        writer.setSelection(insertPosition);
+      });
+    }
   }
 }
 </script>
@@ -204,5 +244,23 @@ export default {
 :deep(.ck-content td), :deep(.ck-content th) {
   border: 1px solid #bfbfbf;
   padding: 0.4em;
+}
+
+/* Image alignment styles */
+:deep(.ck-content .image-style-align-center) {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: block !important;
+  text-align: center !important;
+}
+
+:deep(.ck-content .image-style-align-left) {
+  float: left !important;
+  margin-right: 1.5em !important;
+}
+
+:deep(.ck-content .image-style-align-right) {
+  float: right !important;
+  margin-left: 1.5em !important;
 }
 </style>

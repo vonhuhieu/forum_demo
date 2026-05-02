@@ -56,8 +56,10 @@
           <div class="editor-wrapper" :class="{ 'disabled-editor': isViewMode }">
             <CustomEditor 
               v-if="!isViewMode"
+              ref="editor"
               v-model="form.content" 
             />
+            <ImageUploaderPanel v-if="!isViewMode" @insert-images="handleInsertImages" />
             <div v-else class="ck-content readonly-content" v-html="form.content"></div>
           </div>
         </div>
@@ -80,11 +82,13 @@ import AdminService from '@/apps/Admin/services/admin.service'
 import { alertSuccess, alertError } from '@/shared/utils/swal'
 import api from '@/shared/services/api.service'
 import CustomEditor from '@/shared/components/CustomEditor.vue'
+import ImageUploaderPanel from '@/shared/components/ImageUploaderPanel.vue'
 
 export default {
   name: 'AdminCreateThread',
   components: {
-    CustomEditor
+    CustomEditor,
+    ImageUploaderPanel
   },
   data() {
     return {
@@ -246,6 +250,11 @@ export default {
         this.$router.push({ name: 'AdminThreads' })
       } catch (error) {
         alertError(this.isEditMode ? 'Lỗi khi cập nhật bài viết' : 'Lỗi khi đăng bài')
+      }
+    },
+    handleInsertImages(urls) {
+      if (this.$refs.editor && this.$refs.editor.insertImages) {
+        this.$refs.editor.insertImages(urls)
       }
     }
   }

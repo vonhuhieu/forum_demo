@@ -24,7 +24,8 @@
           </div>
 
           <div class="editor-container" style="margin-bottom: 1.5rem;">
-            <CustomEditor v-model="form.content" />
+            <CustomEditor ref="editor" v-model="form.content" />
+            <ImageUploaderPanel @insert-images="handleInsertImages" />
           </div>
 
           <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -43,13 +44,15 @@ import { alertSuccess, alertError } from '@/shared/utils/swal'
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import CustomEditor from '@/shared/components/CustomEditor.vue'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
+import ImageUploaderPanel from '@/shared/components/ImageUploaderPanel.vue'
 
 export default {
   name: 'CreateThread',
   components: {
     ForumHeader,
     CustomEditor,
-    Breadcrumb
+    Breadcrumb,
+    ImageUploaderPanel
   },
   data() {
     return {
@@ -98,6 +101,11 @@ export default {
         this.$router.push({ name: 'Home' })
       } catch (error) {
         alertError('Lỗi khi đăng bài')
+      }
+    },
+    handleInsertImages(urls) {
+      if (this.$refs.editor && this.$refs.editor.insertImages) {
+        this.$refs.editor.insertImages(urls)
       }
     }
   }
