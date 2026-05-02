@@ -58,8 +58,9 @@
               v-if="!isViewMode"
               ref="editor"
               v-model="form.content" 
+              @image-uploaded="handleImageUploaded"
             />
-            <ImageUploaderPanel v-if="!isViewMode" @insert-images="handleInsertImages" />
+            <ImageUploaderPanel v-if="!isViewMode" ref="uploaderPanel" @insert-images="handleInsertImages" />
             <div v-else class="ck-content readonly-content" v-html="form.content"></div>
           </div>
         </div>
@@ -252,9 +253,14 @@ export default {
         alertError(this.isEditMode ? 'Lỗi khi cập nhật bài viết' : 'Lỗi khi đăng bài')
       }
     },
-    handleInsertImages(urls) {
+    handleInsertImages(urls, type) {
       if (this.$refs.editor && this.$refs.editor.insertImages) {
-        this.$refs.editor.insertImages(urls)
+        this.$refs.editor.insertImages(urls, type)
+      }
+    },
+    handleImageUploaded(image) {
+      if (this.$refs.uploaderPanel) {
+        this.$refs.uploaderPanel.addImage(image)
       }
     }
   }

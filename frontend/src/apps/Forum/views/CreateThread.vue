@@ -24,8 +24,8 @@
           </div>
 
           <div class="editor-container" style="margin-bottom: 1.5rem;">
-            <CustomEditor ref="editor" v-model="form.content" />
-            <ImageUploaderPanel @insert-images="handleInsertImages" />
+            <CustomEditor ref="editor" v-model="form.content" @image-uploaded="handleImageUploaded" />
+            <ImageUploaderPanel ref="uploaderPanel" @insert-images="handleInsertImages" />
           </div>
 
           <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -103,9 +103,14 @@ export default {
         alertError('Lỗi khi đăng bài')
       }
     },
-    handleInsertImages(urls) {
+    handleInsertImages(urls, type) {
       if (this.$refs.editor && this.$refs.editor.insertImages) {
-        this.$refs.editor.insertImages(urls)
+        this.$refs.editor.insertImages(urls, type)
+      }
+    },
+    handleImageUploaded(image) {
+      if (this.$refs.uploaderPanel) {
+        this.$refs.uploaderPanel.addImage(image)
       }
     }
   }

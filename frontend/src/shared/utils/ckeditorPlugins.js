@@ -3,8 +3,9 @@ import { ButtonView } from 'ckeditor5'
 
 // Custom Upload Adapter cho hình ảnh (khi paste ảnh hoặc dùng nút imageUpload)
 class MyUploadAdapter {
-  constructor(loader) {
+  constructor(loader, editor) {
     this.loader = loader
+    this.editor = editor
   }
 
   upload() {
@@ -16,7 +17,11 @@ class MyUploadAdapter {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       .then(res => {
-        resolve({ default: res.data.url })
+        const url = res.data.url;
+        if (this.editor) {
+          this.editor.fire('imageUploaded', { url: url, name: file.name, type: file.type || 'image/jpeg' });
+        }
+        resolve({ default: url })
       })
       .catch(err => {
         reject(err)
@@ -29,7 +34,7 @@ class MyUploadAdapter {
 
 export function MyCustomUploadAdapterPlugin(editor) {
   editor.plugins.get('FileRepository').createUploadAdapter = (loader) => {
-    return new MyUploadAdapter(loader)
+    return new MyUploadAdapter(loader, editor)
   }
 }
 
@@ -68,6 +73,13 @@ export function CustomUploadPlugin(editor) {
           const validResults = res.data || [];
           
           if (validResults.length > 0) {
+            if (editor) {
+              validResults.forEach(r => {
+                if (r.type && r.type.startsWith('image/')) {
+                  editor.fire('imageUploaded', { url: r.url, name: r.name, type: r.type });
+                }
+              });
+            }
             editor.model.change(writer => {
               const selection = editor.model.document.selection;
               let insertPosition = selection.getFirstPosition();
@@ -157,9 +169,12 @@ export function ClearPastedImageWidthPlugin(editor) {
         // Chỉ bắt sự kiện khi có một phần tử mới được chèn vào
         if (entry.type === 'insert' && (entry.name === 'imageBlock' || entry.name === 'imageInline')) {
           const item = entry.position.nodeAfter;
-          // Nếu ảnh có mang theo kích thước từ trang web cũ, xóa nó đi để ảnh bung 100%
+          // Nếu ảnh có mang theo kích thước từ trang web cũ, xóa nó đi để ảnh bung 100%, trừ thumbnail
           if (item && item.hasAttribute('resizedWidth')) {
-            writer.removeAttribute('resizedWidth', item);
+            const currentWidth = item.getAttribute('resizedWidth');
+            if (currentWidth !== '150px') {
+              writer.removeAttribute('resizedWidth', item);
+            }
           }
         }
       }

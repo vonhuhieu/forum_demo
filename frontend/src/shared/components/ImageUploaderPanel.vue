@@ -19,10 +19,16 @@
     </div>
 
     <div v-if="uploadedImages.length > 0" class="uploaded-images-container">
-      <div v-for="(img, index) in uploadedImages" :key="index" class="image-thumbnail-wrapper">
+      <div v-for="(img, index) in uploadedImages" :key="index" class="image-thumbnail-wrapper" @mouseleave="activeInsertIndex = null">
         <img :src="img.url" :alt="img.name" class="image-thumbnail" @click="enlargeImage(img.url)" title="Click để xem ảnh lớn" />
         <div class="thumbnail-overlay">
-          <button class="btn-insert-over" @click="insertImage(img.url)">Chèn...</button>
+          <div class="insert-dropdown">
+            <button class="btn-insert-over" @click.stop="toggleInsertMenu(index)">Chèn...</button>
+            <div class="insert-menu" v-if="activeInsertIndex === index">
+              <button class="btn-menu-item" @click.stop="insertImage(img.url, 'thumbnail')">Hình thu nhỏ</button>
+              <button class="btn-menu-item" @click.stop="insertImage(img.url, 'full')">Hình đầy đủ</button>
+            </div>
+          </div>
           <button class="btn-delete-over" @click="removeImage(index)" title="Xóa ảnh">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
           </button>
@@ -31,8 +37,8 @@
       </div>
     </div>
 
-    <div v-if="uploadedImages.length > 0" class="multiple-actions">
-      <button class="btn-insert-multiple" @click="insertAll">Insert multiple...</button>
+    <div v-if="uploadedImages.length > 1" class="multiple-actions">
+      <button class="btn-insert-multiple" @click="insertAll">Chèn tất cả ảnh</button>
     </div>
   </div>
 </template>
@@ -45,10 +51,14 @@ export default {
   data() {
     return {
       isUploading: false,
-      uploadedImages: []
+      uploadedImages: [],
+      activeInsertIndex: null
     }
   },
   methods: {
+    toggleInsertMenu(index) {
+      this.activeInsertIndex = this.activeInsertIndex === index ? null : index;
+    },
     triggerFileInput() {
       this.$refs.fileInput.click()
     },
@@ -80,12 +90,16 @@ export default {
         this.isUploading = false
       }
     },
-    insertImage(url) {
-      this.$emit('insert-images', [url])
+    addImage(image) {
+      this.uploadedImages.push(image);
+    },
+    insertImage(url, type = 'full') {
+      this.$emit('insert-images', [url], type)
+      this.activeInsertIndex = null;
     },
     insertAll() {
       const urls = this.uploadedImages.map(img => img.url)
-      this.$emit('insert-images', urls)
+      this.$emit('insert-images', urls, 'full')
     },
     removeImage(index) {
       this.uploadedImages.splice(index, 1)
@@ -181,7 +195,50 @@ export default {
   right: 0;
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   padding: 0 5px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.image-thumbnail-wrapper:hover .thumbnail-overlay {
+  opacity: 1;
+}
+
+.insert-dropdown {
+  position: relative;
+}
+
+.insert-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  gap: 2px;
+  z-index: 10;
+  min-width: 90px;
+}
+
+.btn-menu-item {
+  background: transparent;
+  color: white;
+  border: none;
+  padding: 4px 6px;
+  font-size: 11px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+
+.btn-menu-item:hover {
+  background: rgba(52, 152, 219, 0.9);
 }
 
 .btn-insert-over {

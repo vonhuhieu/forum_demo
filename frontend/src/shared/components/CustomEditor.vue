@@ -63,7 +63,7 @@ export default {
       default: false
     }
   },
-  emits: ['update:modelValue', 'ready'],
+  emits: ['update:modelValue', 'ready', 'image-uploaded'],
   data() {
     return {
       editorInstance: null,
@@ -178,9 +178,12 @@ export default {
   methods: {
     onEditorReady(editor) {
       this.editorInstance = editor;
+      editor.on('imageUploaded', (evt, data) => {
+        this.$emit('image-uploaded', data);
+      });
       this.$emit('ready', editor);
     },
-    insertImages(urls) {
+    insertImages(urls, type = 'full') {
       if (!this.editorInstance) return;
       
       this.editorInstance.model.change(writer => {
@@ -188,7 +191,11 @@ export default {
         let insertPosition = selection.getFirstPosition();
 
         urls.forEach((url, index) => {
-          const imageElement = writer.createElement('imageBlock', { src: url });
+          const attributes = { src: url };
+          if (type === 'thumbnail') {
+            attributes.resizedWidth = '150px';
+          }
+          const imageElement = writer.createElement('imageBlock', attributes);
           writer.insert(imageElement, insertPosition);
           
           insertPosition = writer.createPositionAfter(imageElement);
