@@ -12,6 +12,7 @@
 
 <script>
 import { Ckeditor } from '@ckeditor/ckeditor5-vue'
+import translations from 'ckeditor5/translations/vi.js'
 import {
   ClassicEditor,
   Essentials,
@@ -29,6 +30,7 @@ import {
   IndentBlock,
   Image,
   ImageUpload,
+  ImageInsert,
   ImageResize,
   Table,
   MediaEmbed,
@@ -102,7 +104,7 @@ export default {
         },
         plugins: [
           Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
-          Font, Alignment, Link, List, Indent, IndentBlock, Image, ImageUpload, ImageResize, Table,
+          Font, Alignment, Link, List, Indent, IndentBlock, Image, ImageUpload, ImageInsert, ImageResize, Table,
           MediaEmbed, BlockQuote, FileRepository, TableToolbar, TableColumnResize, Undo,
           MyCustomUploadAdapterPlugin, CustomUploadPlugin, TabIndentPlugin, ClearPastedImageWidthPlugin
         ],
@@ -120,7 +122,7 @@ export default {
             '|',
             'outdent', 'indent',
             '|',
-            'link', 'imageUpload', 'customUpload', 'insertTable', 'mediaEmbed', 'blockQuote',
+            'link', 'insertImage', 'customUpload', 'insertTable', 'mediaEmbed', 'blockQuote',
             '|',
             'undo', 'redo'
           ]
@@ -149,7 +151,16 @@ export default {
             }
           }
         },
-        language: 'vi'
+        language: 'vi',
+        translations: [
+          translations,
+          {
+            language: 'vi',
+            dictionary: {
+              'Insert image': 'Chèn ảnh'
+            }
+          }
+        ]
       }
     }
   }
