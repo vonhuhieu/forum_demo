@@ -20,8 +20,13 @@
 
     <div v-if="uploadedImages.length > 0" class="uploaded-images-container">
       <div v-for="(img, index) in uploadedImages" :key="index" class="image-thumbnail-wrapper" @mouseleave="activeInsertIndex = null">
-        <img :src="img.url" :alt="img.name" class="image-thumbnail" @click="enlargeImage(img.url)" title="Click để xem ảnh lớn" />
-        <div class="thumbnail-overlay">
+        <img :src="img.url" :alt="img.name" class="image-thumbnail" @click="handleImageClick(img.url, index)" :title="isMultipleSelectionMode ? 'Click để chọn' : 'Click để xem ảnh lớn'" :class="{ 'selected-img': selectedImages.includes(index) }" />
+        
+        <div v-if="isMultipleSelectionMode" class="checkbox-container" @click="toggleSelectImage(index)">
+          <input type="checkbox" :checked="selectedImages.includes(index)" @click.stop="toggleSelectImage(index)" />
+        </div>
+
+        <div class="thumbnail-overlay" v-if="!isMultipleSelectionMode">
           <div class="insert-dropdown">
             <button class="btn-insert-over" @click.stop="toggleInsertMenu(index)">Chèn...</button>
             <div class="insert-menu" v-if="activeInsertIndex === index">
@@ -37,8 +42,27 @@
       </div>
     </div>
 
-    <div v-if="uploadedImages.length > 1" class="multiple-actions">
-      <button class="btn-insert-multiple" @click="insertAll">Chèn tất cả ảnh</button>
+    <div v-if="uploadedImages.length > 1 && !isMultipleSelectionMode" class="multiple-actions">
+      <button class="btn-insert-multiple" @click="enableMultipleMode">Insert multiple...</button>
+    </div>
+
+    <div v-if="isMultipleSelectionMode" class="multiple-action-bar">
+      <div class="bar-left">
+        <label class="select-all-label">
+          <input type="checkbox" :checked="isAllSelected" @change="toggleSelectAll" /> Chọn tất cả
+        </label>
+        <div class="insert-group">
+          <span>Chèn:</span>
+          <button class="btn-action-insert" @click="insertSelected('thumbnail')" :disabled="selectedImages.length === 0">Hình thu nhỏ</button>
+          <button class="btn-action-insert" @click="insertSelected('full')" :disabled="selectedImages.length === 0">Hình đầy đủ</button>
+        </div>
+      </div>
+      <div class="bar-right">
+        <button class="btn-action-icon" @click="deleteSelected" :disabled="selectedImages.length === 0" title="Xóa ảnh đã chọn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </button>
+        <button class="btn-action-cancel" @click="cancelMultipleMode">Hủy</button>
+      </div>
     </div>
   </div>
 </template>
@@ -52,10 +76,64 @@ export default {
     return {
       isUploading: false,
       uploadedImages: [],
-      activeInsertIndex: null
+      activeInsertIndex: null,
+      isMultipleSelectionMode: false,
+      selectedImages: []
+    }
+  },
+  computed: {
+    isAllSelected() {
+      return this.uploadedImages.length > 0 && this.selectedImages.length === this.uploadedImages.length;
     }
   },
   methods: {
+    handleImageClick(url, index) {
+      if (this.isMultipleSelectionMode) {
+        this.toggleSelectImage(index);
+      } else {
+        this.enlargeImage(url);
+      }
+    },
+    toggleSelectImage(index) {
+      const idx = this.selectedImages.indexOf(index);
+      if (idx > -1) {
+        this.selectedImages.splice(idx, 1);
+      } else {
+        this.selectedImages.push(index);
+      }
+    },
+    toggleSelectAll() {
+      if (this.isAllSelected) {
+        this.selectedImages = [];
+      } else {
+        this.selectedImages = this.uploadedImages.map((_, i) => i);
+      }
+    },
+    insertSelected(type) {
+      if (this.selectedImages.length === 0) return;
+      const urls = this.selectedImages.map(i => this.uploadedImages[i].url);
+      this.$emit('insert-images', urls, type);
+      this.cancelMultipleMode();
+    },
+    deleteSelected() {
+      if (this.selectedImages.length === 0) return;
+      const sortedIndexes = [...this.selectedImages].sort((a, b) => b - a);
+      sortedIndexes.forEach(idx => {
+        this.uploadedImages.splice(idx, 1);
+      });
+      this.cancelMultipleMode();
+      if (this.uploadedImages.length <= 1) {
+         this.isMultipleSelectionMode = false;
+      }
+    },
+    cancelMultipleMode() {
+      this.isMultipleSelectionMode = false;
+      this.selectedImages = [];
+    },
+    enableMultipleMode() {
+      this.isMultipleSelectionMode = true;
+      this.selectedImages = [];
+    },
     toggleInsertMenu(index) {
       this.activeInsertIndex = this.activeInsertIndex === index ? null : index;
     },
@@ -96,10 +174,6 @@ export default {
     insertImage(url, type = 'full') {
       this.$emit('insert-images', [url], type)
       this.activeInsertIndex = null;
-    },
-    insertAll() {
-      const urls = this.uploadedImages.map(img => img.url)
-      this.$emit('insert-images', urls, 'full')
     },
     removeImage(index) {
       this.uploadedImages.splice(index, 1)
@@ -305,6 +379,129 @@ export default {
 }
 
 .btn-insert-multiple:hover {
+  background: #f0f7fb;
+  border-color: #3498db;
+}
+
+.selected-img {
+  border: 2px solid #3498db;
+  box-sizing: border-box;
+}
+
+.checkbox-container {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 3px;
+  border-radius: 3px;
+  cursor: pointer;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-container input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.multiple-action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  padding: 8px 10px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.bar-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.select-all-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  color: #3498db;
+  font-size: 13px;
+  background: white;
+  border: 1px solid #ddd;
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+
+.insert-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+}
+
+.btn-action-insert {
+  background: white;
+  border: 1px solid #ddd;
+  color: #3498db;
+  padding: 4px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.btn-action-insert:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+  border-color: #eee;
+}
+
+.btn-action-insert:not(:disabled):hover {
+  background: #f0f7fb;
+  border-color: #3498db;
+}
+
+.bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-action-icon {
+  background: white;
+  border: 1px solid #ddd;
+  color: #3498db;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.btn-action-icon:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+  border-color: #eee;
+}
+
+.btn-action-icon:not(:disabled):hover {
+  background: #f0f7fb;
+  border-color: #3498db;
+}
+
+.btn-action-cancel {
+  background: white;
+  border: 1px solid #ddd;
+  color: #3498db;
+  padding: 4px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.btn-action-cancel:hover {
   background: #f0f7fb;
   border-color: #3498db;
 }

@@ -190,22 +190,43 @@ export default {
         const selection = this.editorInstance.model.document.selection;
         let insertPosition = selection.getFirstPosition();
 
-        urls.forEach((url, index) => {
-          const attributes = { src: url };
-          if (type === 'thumbnail') {
-            attributes.resizedWidth = '150px';
-          }
-          const imageElement = writer.createElement('imageBlock', attributes);
-          writer.insert(imageElement, insertPosition);
+        if (type === 'thumbnail') {
+          const paragraph = writer.createElement('paragraph');
+          writer.setAttribute('alignment', 'center', paragraph);
+          writer.insert(paragraph, insertPosition);
           
-          insertPosition = writer.createPositionAfter(imageElement);
+          let currentPos = writer.createPositionAt(paragraph, 0);
 
-          if (index === urls.length - 1) {
-            const spacer = writer.createElement('paragraph');
-            writer.insert(spacer, insertPosition);
-            insertPosition = writer.createPositionAt(spacer, 0);
-          }
-        });
+          urls.forEach((url, index) => {
+            const imageElement = writer.createElement('imageInline', { src: url, resizedWidth: '150px' });
+            writer.insert(imageElement, currentPos);
+            currentPos = writer.createPositionAfter(imageElement);
+            
+            if (index < urls.length - 1) {
+              const space = writer.createText(' ');
+              writer.insert(space, currentPos);
+              currentPos = writer.createPositionAfter(space);
+            }
+          });
+
+          const spacer = writer.createElement('paragraph');
+          writer.insert(spacer, writer.createPositionAfter(paragraph));
+          insertPosition = writer.createPositionAt(spacer, 0);
+        } else {
+          urls.forEach((url, index) => {
+            const attributes = { src: url };
+            const imageElement = writer.createElement('imageBlock', attributes);
+            writer.insert(imageElement, insertPosition);
+            
+            insertPosition = writer.createPositionAfter(imageElement);
+
+            if (index === urls.length - 1) {
+              const spacer = writer.createElement('paragraph');
+              writer.insert(spacer, insertPosition);
+              insertPosition = writer.createPositionAt(spacer, 0);
+            }
+          });
+        }
         
         writer.setSelection(insertPosition);
       });
@@ -269,5 +290,11 @@ export default {
 :deep(.ck-content .image-style-align-right) {
   float: right !important;
   margin-left: 1.5em !important;
+}
+
+/* Image inline spacing for thumbnails */
+:deep(.ck-content .image-inline) {
+  margin: 5px !important;
+  display: inline-block !important;
 }
 </style>
