@@ -10,6 +10,9 @@ public interface PollVoteRepository extends JpaRepository<PollVote, Long> {
     List<PollVote> findByPollIdAndUserId(Long pollId, Long userId);
     boolean existsByPollIdAndOptionIdAndUserId(Long pollId, Long optionId, Long userId);
     int countByOptionId(Long optionId);
+    
+    void deleteByPollId(Long pollId);
+    void deleteByOptionId(Long optionId);
 
     @org.springframework.data.jpa.repository.Query("SELECT new com.forum.dto.PollVoteDetailDTO(pv.id, u.username, po.id, po.optionText) " +
             "FROM PollVote pv " +

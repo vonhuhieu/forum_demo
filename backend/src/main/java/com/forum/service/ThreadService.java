@@ -20,6 +20,7 @@ public class ThreadService {
     private final ThreadRepository threadRepository;
     private final UserRepository userRepository;
     private final ThreadMapper threadMapper;
+    private final com.forum.repository.PollVoteRepository pollVoteRepository;
 
     public ResponseDTO<List<ThreadDTO>> getAllThreads(Long categoryId) {
         List<Thread> threads;
@@ -99,7 +100,13 @@ public class ThreadService {
                                 .collect(java.util.stream.Collectors.toList());
 
                         // Xóa các option không còn tồn tại trong request mới (và có ID)
-                        existingPoll.getOptions().removeIf(opt -> opt.getId() != null && !dtoOptionIds.contains(opt.getId()));
+                        existingPoll.getOptions().removeIf(opt -> {
+                            if (opt.getId() != null && !dtoOptionIds.contains(opt.getId())) {
+                                pollVoteRepository.deleteByOptionId(opt.getId());
+                                return true;
+                            }
+                            return false;
+                        });
 
                         // Thêm mới hoặc cập nhật option
                         for (com.forum.dto.PollOptionDTO optDto : threadDTO.getPoll().getOptions()) {
@@ -124,7 +131,12 @@ public class ThreadService {
     }
 
     public ResponseDTO<Void> deleteThread(Long id) {
-        threadRepository.deleteById(id);
+        threadRepository.findById(id).ifPresent(thread -> {
+            if (thread.getPoll() != null) {
+                pollVoteRepository.deleteByPollId(thread.getPoll().getId());
+            }
+            threadRepository.delete(thread);
+        });
         return ResponseDTO.success(null);
     }
 
