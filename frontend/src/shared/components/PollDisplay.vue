@@ -26,6 +26,13 @@
             <div v-if="option.percentage > 0" class="progress-bar-fill" :style="{ width: option.percentage + '%' }"></div>
           </div>
         </div>
+
+        <div v-if="poll.publicVoting" class="public-voting-link">
+          <a href="#" @click.prevent="showVotersModal = true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Xem danh sách thành viên tham gia vote
+          </a>
+        </div>
       </div>
 
       <!-- State 2: Form bầu chọn -->
@@ -103,6 +110,38 @@
         </template>
       </div>
     </div>
+
+    <TableModal 
+      v-model:show="showVotersModal" 
+      title="DANH SÁCH THÀNH VIÊN ĐÃ BÌNH CHỌN"
+      cardClass="voters-modal-card"
+      placeholder="Tìm kiếm thành viên..."
+      :headers="voterHeaders"
+      :items="voters"
+      :totalItems="voterTotal"
+      v-model:pageSize="voterPageSize"
+      v-model:currentPage="voterCurrentPage"
+      :loading="voterLoading"
+      @search="handleVoterSearch"
+      :showAddButton="false"
+      :showAction="false"
+      :showSTT="true"
+    >
+      <template #extra-filters>
+        <div class="filter-group-wrapper">
+          <select v-model="voterSelectedOptionId" class="form-select-sm" @change="handleVoterFilterChange">
+            <option :value="null">-- Tất cả lựa chọn --</option>
+            <option v-for="opt in poll.options" :key="opt.id" :value="opt.id">
+              {{ opt.optionText }}
+            </option>
+          </select>
+        </div>
+      </template>
+      
+      <template #item-username="{ item }">
+        <strong>{{ item.username }}</strong>
+      </template>
+    </TableModal>
   </div>
 </template>
 
@@ -110,9 +149,11 @@
 import api from '@/shared/services/api.service'
 import { formatForumDate } from '@/shared/utils/date'
 import { alertSuccess, alertError } from '@/shared/utils/swal'
+import TableModal from './TableModal.vue'
 
 export default {
   name: 'PollDisplay',
+  components: { TableModal },
   props: {
     pollData: {
       type: Object,
@@ -124,7 +165,21 @@ export default {
       poll: null,
       selectedOptions: [],
       viewResultsOnly: false,
-      isSubmitting: false
+      isSubmitting: false,
+      showVotersModal: false,
+      
+      // Voter List State
+      voters: [],
+      voterTotal: 0,
+      voterKeyword: '',
+      voterSelectedOptionId: null,
+      voterPageSize: 10,
+      voterCurrentPage: 1,
+      voterLoading: false,
+      voterHeaders: [
+        { text: 'Tên thành viên', value: 'username', sortable: false },
+        { text: 'Lựa chọn đã vote', value: 'optionText', sortable: false }
+      ]
     }
   },
   created() {
@@ -143,6 +198,23 @@ export default {
           // Bỏ chọn cái cũ nhất
           this.selectedOptions = newVal.slice(newVal.length - this.poll.maxChoices)
         }
+      }
+    },
+    showVotersModal(newVal) {
+      if (newVal) {
+        this.resetVoterFilters()
+        this.fetchVoters()
+      }
+    },
+    voterCurrentPage() {
+      if (this.showVotersModal) {
+        this.fetchVoters()
+      }
+    },
+    voterPageSize() {
+      if (this.showVotersModal) {
+        this.voterCurrentPage = 1
+        this.fetchVoters()
       }
     }
   },
@@ -234,6 +306,43 @@ export default {
       } finally {
         this.isSubmitting = false
       }
+    },
+    
+    // --- DANH SÁCH NGƯỜI VOTE LOGIC ---
+    resetVoterFilters() {
+      this.voterKeyword = ''
+      this.voterSelectedOptionId = null
+      this.voterCurrentPage = 1
+    },
+    handleVoterSearch(k) {
+      this.voterKeyword = k
+      this.voterCurrentPage = 1
+      this.fetchVoters()
+    },
+    handleVoterFilterChange() {
+      this.voterCurrentPage = 1
+      this.fetchVoters()
+    },
+    async fetchVoters() {
+      this.voterLoading = true
+      try {
+        const params = {
+          page: this.voterCurrentPage - 1,
+          size: this.voterPageSize
+        }
+        if (this.voterKeyword) params.keyword = this.voterKeyword
+        if (this.voterSelectedOptionId) params.optionId = this.voterSelectedOptionId
+
+        const response = await api.get(`/polls/${this.poll.id}/votes`, { params })
+        if (response.data) {
+          this.voters = response.data.content || []
+          this.voterTotal = response.data.totalElements || 0
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải danh sách người vote:', error)
+      } finally {
+        this.voterLoading = false
+      }
     }
   }
 }
@@ -308,6 +417,48 @@ export default {
 .poll-results {
   display: flex;
   flex-direction: column;
+}
+
+.public-voting-link {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.public-voting-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #3498db;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.public-voting-link a:hover {
+  color: #1a507a;
+  text-decoration: underline;
+}
+
+:deep(.voters-modal-card) {
+  width: 800px;
+  max-width: 95vw;
+}
+
+.filter-group-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-select-sm {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  outline: none;
+}
+.form-select-sm:focus {
+  border-color: var(--primary);
 }
 
 .result-item {

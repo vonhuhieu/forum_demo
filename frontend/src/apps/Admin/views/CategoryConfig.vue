@@ -43,117 +43,110 @@
     </DataTable>
 
     <!-- Modal Form Chuyên mục chính -->
-    <div v-if="showModal" class="modal-overlay">
-      <div class="modal-card">
-        <div class="card-header">{{ isEditing ? 'CẬP NHẬT CHUYÊN MỤC' : 'THÊM CHUYÊN MỤC MỚI' }}</div>
-        <form @submit.prevent="handleSubmit" class="admin-form">
-          <div class="form-group">
-            <label>Tên chuyên mục:</label>
-            <input v-model="form.name" required>
-          </div>
-          <div class="form-group">
-            <label>Mô tả:</label>
-            <textarea v-model="form.description" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Thứ tự hiển thị:</label>
-            <input type="number" v-model="form.positionOrder">
-          </div>
-          <div class="form-group">
-            <label>Nhóm chuyên mục:</label>
-            <select v-model="form.categoryGroupId" class="form-select" :disabled="isFixedGroup">
-              <option :value="null">-- Không chọn --</option>
-              <option v-for="g in categoryGroups" :key="g.id" :value="g.id">{{ g.name }}</option>
-            </select>
-          </div>
-          <div class="modal-footer">
-            <button type="button" @click="showModal = false" class="btn-cancel">Đóng</button>
-            <button type="submit" class="btn-save">{{ isEditing ? 'Cập nhật' : 'Lưu lại' }}</button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <BaseModal 
+      v-model:show="showModal" 
+      :title="isEditing ? 'CẬP NHẬT CHUYÊN MỤC' : 'THÊM CHUYÊN MỤC MỚI'"
+    >
+      <form @submit.prevent="handleSubmit" class="admin-form">
+        <div class="form-group">
+          <label>Tên chuyên mục:</label>
+          <input v-model="form.name" required>
+        </div>
+        <div class="form-group">
+          <label>Mô tả:</label>
+          <textarea v-model="form.description" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Thứ tự hiển thị:</label>
+          <input type="number" v-model="form.positionOrder">
+        </div>
+        <div class="form-group">
+          <label>Nhóm chuyên mục:</label>
+          <select v-model="form.categoryGroupId" class="form-select" :disabled="isFixedGroup">
+            <option :value="null">-- Không chọn --</option>
+            <option v-for="g in categoryGroups" :key="g.id" :value="g.id">{{ g.name }}</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" @click="showModal = false" class="btn-cancel">Đóng</button>
+          <button type="submit" class="btn-save">{{ isEditing ? 'Cập nhật' : 'Lưu lại' }}</button>
+        </div>
+      </form>
+    </BaseModal>
 
     <!-- Modal Quản lý Chuyên mục con (Sub-categories) -->
-    <div v-if="showSubModal" class="modal-overlay">
-      <div class="modal-card sub-manager-card">
-        <div class="card-header">
-          QUẢN LÝ CHUYÊN MỤC CON: {{ selectedParentCategory?.name }}
-        </div>
-        
-        <div class="sub-manager-content">
-          <DataTable
-            placeholder="Tìm kiếm chuyên mục con..."
-            addButtonLabel="Thêm chuyên mục con"
-            :headers="subHeaders"
-            :items="displaySubCategories"
-            :totalItems="filteredSubCategories.length"
-            v-model:pageSize="subPageSize"
-            v-model:currentPage="subCurrentPage"
-            :loading="loading"
-            @search="handleSubSearch"
-            @add="openAddSubCategory"
-            @edit="openEditSubCategory"
-            @delete="deleteSubCategory"
-            @sort="handleSubSort"
-            :showSTT="true"
-          >
-            <template #item-name="{ item }">
-              <strong>{{ item.name }}</strong>
-            </template>
-            <template #item-active="{ item }">
-              <span :class="['badge', item.active ? 'badge-success' : 'badge-danger']">
-                {{ item.active ? 'Bật' : 'Tắt' }}
-              </span>
-            </template>
-          </DataTable>
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" @click="showSubModal = false" class="btn-cancel">Đóng</button>
-        </div>
-      </div>
-    </div>
+    <TableModal 
+      v-model:show="showSubModal" 
+      :title="`QUẢN LÝ CHUYÊN MỤC CON: ${selectedParentCategory?.name}`"
+      cardClass="sub-manager-card"
+      placeholder="Tìm kiếm chuyên mục con..."
+      addButtonLabel="Thêm chuyên mục con"
+      :headers="subHeaders"
+      :items="displaySubCategories"
+      :totalItems="filteredSubCategories.length"
+      v-model:pageSize="subPageSize"
+      v-model:currentPage="subCurrentPage"
+      :loading="loading"
+      @search="handleSubSearch"
+      @add="openAddSubCategory"
+      @edit="openEditSubCategory"
+      @delete="deleteSubCategory"
+      @sort="handleSubSort"
+      :showSTT="true"
+    >
+      <template #item-name="{ item }">
+        <strong>{{ item.name }}</strong>
+      </template>
+      <template #item-active="{ item }">
+        <span :class="['badge', item.active ? 'badge-success' : 'badge-danger']">
+          {{ item.active ? 'Bật' : 'Tắt' }}
+        </span>
+      </template>
+    </TableModal>
 
     <!-- Modal Form Chuyên mục con (CRUD Sub-cat) -->
-    <div v-if="showSubFormModal" class="modal-overlay sub-form-overlay">
-      <div class="modal-card sub-form-card">
-        <div class="card-header">{{ isEditingSub ? 'SỬA CHUYÊN MỤC CON' : 'THÊM CHUYÊN MỤC CON' }}</div>
-        <form @submit.prevent="handleSubSubmit" class="admin-form">
-          <div class="form-group">
-            <label>Tên chuyên mục:</label>
-            <input v-model="subForm.name" required>
-          </div>
-          <div class="form-group">
-            <label>Mô tả:</label>
-            <textarea v-model="subForm.description" rows="2"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Thứ tự:</label>
-            <input type="number" v-model="subForm.positionOrder">
-          </div>
-          <div class="form-group checkbox-group">
-            <input type="checkbox" v-model="subForm.active" id="sub-active">
-            <label for="sub-active">Kích hoạt</label>
-          </div>
-          <div class="modal-footer">
-            <button type="button" @click="showSubFormModal = false" class="btn-cancel">Hủy</button>
-            <button type="submit" class="btn-save">Lưu lại</button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <BaseModal 
+      v-model:show="showSubFormModal" 
+      :title="isEditingSub ? 'SỬA CHUYÊN MỤC CON' : 'THÊM CHUYÊN MỤC CON'"
+      overlayClass="sub-form-overlay"
+      cardClass="sub-form-card"
+    >
+      <form @submit.prevent="handleSubSubmit" class="admin-form">
+        <div class="form-group">
+          <label>Tên chuyên mục:</label>
+          <input v-model="subForm.name" required>
+        </div>
+        <div class="form-group">
+          <label>Mô tả:</label>
+          <textarea v-model="subForm.description" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Thứ tự:</label>
+          <input type="number" v-model="subForm.positionOrder">
+        </div>
+        <div class="form-group checkbox-group">
+          <input type="checkbox" v-model="subForm.active" id="sub-active">
+          <label for="sub-active">Kích hoạt</label>
+        </div>
+        <div class="modal-footer">
+          <button type="button" @click="showSubFormModal = false" class="btn-cancel">Hủy</button>
+          <button type="submit" class="btn-save">Lưu lại</button>
+        </div>
+      </form>
+    </BaseModal>
   </div>
 </template>
 
 <script>
 import AdminService from '@/apps/Admin/services/admin.service'
 import DataTable from '@/shared/components/DataTable.vue'
+import BaseModal from '@/shared/components/BaseModal.vue'
+import TableModal from '@/shared/components/TableModal.vue'
 import { alertConfirm, toastSuccess, toastError } from '@/shared/utils/swal'
 
 export default {
   name: 'CategoryConfig',
-  components: { DataTable },
+  components: { DataTable, BaseModal, TableModal },
   data() {
     return {
       categories: [],
@@ -458,14 +451,13 @@ export default {
 .badge-success { background: #d4edda; color: #155724; }
 .badge-danger { background: #f8d7da; color: #721c24; }
 
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-.sub-form-overlay { z-index: 1001; background: rgba(0,0,0,0.3); }
+.sub-form-overlay { z-index: 1001 !important; background: rgba(0,0,0,0.3) !important; }
 
-.modal-card { background: white; width: 500px; border-radius: 8px; overflow: hidden; box-shadow: 0 5px 25px rgba(0,0,0,0.2); }
-.sub-manager-card { width: 1000px; max-width: 95vw; max-height: 90vh; }
-.sub-form-card { width: 450px; }
+/* Các style modal-card và card-header đã được chuyển sang BaseModal. 
+   Ở đây chỉ định nghĩa các class truyền vào cardClass nếu cần */
+:deep(.sub-manager-card) { width: 1000px; max-width: 95vw; max-height: 90vh; }
+:deep(.sub-form-card) { width: 450px; }
 
-.card-header { background: #1a507a; color: white; padding: 1rem; font-weight: bold; text-align: center; }
 .admin-form { padding: 1.5rem; }
 .form-group { margin-bottom: 1rem; }
 .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }

@@ -122,4 +122,20 @@ public class PollService {
         poll = pollRepository.save(poll);
         return toPollDTO(poll);
     }
+
+    public org.springframework.data.domain.Page<com.forum.dto.PollVoteDetailDTO> getPollVotes(
+            Long pollId, String keyword, Long optionId, int page, int size) {
+        
+        Poll poll = pollRepository.findById(pollId)
+                .orElseThrow(() -> new RuntimeException("Poll not found"));
+
+        if (!poll.isPublicVoting()) {
+            throw new RuntimeException("This poll does not allow public viewing of votes");
+        }
+
+        org.springframework.data.domain.Pageable pageable = 
+            org.springframework.data.domain.PageRequest.of(page, size);
+
+        return pollVoteRepository.findVotesByPollIdWithFilters(pollId, keyword, optionId, pageable);
+    }
 }

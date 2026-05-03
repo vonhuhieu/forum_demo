@@ -30,4 +30,21 @@ public class PollController {
             return ResponseEntity.badRequest().body(ResponseDTO.fail(null));
         }
     }
+
+    @GetMapping("/{pollId}/votes")
+    public ResponseEntity<ResponseDTO<org.springframework.data.domain.Page<com.forum.dto.PollVoteDetailDTO>>> getPollVotes(
+            @PathVariable Long pollId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long optionId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        try {
+            org.springframework.data.domain.Page<com.forum.dto.PollVoteDetailDTO> result = 
+                pollService.getPollVotes(pollId, keyword, optionId, page, size);
+            return ResponseEntity.ok(ResponseDTO.success(result));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(ResponseDTO.fail(null));
+        }
+    }
 }
