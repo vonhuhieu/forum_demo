@@ -100,10 +100,11 @@
             class="count-input"
             min="1"
             :disabled="disabled"
+            @input="poll.expiryChanged = true"
           />
-          <button v-if="!disabled" class="btn-count" @click.prevent="poll.expiryValue++">+</button>
+          <button v-if="!disabled" class="btn-count" @click.prevent="poll.expiryValue++; poll.expiryChanged = true">+</button>
           <button v-if="!disabled" class="btn-count" @click.prevent="decrementExpiry">−</button>
-          <select v-model="poll.expiryUnit" class="expiry-select" :disabled="disabled">
+          <select v-model="poll.expiryUnit" class="expiry-select" :disabled="disabled" @change="poll.expiryChanged = true">
             <option value="day">Ngày</option>
             <option value="hour">Giờ</option>
           </select>
@@ -139,7 +140,9 @@ export default {
         showResultWithoutVote: true,
         hasExpiry: false,
         expiryValue: 7,
-        expiryUnit: 'day'
+        expiryUnit: 'day',
+        originalClosedAt: null,
+        expiryChanged: false
       },
       isInitialized: false,
       isPopulating: false
@@ -209,7 +212,9 @@ export default {
           showResultWithoutVote: val.showResultWithoutVote !== undefined ? val.showResultWithoutVote : true,
           hasExpiry,
           expiryValue,
-          expiryUnit
+          expiryUnit,
+          originalClosedAt: val.closedAt || null,
+          expiryChanged: false
         }
         
         this.isInitialized = true
@@ -239,7 +244,10 @@ export default {
       if (!this.disabled && this.poll.maxChoiceCustom > 2) this.poll.maxChoiceCustom--
     },
     decrementExpiry() {
-      if (!this.disabled && this.poll.expiryValue > 1) this.poll.expiryValue--
+      if (!this.disabled && this.poll.expiryValue > 1) {
+        this.poll.expiryValue--
+        this.poll.expiryChanged = true
+      }
     },
     getPollData() {
       const options = this.poll.options.filter(o => o.text.trim()).map(o => ({ id: o.id, optionText: o.text }))
@@ -249,14 +257,19 @@ export default {
 
       let closedAt = null
       if (this.poll.hasExpiry) {
-        const date = new Date()
-        if (this.poll.expiryUnit === 'day') {
-          date.setDate(date.getDate() + this.poll.expiryValue)
-        } else if (this.poll.expiryUnit === 'hour') {
-          date.setHours(date.getHours() + this.poll.expiryValue)
+        if (this.poll.originalClosedAt && !this.poll.expiryChanged) {
+          closedAt = this.poll.originalClosedAt
+        } else {
+          const date = new Date()
+          if (this.poll.expiryUnit === 'day') {
+            date.setDate(date.getDate() + this.poll.expiryValue)
+          } else if (this.poll.expiryUnit === 'hour') {
+            date.setHours(date.getHours() + this.poll.expiryValue)
+          }
+          // Chuyển đổi thành local time string thay vì UTC toISOString để SpringBoot nhận đúng giờ
+          const tzOffset = date.getTimezoneOffset() * 60000;
+          closedAt = (new Date(date.getTime() - tzOffset)).toISOString().slice(0, -1);
         }
-        // Format as ISO string for backend
-        closedAt = date.toISOString()
       }
 
       return {
@@ -280,7 +293,9 @@ export default {
         showResultWithoutVote: true,
         hasExpiry: false,
         expiryValue: 7,
-        expiryUnit: 'day'
+        expiryUnit: 'day',
+        originalClosedAt: null,
+        expiryChanged: false
       }
     }
   }

@@ -222,7 +222,7 @@ export default {
         }
 
         const response = await api.post(`/polls/${this.poll.id}/vote`, { optionIds })
-        if (response.status === 1) {
+        if (response.status === 200) {
           this.poll = response.data
           this.viewResultsOnly = false
           this.$emit('vote-updated', response.data)
