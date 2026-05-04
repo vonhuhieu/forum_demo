@@ -35,15 +35,17 @@
               <div class="thread-main">
                 <div class="thread-title">
                   <span v-if="thread.pinned" class="badge-pinned">GHIM</span>
+                  <span v-if="thread.label" class="label-tag" :style="{ backgroundColor: thread.label.colorCode, color: thread.label.textColor, borderColor: thread.label.borderColor || 'transparent' }">
+                    {{ thread.label.name }}
+                  </span>
                   <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }">{{ thread.title }}</router-link>
                 </div>
                 <div class="thread-meta">
                   <span class="author-name">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
+                  <span class="dot">•</span>
                   <span>{{ formatDate(thread.createdAt) }}</span>
-                  <span class="dot" v-if="thread.label">•</span>
-                  <span v-if="thread.label" class="label-tag" :style="{ backgroundColor: thread.label.colorCode, color: thread.label.textColor, borderColor: thread.label.borderColor || 'transparent' }">
-                    {{ thread.label.name }}
-                  </span>
+                  <span class="dot">•</span>
+                  <span class="meta-category">{{ thread.category ? thread.category.name : 'N/A' }}</span>
                 </div>
               </div>
               <div class="thread-stats">
@@ -57,8 +59,13 @@
                 </div>
               </div>
               <div class="thread-last-post">
-                <span class="last-post-time">{{ formatDate(thread.createdAt) }}</span>
-                <span class="last-post-author">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
+                <div class="last-post-info">
+                  <span class="last-post-time">{{ formatDate(thread.createdAt) }}</span>
+                  <span class="last-post-author">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
+                </div>
+                <div class="last-post-avatar">
+                  {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
+                </div>
               </div>
             </div>
 
@@ -201,5 +208,61 @@ export default {
   font-weight: 600;
   display: inline-block;
   border: 1px solid transparent;
+  margin-right: 8px;
+}
+
+.thread-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.thread-title a {
+  text-decoration: none;
+  color: #1a507a;
+  font-weight: 500;
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.thread-meta {
+  font-size: 0.85rem;
+  color: #8c8c8c;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.meta-category {
+  color: #666;
+}
+
+.thread-last-post {
+  width: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  text-align: right;
+}
+
+.last-post-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.last-post-avatar {
+  width: 32px;
+  height: 32px;
+  background-color: #5c6bc0;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  border: 1px solid #dee2e6;
 }
 </style>
