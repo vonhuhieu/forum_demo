@@ -23,9 +23,7 @@
             </div>
             <div class="thread-meta">
               <span class="author-name">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
-              <span class="dot">•</span>
               <span>{{ formatDate(thread.createdAt) }}</span>
-              <span class="dot">•</span>
               <span class="meta-category">{{ thread.category ? thread.category.name : 'N/A' }}</span>
             </div>
           </div>
@@ -445,12 +443,14 @@ export default {
   display: inline-block;
   border: 1px solid transparent;
   margin-right: 8px;
+  white-space: nowrap;
+  vertical-align: middle;
+  line-height: 1;
 }
 
 .thread-title-wrapper {
-  display: flex;
-  align-items: center;
   margin-bottom: 4px;
+  display: block;
 }
 
 .thread-title {
@@ -459,7 +459,8 @@ export default {
   color: #1a507a;
   text-decoration: none;
   margin-bottom: 0;
-  line-height: 1.2;
+  line-height: 1.5;
+  display: inline;
 }
 
 .thread-meta {

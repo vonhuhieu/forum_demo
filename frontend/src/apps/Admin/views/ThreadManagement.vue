@@ -265,6 +265,10 @@ export default {
   padding: 2px 6px;
   border-radius: 3px;
   border: 1px solid #ffeeba;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
 }
 
 .category-tag {
@@ -282,6 +286,9 @@ export default {
   font-weight: 600;
   display: inline-block;
   border: 1px solid transparent;
+  white-space: nowrap;
+  vertical-align: middle;
+  line-height: 1;
 }
 
 .filter-item-mini {
@@ -307,9 +314,8 @@ export default {
 }
 
 .title-cell-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: block;
+  line-height: 1.5;
 }
 
 .thread-title-text {

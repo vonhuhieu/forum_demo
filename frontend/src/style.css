@@ -357,6 +357,10 @@ body {
   margin-right: 8px;
   border: 1px solid #ffeeba;
   font-weight: bold;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
 }
 
 .forum-tag {
