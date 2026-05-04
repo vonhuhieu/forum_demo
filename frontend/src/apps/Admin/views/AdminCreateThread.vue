@@ -3,15 +3,42 @@
     <div class="card">
       <div class="card-header">{{ pageTitle }}</div>
       <div class="admin-form" style="padding: 2rem;">
-        <div class="form-group">
-          <label>Tiêu đề bài viết:</label>
-          <input 
-            v-model="form.title" 
-            class="admin-input-large" 
-            placeholder="Nhập tiêu đề..." 
-            required
-            :disabled="isViewMode"
-          >
+        <div class="form-group" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
+          <div class="custom-select" style="position: relative; width: 250px;">
+            <div 
+              class="select-selected admin-input" 
+              @click="!isViewMode && (labelDropdownOpen = !labelDropdownOpen)"
+              :style="selectedLabel ? { backgroundColor: selectedLabel.colorCode, color: '#fff', border: 'none' } : {}"
+              :class="{ 'disabled': isViewMode }"
+            >
+              {{ selectedLabel ? selectedLabel.name : '(Chọn nhãn nếu có)' }}
+            </div>
+            <div class="select-items" v-if="labelDropdownOpen">
+              <div class="select-item" @click="selectLabel(null)">
+                (Không chọn nhãn)
+              </div>
+              <div 
+                v-for="label in labels" 
+                :key="label.id" 
+                class="select-item"
+                :style="{ backgroundColor: label.colorCode, color: '#fff' }"
+                @click="selectLabel(label)"
+              >
+                {{ label.name }}
+              </div>
+            </div>
+          </div>
+
+          <div style="flex: 1;">
+            <input 
+              v-model="form.title" 
+              class="admin-input-large" 
+              placeholder="Nhập tiêu đề..." 
+              required
+              :disabled="isViewMode"
+              style="margin-bottom: 0;"
+            >
+          </div>
         </div>
 
         <div class="form-row" style="display: flex; gap: 2rem; margin-bottom: 1.5rem;">
@@ -128,9 +155,12 @@ export default {
     return {
       categories: [],
       categoryGroups: [],
+      labels: [],
+      selectedLabel: null,
+      labelDropdownOpen: false,
       selectedGroupId: '',
       postType: 'discussion',
-      form: { title: '', content: '', categoryId: '', pinned: false, poll: null }
+      form: { title: '', content: '', categoryId: '', pinned: false, poll: null, labelId: null }
     }
   },
   computed: {
@@ -157,11 +187,34 @@ export default {
   async mounted() {
     await this.fetchCategoryGroups()
     await this.fetchCategories()
+    await this.fetchLabels()
     if (this.threadId) {
       await this.fetchThread()
     }
+    document.addEventListener('click', this.handleClickOutside)
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside)
   },
   methods: {
+    handleClickOutside(e) {
+      if (!this.$el.querySelector('.custom-select')?.contains(e.target)) {
+        this.labelDropdownOpen = false
+      }
+    },
+    async fetchLabels() {
+      try {
+        const response = await api.get('/labels')
+        this.labels = response.data
+      } catch (error) {
+        console.error('Error fetching labels:', error)
+      }
+    },
+    selectLabel(label) {
+      this.selectedLabel = label
+      this.form.labelId = label ? label.id : null
+      this.labelDropdownOpen = false
+    },
     async fetchCategoryGroups() {
       try {
         const response = await AdminService.getCategoryGroups()
@@ -251,7 +304,12 @@ export default {
           content: content,
           categoryId: thread.category ? thread.category.id : '',
           pinned: thread.pinned || false,
-          poll: thread.poll || null
+          poll: thread.poll || null,
+          labelId: thread.label ? thread.label.id : null
+        }
+        
+        if (thread.label) {
+          this.selectedLabel = thread.label
         }
         
         if (thread.poll) {
@@ -278,6 +336,7 @@ export default {
           title: this.form.title,
           content: this.form.content,
           category: { id: this.form.categoryId },
+          label: this.form.labelId ? { id: this.form.labelId } : null,
           pinned: this.form.pinned
         }
         
@@ -398,5 +457,61 @@ export default {
 :deep(.ck-content td), :deep(.ck-content th) {
   border: 1px solid #bfbfbf;
   padding: 0.4em;
+}
+
+/* Custom Select for Labels */
+.custom-select {
+  font-size: 14px;
+}
+.select-selected {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: bold;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 42px;
+}
+.select-selected.disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.select-selected:after {
+  content: "▼";
+  position: absolute;
+  right: 10px;
+  top: 15px;
+  font-size: 10px;
+}
+.select-items {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 5px;
+  padding: 5px;
+}
+.select-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  margin-bottom: 2px;
+  font-weight: 500;
+  color: #333;
+}
+.select-item:hover {
+  filter: brightness(0.9);
 }
 </style>

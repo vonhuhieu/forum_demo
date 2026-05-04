@@ -9,6 +9,7 @@ public class ThreadDTO {
     private String title;
     private String content;
     private CategoryDTO category;
+    private LabelDTO label;
     private UserDTO author;
     private LocalDateTime createdAt;
     private int viewCount;

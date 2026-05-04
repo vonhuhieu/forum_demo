@@ -22,10 +22,10 @@
               <span class="author-name">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
               <span class="dot">•</span>
               <span>{{ formatDate(thread.createdAt) }}</span>
-              <span class="dot">•</span>
-              <router-link :to="{ name: 'CategoryDetail', params: { id: thread.category?.id } }" class="forum-tag">
-                {{ thread.category?.name }}
-              </router-link>
+              <span class="dot" v-if="thread.label">•</span>
+              <span v-if="thread.label" class="label-tag" :style="{ backgroundColor: thread.label.colorCode }">
+                {{ thread.label.name }}
+              </span>
             </div>
           </div>
           <div class="thread-stats">
@@ -429,5 +429,14 @@ export default {
   text-decoration: none;
   font-size: 1.1rem;
   display: block;
+}
+
+.label-tag {
+  color: #fff;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  border-radius: 3px;
+  font-weight: 600;
+  display: inline-block;
 }
 </style>

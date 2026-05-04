@@ -4,6 +4,7 @@ import AdminLayout from '@/apps/Admin/views/AdminLayout.vue'
 import MenuConfig from '@/apps/Admin/views/MenuConfig.vue'
 import CategoryConfig from '@/apps/Admin/views/CategoryConfig.vue'
 import CategoryGroupConfig from '@/apps/Admin/views/CategoryGroupConfig.vue'
+import LabelConfig from '@/apps/Admin/views/LabelConfig.vue'
 import ThreadManagement from '@/apps/Admin/views/ThreadManagement.vue'
 import AdminCreateThread from '@/apps/Admin/views/AdminCreateThread.vue'
 import Login from '@/apps/Auth/views/Login.vue'
@@ -65,6 +66,11 @@ const routes = [
         path: 'category',
         name: 'AdminCategory',
         component: CategoryConfig
+      },
+      {
+        path: 'labels',
+        name: 'AdminLabels',
+        component: LabelConfig
       },
       {
         path: 'category-group',

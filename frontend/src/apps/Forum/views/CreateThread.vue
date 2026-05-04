@@ -8,9 +8,35 @@
       <div class="card">
         <div class="card-header">ĐĂNG BÀI</div>
         <div class="post-form" style="padding: 2rem;">
-          <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #1a507a;">Tiêu đề bài viết:</label>
-            <input v-model="form.title" class="title-input" placeholder="Nhập tiêu đề bài viết..." required>
+          <div class="form-group" style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center;">
+            <div class="custom-select" style="position: relative; width: 200px;">
+              <div 
+                class="select-selected" 
+                @click="labelDropdownOpen = !labelDropdownOpen"
+                :style="selectedLabel ? { backgroundColor: selectedLabel.colorCode, color: '#fff', border: 'none' } : {}"
+              >
+                {{ selectedLabel ? selectedLabel.name : '(Chọn nhãn nếu có)' }}
+              </div>
+              <div class="select-items" v-if="labelDropdownOpen">
+                <div 
+                  class="select-item" 
+                  @click="selectLabel(null)"
+                >
+                  (Không chọn nhãn)
+                </div>
+                <div 
+                  v-for="label in labels" 
+                  :key="label.id" 
+                  class="select-item"
+                  :style="{ backgroundColor: label.colorCode, color: '#fff' }"
+                  @click="selectLabel(label)"
+                >
+                  {{ label.name }}
+                </div>
+              </div>
+            </div>
+            
+            <input v-model="form.title" class="title-input" style="flex: 1;" placeholder="Nhập tiêu đề bài viết..." required>
           </div>
 
           <div class="form-group" style="margin-bottom: 1.5rem;">
@@ -85,8 +111,11 @@ export default {
     return {
       catId: this.$route.query.catId,
       category: null,
+      labels: [],
+      selectedLabel: null,
+      labelDropdownOpen: false,
       postType: 'discussion',
-      form: { title: '', content: '', categoryId: '', poll: null }
+      form: { title: '', content: '', categoryId: '', poll: null, labelId: null }
     }
   },
   computed: {
@@ -104,8 +133,31 @@ export default {
   },
   mounted() {
     this.fetchCategory()
+    this.fetchLabels()
+    document.addEventListener('click', this.handleClickOutside)
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside)
   },
   methods: {
+    handleClickOutside(e) {
+      if (!this.$el.querySelector('.custom-select')?.contains(e.target)) {
+        this.labelDropdownOpen = false
+      }
+    },
+    async fetchLabels() {
+      try {
+        const response = await api.get('/labels')
+        this.labels = response.data
+      } catch (error) {
+        console.error('Error fetching labels:', error)
+      }
+    },
+    selectLabel(label) {
+      this.selectedLabel = label
+      this.form.labelId = label ? label.id : null
+      this.labelDropdownOpen = false
+    },
     async fetchCategory() {
       if (!this.catId) return
       try {
@@ -124,7 +176,8 @@ export default {
         const payload = {
           title: this.form.title,
           content: this.form.content,
-          category: { id: this.catId }
+          category: { id: this.catId },
+          label: this.form.labelId ? { id: this.form.labelId } : null
         }
         if (this.postType === 'poll' && this.form.poll) {
           payload.poll = this.form.poll
@@ -152,10 +205,61 @@ export default {
 
 <style scoped>
 .create-thread-page { padding-bottom: 5rem; }
-.title-input { width: 100%; padding: 1rem; font-size: 1.2rem; border: 1px solid #ddd; border-radius: 4px; font-weight: bold; }
+.title-input { padding: 1rem; font-size: 1.2rem; border: 1px solid #ddd; border-radius: 4px; font-weight: bold; }
 .btn-post { background-color: #3498db; color: white; border: none; padding: 12px 35px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
 .btn-post:hover { background-color: #2980b9; }
 .btn-cancel { background-color: #ecf0f1; color: #333; border: none; padding: 12px 25px; border-radius: 4px; cursor: pointer; }
+
+/* Custom Select for Labels */
+.custom-select {
+  font-size: 14px;
+}
+.select-selected {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: bold;
+  color: #555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.select-selected:after {
+  content: "▼";
+  position: absolute;
+  right: 10px;
+  top: 12px;
+  font-size: 10px;
+}
+.select-items {
+  position: absolute;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 5px;
+  padding: 5px;
+}
+.select-item {
+  padding: 8px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  margin-bottom: 2px;
+  font-weight: 500;
+  color: #333;
+}
+.select-item:hover {
+  filter: brightness(0.9);
+}
 
 .post-type-tabs {
   display: flex;

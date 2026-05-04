@@ -7,7 +7,7 @@
 
       <div class="thread-header card">
         <div class="thread-title-full">
-          <span class="category-tag">{{ thread.category ? thread.category.name : 'Chung' }}</span>
+          <span v-if="thread.label" class="label-tag" :style="{ backgroundColor: thread.label.colorCode }">{{ thread.label.name }}</span>
           <h1>{{ thread.title }}</h1>
         </div>
         <div class="thread-meta-bar">
@@ -171,13 +171,12 @@ export default {
   font-weight: 500;
 }
 
-.category-tag {
-  background: #fdf3a4;
-  color: #333;
+.label-tag {
+  color: #fff;
   padding: 4px 8px;
   font-size: 0.9rem;
   border-radius: 3px;
-  border: 1px solid #f1c40f;
+  font-weight: 600;
 }
 
 .thread-meta-bar {

@@ -30,6 +30,10 @@ public class Thread {
     private Category category;
 
     @ManyToOne
+    @JoinColumn(name = "label_id")
+    private Label label;
+
+    @ManyToOne
     @JoinColumn(name = "author_id")
     private User author;
 

@@ -59,6 +59,12 @@ public class ThreadService {
             }
         }
         
+        if (threadDTO.getLabel() != null) {
+            com.forum.entity.Label label = new com.forum.entity.Label();
+            label.setId(threadDTO.getLabel().getId());
+            thread.setLabel(label);
+        }
+        
         Thread saved = threadRepository.save(thread);
         return ResponseDTO.success(threadMapper.toDTO(saved));
     }
@@ -72,6 +78,15 @@ public class ThreadService {
                 category.setId(threadDTO.getCategory().getId());
                 thread.setCategory(category);
             }
+            
+            if (threadDTO.getLabel() != null && threadDTO.getLabel().getId() != null) {
+                com.forum.entity.Label label = new com.forum.entity.Label();
+                label.setId(threadDTO.getLabel().getId());
+                thread.setLabel(label);
+            } else {
+                thread.setLabel(null);
+            }
+            
             thread.setPinned(threadDTO.isPinned());
 
             // Xử lý cập nhật Poll

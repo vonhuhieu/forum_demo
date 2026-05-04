@@ -32,6 +32,7 @@
 
       <template #item-title="{ item }">
         <span v-if="item.pinned" class="badge-pinned" style="margin-right: 5px;">GHIM</span>
+        <span v-if="item.label" class="label-tag" :style="{ backgroundColor: item.label.colorCode }" style="margin-right: 5px;">{{ item.label.name }}</span>
         <strong>{{ item.title }}</strong>
       </template>
 
@@ -271,6 +272,16 @@ export default {
   border-radius: 4px;
   font-size: 0.8rem;
 }
+
+.label-tag {
+  color: #fff;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  border-radius: 3px;
+  font-weight: 600;
+  display: inline-block;
+}
+
 .filter-item-mini {
   display: flex;
   align-items: center;

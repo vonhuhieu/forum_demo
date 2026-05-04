@@ -19,6 +19,9 @@
            <router-link :to="{ name: 'AdminCategoryGroup' }" :class="['nav-item', { 'active': $route.name === 'AdminCategoryGroup' || $route.name === 'AdminCategoryGroupDetail' }]">
              <span class="icon">📂</span> Quản lý Nhóm & Chuyên mục
            </router-link>
+           <router-link :to="{ name: 'AdminLabels' }" :class="['nav-item', { 'active': $route.name === 'AdminLabels' }]">
+             <span class="icon">🏷️</span> Quản lý Nhãn (Label)
+           </router-link>
            <router-link :to="{ name: 'AdminThreads' }" :class="['nav-item', { 'active': $route.name === 'AdminThreads' || $route.name === 'AdminThreadCreate' || $route.name === 'AdminThreadEdit' }]">
              <span class="icon">📝</span> Quản lý Bài viết
            </router-link>
@@ -75,6 +78,7 @@ export default {
         'AdminCategoryGroup': 'Quản lý Nhóm',
         'AdminCategory': 'Quản lý Chuyên mục',
         'AdminCategoryGroupDetail': 'Chuyên mục thuộc Nhóm',
+        'AdminLabels': 'Quản lý Nhãn',
         'AdminThreads': 'Quản lý Bài viết',
         'AdminThreadCreate': 'Thêm bài viết mới',
         'AdminThreadEdit': 'Cập nhật bài viết',
