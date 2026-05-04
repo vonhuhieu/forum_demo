@@ -4,9 +4,11 @@
       <div class="logo" @click="$router.push({ name: 'Home' })">HTXSL</div>
     </div>
     <div class="header-right">
-      <div class="user-info">
-        <span class="user-avatar">A</span>
-        <span class="user-name">Chào, Admin</span>
+      <div class="user-info" v-if="currentUser">
+        <span class="user-avatar" :style="{ backgroundColor: currentUser.avatar || '#fff', color: currentUser.avatar ? '#fff' : '#1a507a' }">
+          {{ currentUser.username.charAt(0).toUpperCase() }}
+        </span>
+        <span class="user-name">Chào, {{ currentUser.username }}</span>
       </div>
     </div>
   </header>
@@ -14,7 +16,18 @@
 
 <script>
 export default {
-  name: 'AdminHeader'
+  name: 'AdminHeader',
+  data() {
+    return {
+      currentUser: null
+    }
+  },
+  mounted() {
+    const user = localStorage.getItem('user')
+    if (user) {
+      this.currentUser = JSON.parse(user)
+    }
+  }
 }
 </script>
 

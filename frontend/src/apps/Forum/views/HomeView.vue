@@ -32,9 +32,8 @@
               </div>
               <div v-else class="latest-threads-list">
                 <div v-for="thread in latestThreads" :key="thread.id" class="latest-thread-item">
-                  <div class="lt-avatar">
-                    <span v-if="!thread.author?.avatarUrl">{{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}</span>
-                    <img v-else :src="thread.author.avatarUrl" alt="Avatar" />
+                  <div class="lt-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#e0e0e0', color: thread.author && thread.author.avatar ? '#fff' : '#555' }">
+                    {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
                   </div>
                   <div class="lt-content">
                     <div class="lt-title">

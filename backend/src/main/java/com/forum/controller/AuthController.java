@@ -31,8 +31,9 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody Map<String, String> registerRequest) {
         String username = registerRequest.get("username");
         String password = registerRequest.get("password");
+        String email = registerRequest.get("email");
 
-        boolean isRegistered = authService.registerUser(username, password);
+        boolean isRegistered = authService.registerUser(username, password, email);
         if (!isRegistered) {
             return ResponseEntity.badRequest().body(Map.of("message", "Tên đăng nhập đã tồn tại"));
         }

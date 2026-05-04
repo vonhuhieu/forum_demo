@@ -30,6 +30,12 @@ public class User {
     @Column(name = "role")
     private Set<String> roles = new HashSet<>();
 
+    @Column
+    private String avatar;
+
+    @Column
+    private String email;
+
     public User(String username, String password, Set<String> roles) {
         this.username = username;
         this.password = password;

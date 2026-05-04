@@ -29,7 +29,7 @@
       <div class="thread-content-card card">
         <div class="post-layout">
           <div class="post-sidebar">
-            <div class="avatar-large">
+            <div class="avatar-large" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
               {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
             </div>
             <div class="author-name-large">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</div>

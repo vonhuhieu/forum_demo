@@ -29,7 +29,7 @@
           
           <div class="thread-list">
             <div v-for="thread in paginatedThreads" :key="thread.id" class="thread-row">
-              <div class="thread-avatar">
+              <div class="thread-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
                 {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
               </div>
               <div class="thread-main">
@@ -61,7 +61,7 @@
                   <span class="last-post-time">{{ formatDate(thread.createdAt) }}</span>
                   <span class="last-post-author">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
                 </div>
-                <div class="last-post-avatar">
+                <div class="last-post-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
                   {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
                 </div>
               </div>

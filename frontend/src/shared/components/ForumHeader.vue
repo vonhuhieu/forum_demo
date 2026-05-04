@@ -19,7 +19,12 @@
         </nav>
         <div class="nav-right">
           <template v-if="isLoggedIn">
-            <span class="user-greeting">Chào, {{ currentUser.username }}</span>
+            <div class="user-info-header">
+              <span class="user-avatar-small" :style="{ backgroundColor: currentUser.avatar || '#fff', color: currentUser.avatar ? '#fff' : '#1a507a' }">
+                {{ currentUser.username.charAt(0).toUpperCase() }}
+              </span>
+              <span class="user-greeting">Chào, {{ currentUser.username }}</span>
+            </div>
             <button @click="handleLogout" class="btn-logout-small">Thoát</button>
           </template>
           <template v-else>
@@ -85,9 +90,26 @@ export default {
 </script>
 
 <style scoped>
+.user-info-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 15px;
+}
+
+.user-avatar-small {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+
 .user-greeting {
   color: white;
-  margin-right: 15px;
   font-size: 0.9rem;
 }
 

@@ -8,7 +8,7 @@
       
       <div class="thread-list">
         <div v-for="thread in latestThreads" :key="thread.id" class="thread-row">
-          <div class="thread-avatar">
+          <div class="thread-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
             {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
           </div>
           <div class="thread-main">
@@ -42,7 +42,7 @@
               <span class="last-post-time">{{ formatDate(thread.createdAt) }}</span>
               <span class="last-post-author">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
             </div>
-            <div class="last-post-avatar">
+            <div class="last-post-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
               {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
             </div>
           </div>
@@ -100,7 +100,7 @@
           </div>
           <div class="category-last-thread">
             <div v-if="lastThreadByCat[cat.id]" class="last-thread-box">
-              <div class="last-thread-avatar">
+              <div class="last-thread-avatar" :style="{ backgroundColor: lastThreadByCat[cat.id].author && lastThreadByCat[cat.id].author.avatar ? lastThreadByCat[cat.id].author.avatar : '#ccc', color: '#fff' }">
                 {{ lastThreadByCat[cat.id].author?.username?.charAt(0).toUpperCase() || 'A' }}
               </div>
               <div class="last-thread-info">
