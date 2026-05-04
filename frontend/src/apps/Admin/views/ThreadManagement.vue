@@ -31,9 +31,11 @@
       </template>
 
       <template #item-title="{ item }">
-        <span v-if="item.pinned" class="badge-pinned" style="margin-right: 5px;">GHIM</span>
-        <span v-if="item.label" class="label-tag" :style="{ backgroundColor: item.label.colorCode }" style="margin-right: 5px;">{{ item.label.name }}</span>
-        <strong>{{ item.title }}</strong>
+        <div class="title-cell-wrapper">
+          <span v-if="item.pinned" class="badge-pinned">GHIM</span>
+          <span v-if="item.label" class="label-tag" :style="{ backgroundColor: item.label.colorCode, color: item.label.textColor, borderColor: item.label.borderColor || 'transparent' }">{{ item.label.name }}</span>
+          <strong class="thread-title-text">{{ item.title }}</strong>
+        </div>
       </template>
 
       <template #item-author="{ item }">
@@ -274,12 +276,12 @@ export default {
 }
 
 .label-tag {
-  color: #fff;
   padding: 2px 6px;
   font-size: 0.75rem;
   border-radius: 3px;
   font-weight: 600;
   display: inline-block;
+  border: 1px solid transparent;
 }
 
 .filter-item-mini {
@@ -302,6 +304,16 @@ export default {
 
 .mini-select:focus {
   border-color: var(--primary);
+}
+
+.title-cell-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.thread-title-text {
+  line-height: 1.2;
 }
 </style>
 

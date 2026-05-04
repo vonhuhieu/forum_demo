@@ -32,6 +32,8 @@ public class LabelService {
         return labelRepository.findById(id).map(label -> {
             label.setName(dto.getName());
             label.setColorCode(dto.getColorCode());
+            label.setTextColor(dto.getTextColor());
+            label.setBorderColor(dto.getBorderColor());
             return ResponseDTO.success(labelMapper.toDTO(labelRepository.save(label)));
         }).orElseThrow(() -> new RuntimeException("Label not found"));
     }

@@ -23,7 +23,7 @@
               <span class="dot">•</span>
               <span>{{ formatDate(thread.createdAt) }}</span>
               <span class="dot" v-if="thread.label">•</span>
-              <span v-if="thread.label" class="label-tag" :style="{ backgroundColor: thread.label.colorCode }">
+              <span v-if="thread.label" class="label-tag" :style="{ backgroundColor: thread.label.colorCode, color: thread.label.textColor, borderColor: thread.label.borderColor || 'transparent' }">
                 {{ thread.label.name }}
               </span>
             </div>
@@ -432,11 +432,11 @@ export default {
 }
 
 .label-tag {
-  color: #fff;
   padding: 2px 6px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   border-radius: 3px;
   font-weight: 600;
   display: inline-block;
+  border: 1px solid transparent;
 }
 </style>

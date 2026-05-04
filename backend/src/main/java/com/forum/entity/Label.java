@@ -20,4 +20,10 @@ public class Label {
 
     @Column(nullable = false)
     private String colorCode; // e.g. "#3498db"
+
+    @Column(nullable = false)
+    private String textColor; // e.g. "#ffffff"
+
+    @Column(nullable = true)
+    private String borderColor; // e.g. "transparent" or "#000000"
 }

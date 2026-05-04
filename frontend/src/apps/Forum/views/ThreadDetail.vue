@@ -7,7 +7,7 @@
 
       <div class="thread-header card">
         <div class="thread-title-full">
-          <span v-if="thread.label" class="label-tag" :style="{ backgroundColor: thread.label.colorCode }">{{ thread.label.name }}</span>
+          <span v-if="thread.label" class="label-tag" :style="{ backgroundColor: thread.label.colorCode, color: thread.label.textColor, borderColor: thread.label.borderColor || 'transparent' }">{{ thread.label.name }}</span>
           <h1>{{ thread.title }}</h1>
         </div>
         <div class="thread-meta-bar">
@@ -172,11 +172,13 @@ export default {
 }
 
 .label-tag {
-  color: #fff;
-  padding: 4px 8px;
-  font-size: 0.9rem;
-  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 0.85rem;
+  border-radius: 4px;
   font-weight: 600;
+  display: inline-block;
+  margin-bottom: 10px;
+  border: 1px solid transparent;
 }
 
 .thread-meta-bar {

@@ -11,4 +11,6 @@ public class LabelDTO {
     private Long id;
     private String name;
     private String colorCode;
+    private String textColor;
+    private String borderColor;
 }
