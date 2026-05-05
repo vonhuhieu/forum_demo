@@ -350,9 +350,25 @@ export default {
         return
       }
       try {
-        this.syncAttachmentsToEditor() // Đảm bảo content mới nhất trước khi gửi
-        let finalContent = this.form.content
+        // Loại bỏ các khối đính kèm chuẩn hóa từ editor trước khi nối khối HTML chuẩn cho cơ sở dữ liệu
+        let cleanContent = this.form.content || ''
+        const markers = [
+          /<div[^>]*class="attachment-block"[^>]*>/i,
+          /<p><strong>Đính kèm<\/strong><\/p>/i
+        ]
+        let matchIndex = -1
+        for (const marker of markers) {
+          const match = cleanContent.match(marker)
+          if (match) {
+            matchIndex = match.index
+            break
+          }
+        }
+        if (matchIndex !== -1) {
+          cleanContent = cleanContent.substring(0, matchIndex).trim()
+        }
 
+        let finalContent = cleanContent
         const attachedImages = this.attachedImages
 
         // 3. Nếu có ảnh đính kèm, tạo HTML block và nối vào cuối content
@@ -362,10 +378,7 @@ export default {
           attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
           
           attachedImages.forEach(img => {
-            attachedHtml += `
-              <div class="attachment-item">
-                <img src="${img.url}" alt="${img.name}" style="width: 150px; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" />
-              </div>`
+            attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 150px; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
           })
           
           attachedHtml += `</div><!-- END ATTACHMENT SECTION --></div>`
@@ -410,11 +423,21 @@ export default {
       let content = this.form.content || ''
       
       // 1. Loại bỏ tất cả các khối đính kèm cũ
-      // Tìm vị trí của khối đính kèm đầu tiên và cắt bỏ từ đó đến hết
-      const marker = /<div[^>]*class="attachment-block"[^>]*>/i
-      const match = content.match(marker)
-      if (match) {
-        content = content.substring(0, match.index).trim()
+      // Tìm vị trí của khối đính kèm đầu tiên và cắt bỏ từ đó đến hết (hỗ trợ cả tag div gốc và tag p đã được CKEditor chuẩn hóa)
+      const markers = [
+        /<div[^>]*class="attachment-block"[^>]*>/i,
+        /<p><strong>Đính kèm<\/strong><\/p>/i
+      ]
+      let matchIndex = -1
+      for (const marker of markers) {
+        const match = content.match(marker)
+        if (match) {
+          matchIndex = match.index
+          break
+        }
+      }
+      if (matchIndex !== -1) {
+        content = content.substring(0, matchIndex).trim()
       }
 
       // 2. Nếu có ảnh đính kèm, tạo HTML block và nối vào cuối content
@@ -424,10 +447,7 @@ export default {
         attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
         
         this.attachedImages.forEach(img => {
-          attachedHtml += `
-            <div class="attachment-item">
-              <img src="${img.url}" alt="${img.name}" style="width: 150px; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" />
-            </div>`
+          attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 150px; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
         })
         
         attachedHtml += `</div></div>`
