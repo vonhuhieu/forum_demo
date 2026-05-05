@@ -46,7 +46,7 @@
               </div>
             </div>
             
-            <div class="content-body ql-editor" v-html="thread.content"></div>
+            <div class="content-body ql-editor" v-html="thread.content" @click="handleContentClick"></div>
             
             <div class="post-meta-bottom">
               <div class="left-actions">
@@ -69,6 +69,18 @@
   <div v-else-if="loading" class="container" style="padding: 3rem; text-align: center;">
     Đang tải bài viết...
   </div>
+
+  <!-- Lightbox Modal -->
+  <div v-if="showLightbox" class="lightbox-modal" @click="closeLightbox">
+    <div class="lightbox-content">
+      <button class="btn-close-lightbox" @click="closeLightbox">&times;</button>
+      <div class="lightbox-main">
+        <div class="lightbox-image-wrapper">
+          <img :src="activeImageUrl" class="main-lightbox-img" @click.stop />
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -89,7 +101,9 @@ export default {
     return {
       thread: null,
       categoryGroup: null,
-      loading: true
+      loading: true,
+      showLightbox: false,
+      activeImageUrl: ''
     }
   },
   computed: {
@@ -97,10 +111,6 @@ export default {
       const items = [{ title: 'Trang chủ', to: { name: 'Home' } }]
       
       if (this.thread && this.thread.category && this.thread.category.categoryGroupId) {
-        // Cần lấy tên nhóm chuyên mục. Trong ThreadDetail hiện tại chưa có list groups.
-        // Tuy nhiên, backend thường trả về object category lồng nhau hoặc chúng ta fetch thêm.
-        // Giả sử chúng ta dùng tên nhóm từ API nếu có, hoặc fetch thêm.
-        // Kiểm tra xem thread.category có chứa info group không.
         if (this.categoryGroup) {
            items.push({ 
              title: this.categoryGroup.name, 
@@ -119,6 +129,17 @@ export default {
         items.push({ title: this.thread.title })
       }
       return items
+    },
+    attachedImages() {
+      if (this.thread && this.thread.attachedImages) {
+        try {
+          return JSON.parse(this.thread.attachedImages)
+        } catch (e) {
+          console.error('Error parsing attached images:', e)
+          return []
+        }
+      }
+      return []
     }
   },
   async mounted() {
@@ -128,7 +149,9 @@ export default {
     async fetchThread() {
       try {
         const response = await api.get(`/threads/${this.$route.params.id}`)
-        let content = response.data.content || ''
+        this.thread = response.data
+        
+        let content = this.thread.content || ''
         
         // Transform <oembed> tags (legacy CKEditor format) to <iframe>
         content = content.replace(/<oembed\s+url="([^"]+)"><\/oembed>/gi, (match, url) => {
@@ -174,6 +197,21 @@ export default {
       if (this.thread) {
         this.thread.poll = updatedPoll
       }
+    },
+    handleContentClick(e) {
+      if (e.target.tagName === 'IMG') {
+        this.openLightbox(e.target.src)
+      }
+    },
+    openLightbox(url) {
+      this.activeImageUrl = url
+      this.showLightbox = true
+      document.body.style.overflow = 'hidden'
+    },
+    closeLightbox() {
+      this.showLightbox = false
+      this.activeImageUrl = ''
+      document.body.style.overflow = ''
     }
   }
 }
@@ -344,7 +382,109 @@ export default {
   font-weight: 600;
 }
 
-:deep(.ql-editor img), :deep(.ql-editor video) { max-width: 100%; height: auto; min-width: 100% !important }
+:deep(.ql-editor img), :deep(.ql-editor video) { max-width: 100%; height: auto; }
 :deep(.ql-editor table) { border-collapse: collapse; width: 100%; margin: 1rem 0; }
 :deep(.ql-editor td) { border: 1px solid #ccc; padding: 8px; }
+
+.attached-section {
+  margin-top: 1.5rem;
+  border-top: 1px dashed #ddd;
+  padding-top: 1.5rem;
+  padding-left: 15px; /* Cân lề ngang với phần text content */
+}
+
+.attached-label {
+  font-weight: bold;
+  color: #1a507a;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.attached-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.attached-item img {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: cover;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  cursor: zoom-in;
+  transition: transform 0.2s;
+}
+
+.attached-item img:hover {
+  transform: scale(1.02);
+}
+
+/* Lightbox Styles */
+.lightbox-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.lightbox-content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-close-lightbox {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 40px;
+  cursor: pointer;
+  z-index: 10001;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lightbox-main {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.lightbox-image-wrapper {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.main-lightbox-img {
+  max-width: 100%;
+  max-height: calc(100% - 60px);
+  object-fit: contain;
+  transition: transform 0.3s;
+}
 </style>

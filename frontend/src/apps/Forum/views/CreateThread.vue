@@ -180,7 +180,8 @@ export default {
           title: this.form.title,
           content: this.form.content,
           category: { id: this.catId },
-          label: this.form.labelId ? { id: this.form.labelId } : null
+          label: this.form.labelId ? { id: this.form.labelId } : null,
+          attachedImages: JSON.stringify(this.$refs.uploaderPanel.uploadedImages)
         }
         if (this.postType === 'poll' && this.form.poll) {
           payload.poll = this.form.poll

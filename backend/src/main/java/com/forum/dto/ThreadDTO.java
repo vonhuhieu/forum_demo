@@ -17,4 +17,5 @@ public class ThreadDTO {
     private boolean pinned;
     private boolean active = true;
     private PollDTO poll;
+    private String attachedImages;
 }

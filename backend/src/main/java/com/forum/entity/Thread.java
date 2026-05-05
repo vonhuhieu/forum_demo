@@ -48,4 +48,7 @@ public class Thread {
 
     @OneToOne(mappedBy = "thread", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Poll poll;
+
+    @Column(columnDefinition = "TEXT")
+    private String attachedImages; // JSON string of images
 }

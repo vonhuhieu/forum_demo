@@ -73,6 +73,10 @@ import api from '@/shared/services/api.service'
 export default {
   name: 'ImageUploaderPanel',
   props: {
+    images: {
+      type: Array,
+      default: () => []
+    },
     disabled: {
       type: Boolean,
       default: false
@@ -81,10 +85,30 @@ export default {
   data() {
     return {
       isUploading: false,
-      uploadedImages: [],
+      uploadedImages: [...this.images],
       activeInsertIndex: null,
       isMultipleSelectionMode: false,
       selectedImages: []
+    }
+  },
+  watch: {
+    images: {
+      handler(newVal) {
+        // Chỉ cập nhật nếu giá trị thực sự khác nhau để tránh vòng lặp
+        if (JSON.stringify(newVal) !== JSON.stringify(this.uploadedImages)) {
+          this.uploadedImages = [...newVal];
+        }
+      },
+      deep: true
+    },
+    uploadedImages: {
+      handler(newVal) {
+        // Chỉ emit nếu giá trị thực sự khác với prop
+        if (JSON.stringify(newVal) !== JSON.stringify(this.images)) {
+          this.$emit('update:images', newVal);
+        }
+      },
+      deep: true
     }
   },
   computed: {
@@ -149,11 +173,11 @@ export default {
     async onFileChange(event) {
       const files = Array.from(event.target.files)
       if (files.length === 0) return
-
+ 
       this.isUploading = true
       const formData = new FormData()
       files.forEach(file => formData.append('files', file))
-
+ 
       try {
         const res = await api.post('/upload/multiple', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }

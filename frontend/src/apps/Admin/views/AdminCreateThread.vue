@@ -81,8 +81,6 @@
         <div class="form-group">
           <label>Nội dung bài viết:</label>
           <div class="editor-wrapper" :class="{ 'disabled-editor': isViewMode }">
-
-            <!-- Tabs (hiển thị để biết loại bài viết, disabled ở view mode) -->
             <div class="post-type-tabs" :class="{ 'disabled-tabs': isViewMode }">
               <button
                 :class="['tab-btn', postType === 'discussion' ? 'active' : '']"
@@ -107,16 +105,23 @@
                 v-model="form.content" 
                 @image-uploaded="handleImageUploaded"
               />
-              <ImageUploaderPanel ref="uploaderPanel" @insert-images="handleInsertImages" :disabled="isViewMode" />
-              <div v-if="isViewMode" class="ck-content readonly-content" v-html="form.content"></div>
+              <div v-if="isViewMode" class="ck-content readonly-content" style="margin-top: 1rem;">
+                <div v-html="form.content"></div>
+              </div>
+
+              <!-- Field Up Ảnh luôn hiển thị nhưng disabled ở chế độ Xem -->
+              <ImageUploaderPanel 
+                ref="uploaderPanel" 
+                v-model:images="attachedImages"
+                @insert-images="handleInsertImages" 
+                :disabled="isViewMode" 
+              />
             </div>
 
-            <!-- Poll Form (for Edit/Create) -->
+            <!-- Poll Form -->
             <div v-if="!isViewMode && postType === 'poll'" style="margin-top: 0;">
               <PollForm v-model="form.poll" />
             </div>
-
-            <!-- Poll Config Display (cho View Mode) -->
             <div v-if="isViewMode && form.poll" style="margin-top: 1.5rem;">
               <PollForm :modelValue="form.poll" disabled />
             </div>
@@ -160,7 +165,18 @@ export default {
       labelDropdownOpen: false,
       selectedGroupId: '',
       postType: 'discussion',
-      form: { title: '', content: '', categoryId: '', pinned: false, poll: null, labelId: null }
+      attachedImages: [],
+      form: { title: '', content: '', categoryId: '', pinned: false, poll: null, labelId: null, attachedImages: '' }
+    }
+  },
+  watch: {
+    attachedImages: {
+      handler() {
+        if (!this.isViewMode) {
+          this.syncAttachmentsToEditor()
+        }
+      },
+      deep: true
     }
   },
   computed: {
@@ -271,7 +287,6 @@ export default {
         const thread = response.data
         let content = thread.content || ''
         
-        // Trong chế độ View, cần parse <oembed> ra HTML để v-html hiển thị được
         if (this.isViewMode) {
           content = content.replace(/<oembed\s+url="([^"]+)"><\/oembed>/gi, (match, url) => {
             const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
@@ -280,7 +295,6 @@ export default {
               return `<iframe width="100%" height="450" src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
             }
             
-            // Render video tải lên
             if (url.match(/\.(mp4|webm|ogg|avi|mov)(\?.*)?$/i)) {
                let fixedUrl = url;
                const uploadsIndex = fixedUrl.indexOf('/uploads/');
@@ -292,11 +306,6 @@ export default {
 
             return `<a href="${url}" target="_blank">${url}</a>`
           })
-        } else {
-          // Trong chế độ Edit, migration các bài cũ:
-          content = content.replace(/<oembed\s+url="https:\/\/uploads\/([^"]+)"><\/oembed>/gi, '<figure class="media"><oembed url="/uploads/$1"></oembed></figure>')
-          content = content.replace(/<div[^>]*>\s*<video[^>]*src="([^"]+)"[^>]*><\/video>\s*<\/div>/gi, '<figure class="media"><oembed url="$1"></oembed></figure>')
-          content = content.replace(/<video[^>]*src="([^"]+)"[^>]*><\/video>/gi, '<figure class="media"><oembed url="$1"></oembed></figure>')
         }
 
         this.form = {
@@ -305,7 +314,17 @@ export default {
           categoryId: thread.category ? thread.category.id : '',
           pinned: thread.pinned || false,
           poll: thread.poll || null,
-          labelId: thread.label ? thread.label.id : null
+          labelId: thread.label ? thread.label.id : null,
+          attachedImages: thread.attachedImages || ''
+        }
+        
+        if (thread.attachedImages) {
+          try {
+            const imgs = JSON.parse(thread.attachedImages)
+            this.attachedImages = imgs
+          } catch (e) {
+            console.error('Error parsing attached images:', e)
+          }
         }
         
         if (thread.label) {
@@ -318,7 +337,6 @@ export default {
           this.postType = 'discussion'
         }
         
-        // Tự động chọn nhóm chuyên mục dựa trên chuyên mục của bài viết
         if (thread.category && thread.category.categoryGroupId) {
           this.selectedGroupId = thread.category.categoryGroupId
         }
@@ -332,12 +350,35 @@ export default {
         return
       }
       try {
+        this.syncAttachmentsToEditor() // Đảm bảo content mới nhất trước khi gửi
+        let finalContent = this.form.content
+
+        const attachedImages = this.attachedImages
+
+        // 3. Nếu có ảnh đính kèm, tạo HTML block và nối vào cuối content
+        if (attachedImages && attachedImages.length > 0) {
+          let attachedHtml = `<div id="attachment-section" class="attachment-block" style="margin-top: 2rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">`
+          attachedHtml += `<div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>`
+          attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
+          
+          attachedImages.forEach(img => {
+            attachedHtml += `
+              <div class="attachment-item">
+                <img src="${img.url}" alt="${img.name}" style="width: 150px; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" />
+              </div>`
+          })
+          
+          attachedHtml += `</div><!-- END ATTACHMENT SECTION --></div>`
+          finalContent = finalContent.trim() + '\n' + attachedHtml
+        }
+
         const payload = {
           title: this.form.title,
-          content: this.form.content,
+          content: finalContent,
           category: { id: this.form.categoryId },
           label: this.form.labelId ? { id: this.form.labelId } : null,
-          pinned: this.form.pinned
+          pinned: this.form.pinned,
+          attachedImages: JSON.stringify(attachedImages)
         }
         
         if (this.postType === 'poll' && this.form.poll) {
@@ -363,9 +404,40 @@ export default {
       }
     },
     handleImageUploaded(image) {
-      if (this.$refs.uploaderPanel) {
-        this.$refs.uploaderPanel.addImage(image)
+      this.attachedImages.push(image)
+    },
+    syncAttachmentsToEditor() {
+      let content = this.form.content || ''
+      
+      // 1. Loại bỏ tất cả các khối đính kèm cũ
+      // Tìm vị trí của khối đính kèm đầu tiên và cắt bỏ từ đó đến hết
+      const marker = /<div[^>]*class="attachment-block"[^>]*>/i
+      const match = content.match(marker)
+      if (match) {
+        content = content.substring(0, match.index).trim()
       }
+
+      // 2. Nếu có ảnh đính kèm, tạo HTML block và nối vào cuối content
+      if (this.attachedImages && this.attachedImages.length > 0) {
+        let attachedHtml = `<div class="attachment-block" style="margin-top: 2rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">`
+        attachedHtml += `<div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>`
+        attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
+        
+        this.attachedImages.forEach(img => {
+          attachedHtml += `
+            <div class="attachment-item">
+              <img src="${img.url}" alt="${img.name}" style="width: 150px; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;" />
+            </div>`
+        })
+        
+        attachedHtml += `</div></div>`
+        content = content.trim() + '\n' + attachedHtml
+      }
+
+      this.form.content = content
+    },
+    openImage(url) {
+      window.open(url, '_blank')
     }
   }
 }
@@ -433,7 +505,6 @@ export default {
   border-top: 1px solid #ddd;
 }
 
-/* Custom styles for CKEditor content */
 :deep(.ck-editor__editable) {
   min-height: 400px;
   font-size: 16px;
@@ -448,7 +519,6 @@ export default {
   min-height: 400px;
 }
 
-/* Table styles for CKEditor content */
 :deep(.ck-content table) {
   width: 100%;
   border-collapse: collapse;
@@ -459,7 +529,6 @@ export default {
   padding: 0.4em;
 }
 
-/* Custom Select for Labels */
 .custom-select {
   font-size: 14px;
 }
@@ -515,5 +584,46 @@ export default {
 }
 .select-item:hover {
   filter: brightness(0.9);
+}
+
+.attached-section {
+  margin-top: 0;
+  border-top: 1px dashed #ddd;
+  padding: 1.5rem;
+}
+
+.attached-label {
+  font-weight: bold;
+  color: #1a507a;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.attached-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.attached-item img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: zoom-in;
+  transition: transform 0.2s;
+}
+
+.attached-item img:hover {
+  transform: scale(1.02);
+}
+
+.edit-mode-preview {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fdfdfd;
+  border: 1px solid #eee;
+  border-radius: 4px;
 }
 </style>

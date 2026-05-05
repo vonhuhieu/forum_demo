@@ -87,7 +87,9 @@ public class ThreadService {
                 thread.setLabel(null);
             }
             
+            
             thread.setPinned(threadDTO.isPinned());
+            thread.setAttachedImages(threadDTO.getAttachedImages());
 
             // Xử lý cập nhật Poll
             if (threadDTO.getPoll() != null) {
