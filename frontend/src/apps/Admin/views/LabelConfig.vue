@@ -44,6 +44,13 @@
           <code>{{ item.borderColor || 'transparent' }}</code>
         </div>
       </template>
+
+      <!-- Slot cho cột quyền -->
+      <template #item-adminOnly="{ item }">
+        <span :class="['badge', item.adminOnly ? 'badge-danger' : 'badge-success']">
+          {{ item.adminOnly ? 'Admin' : 'Công khai' }}
+        </span>
+      </template>
     </DataTable>
 
     <!-- Modal Thêm/Sửa Nhãn -->
@@ -81,6 +88,14 @@
               <button class="btn-clear" @click="formData.borderColor = 'transparent'">Xóa viền</button>
             </div>
           </div>
+        </div>
+
+        <div class="form-group">
+          <div class="checkbox-wrapper">
+            <input type="checkbox" id="adminOnly" v-model="formData.adminOnly" />
+            <label for="adminOnly">Chỉ dành cho Admin</label>
+          </div>
+          <small class="form-text text-muted">Nếu chọn, người dùng thông thường sẽ không thấy nhãn này khi đăng bài.</small>
         </div>
         
         <div class="preview-section mb-3">
@@ -127,8 +142,9 @@ export default {
       headers: [
         { text: 'Tên Nhãn', value: 'name', width: '25%', sortable: true },
         { text: 'Màu Nền', value: 'colorCode', width: '20%', sortable: true },
-        { text: 'Màu Chữ', value: 'textColor', width: '20%', sortable: true },
-        { text: 'Màu Viền', value: 'borderColor', width: '20%', sortable: true }
+        { text: 'Màu Chữ', value: 'textColor', width: '15%', sortable: true },
+        { text: 'Màu Viền', value: 'borderColor', width: '15%', sortable: true },
+        { text: 'Quyền', value: 'adminOnly', width: '10%', sortable: true }
       ],
       showModal: false,
       isEdit: false,
@@ -138,7 +154,8 @@ export default {
         name: '',
         colorCode: '#3498db',
         textColor: '#ffffff',
-        borderColor: 'transparent'
+        borderColor: 'transparent',
+        adminOnly: false
       }
     }
   },
@@ -204,7 +221,7 @@ export default {
     },
     openAddModal() {
       this.isEdit = false
-      this.formData = { id: null, name: '', colorCode: '#3498db', textColor: '#ffffff', borderColor: 'transparent' }
+      this.formData = { id: null, name: '', colorCode: '#3498db', textColor: '#ffffff', borderColor: 'transparent', adminOnly: false }
       this.showModal = true
     },
     openEditModal(label) {
@@ -212,7 +229,8 @@ export default {
       this.formData = { 
         ...label,
         textColor: label.textColor || '#ffffff',
-        borderColor: label.borderColor || 'transparent'
+        borderColor: label.borderColor || 'transparent',
+        adminOnly: !!label.adminOnly
       }
       this.showModal = true
     },
@@ -383,6 +401,39 @@ export default {
   border-radius: 4px;
   cursor: pointer;
 }
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.checkbox-wrapper label {
+  margin-bottom: 0 !important;
+  cursor: pointer;
+}
+
+.text-muted {
+  color: #6c757d;
+  font-size: 0.8rem;
+  display: block;
+  margin-top: 4px;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
+.badge-success { background: #d4edda; color: #155724; }
+.badge-danger { background: #f8d7da; color: #721c24; }
 </style>
 
 

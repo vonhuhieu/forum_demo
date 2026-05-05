@@ -25,7 +25,7 @@
                   (Không chọn nhãn)
                 </div>
                 <div 
-                  v-for="label in labels" 
+                  v-for="label in filteredLabels" 
                   :key="label.id" 
                   class="select-item"
                   :style="{ backgroundColor: label.colorCode, color: label.textColor, borderColor: label.borderColor || 'transparent' }"
@@ -129,6 +129,9 @@ export default {
       }
       items.push({ title: 'Đăng bài mới' })
       return items
+    },
+    filteredLabels() {
+      return this.labels.filter(l => !l.adminOnly)
     }
   },
   mounted() {

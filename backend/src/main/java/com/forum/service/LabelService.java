@@ -34,6 +34,7 @@ public class LabelService {
             label.setColorCode(dto.getColorCode());
             label.setTextColor(dto.getTextColor());
             label.setBorderColor(dto.getBorderColor());
+            label.setAdminOnly(dto.getAdminOnly() != null ? dto.getAdminOnly() : false);
             return ResponseDTO.success(labelMapper.toDTO(labelRepository.save(label)));
         }).orElseThrow(() -> new RuntimeException("Label not found"));
     }

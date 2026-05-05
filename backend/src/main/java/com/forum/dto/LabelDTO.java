@@ -13,4 +13,5 @@ public class LabelDTO {
     private String colorCode;
     private String textColor;
     private String borderColor;
+    private Boolean adminOnly;
 }

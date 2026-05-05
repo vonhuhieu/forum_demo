@@ -26,4 +26,7 @@ public class Label {
 
     @Column(nullable = true)
     private String borderColor; // e.g. "transparent" or "#000000"
+
+    @Column(nullable = false)
+    private Boolean adminOnly = false;
 }
