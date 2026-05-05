@@ -142,8 +142,20 @@ export default {
       return this.categoryGroups.filter(g => g.active && g.categories && g.categories.length > 0)
     }
   },
+  watch: {
+    '$route.hash': {
+      handler(newHash) {
+        if (newHash) {
+          this.scrollToHash(newHash)
+        }
+      }
+    }
+  },
   async mounted() {
     await this.fetchData()
+    if (this.$route.hash) {
+      this.scrollToHash(this.$route.hash)
+    }
   },
   methods: {
     async fetchData() {
@@ -187,6 +199,15 @@ export default {
       if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
       if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
       return num
+    },
+    scrollToHash(hash) {
+      this.$nextTick(() => {
+        const id = hash.replace('#', '')
+        const element = document.getElementById(id)
+        if (element) {
+          element.scrollIntoView({ behavior: 'auto' })
+        }
+      })
     }
   }
 }

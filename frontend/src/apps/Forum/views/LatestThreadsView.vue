@@ -14,6 +14,14 @@
           <div class="card-header">
             <span>Mới ra lò - Danh sách bài viết mới nhất</span>
           </div>
+
+          <div class="pagination-wrapper" style="padding: 1rem; border-top: 1px solid #eee;">
+            <ForumPagination 
+              :current-page="currentPage" 
+              :total-pages="totalPages" 
+              @page-changed="currentPage = $event"
+            />
+          </div>
           
           <div class="thread-list">
             <div v-for="thread in paginatedThreads" :key="thread.id" class="thread-row">

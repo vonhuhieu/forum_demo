@@ -88,12 +88,27 @@ export default {
   data() {
     return {
       thread: null,
+      categoryGroup: null,
       loading: true
     }
   },
   computed: {
     breadcrumbItems() {
-      const items = [{ title: 'Trang nhất', to: { name: 'Home' } }]
+      const items = [{ title: 'Trang chủ', to: { name: 'Home' } }]
+      
+      if (this.thread && this.thread.category && this.thread.category.categoryGroupId) {
+        // Cần lấy tên nhóm chuyên mục. Trong ThreadDetail hiện tại chưa có list groups.
+        // Tuy nhiên, backend thường trả về object category lồng nhau hoặc chúng ta fetch thêm.
+        // Giả sử chúng ta dùng tên nhóm từ API nếu có, hoặc fetch thêm.
+        // Kiểm tra xem thread.category có chứa info group không.
+        if (this.categoryGroup) {
+           items.push({ 
+             title: this.categoryGroup.name, 
+             to: { name: 'Home', hash: `#group-${this.categoryGroup.id}` } 
+           })
+        }
+      }
+
       if (this.thread && this.thread.category) {
         items.push({ 
           title: this.thread.category.name, 
@@ -136,6 +151,16 @@ export default {
         })
 
         this.thread = { ...response.data, content }
+
+        // Fetch Group Name
+        if (this.thread.category && this.thread.category.categoryGroupId) {
+          try {
+            const groupRes = await api.get('/category-groups')
+            this.categoryGroup = groupRes.data.find(g => g.id === this.thread.category.categoryGroupId)
+          } catch (e) {
+            console.error('Lỗi khi tải nhóm chuyên mục:', e)
+          }
+        }
       } catch (error) {
         console.error('Lỗi khi tải chi tiết bài viết:', error)
       } finally {

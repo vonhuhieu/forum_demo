@@ -8,7 +8,7 @@
             <div 
               class="select-selected admin-input" 
               @click="!isViewMode && (labelDropdownOpen = !labelDropdownOpen)"
-              :style="selectedLabel ? { backgroundColor: selectedLabel.colorCode, color: '#fff', border: 'none' } : {}"
+              :style="selectedLabel ? { backgroundColor: selectedLabel.colorCode, color: selectedLabel.textColor, borderColor: selectedLabel.borderColor || 'transparent' } : {}"
               :class="{ 'disabled': isViewMode }"
             >
               {{ selectedLabel ? selectedLabel.name : '(Chọn nhãn nếu có)' }}
@@ -21,7 +21,7 @@
                 v-for="label in labels" 
                 :key="label.id" 
                 class="select-item"
-                :style="{ backgroundColor: label.colorCode, color: '#fff' }"
+                :style="{ backgroundColor: label.colorCode, color: label.textColor, borderColor: label.borderColor || 'transparent' }"
                 @click="selectLabel(label)"
               >
                 {{ label.name }}
@@ -476,6 +476,7 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   min-height: 42px;
+  border: 1px solid transparent;
 }
 .select-selected.disabled {
   cursor: not-allowed;
@@ -510,6 +511,7 @@ export default {
   margin-bottom: 2px;
   font-weight: 500;
   color: #333;
+  border: 1px solid transparent;
 }
 .select-item:hover {
   filter: brightness(0.9);

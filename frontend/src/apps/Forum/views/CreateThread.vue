@@ -13,7 +13,7 @@
               <div 
                 class="select-selected" 
                 @click="labelDropdownOpen = !labelDropdownOpen"
-                :style="selectedLabel ? { backgroundColor: selectedLabel.colorCode, color: '#fff', border: 'none' } : {}"
+                :style="selectedLabel ? { backgroundColor: selectedLabel.colorCode, color: selectedLabel.textColor, borderColor: selectedLabel.borderColor || 'transparent' } : {}"
               >
                 {{ selectedLabel ? selectedLabel.name : '(Chọn nhãn nếu có)' }}
               </div>
@@ -28,7 +28,7 @@
                   v-for="label in labels" 
                   :key="label.id" 
                   class="select-item"
-                  :style="{ backgroundColor: label.colorCode, color: '#fff' }"
+                  :style="{ backgroundColor: label.colorCode, color: label.textColor, borderColor: label.borderColor || 'transparent' }"
                   @click="selectLabel(label)"
                 >
                   {{ label.name }}
@@ -226,6 +226,7 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  border: 1px solid transparent;
 }
 .select-selected:after {
   content: "▼";
@@ -256,6 +257,7 @@ export default {
   margin-bottom: 2px;
   font-weight: 500;
   color: #333;
+  border: 1px solid transparent;
 }
 .select-item:hover {
   filter: brightness(0.9);

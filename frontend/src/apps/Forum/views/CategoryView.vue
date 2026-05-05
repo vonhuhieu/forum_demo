@@ -16,6 +16,14 @@
             <span v-if="category" style="font-size: 0.8rem; font-weight: normal; opacity: 0.8;">{{ category.description }}</span>
           </div>
 
+          <div class="pagination-wrapper" style="padding: 1rem; border-top: 1px solid #eee;">
+            <ForumPagination 
+              :current-page="currentPage" 
+              :total-pages="totalPages" 
+              @page-changed="currentPage = $event"
+            />
+          </div>
+
           <!-- Sub-categories block (New) -->
           <div v-if="category && category.subCategories && category.subCategories.length > 0" class="sub-categories-block">
             <div class="sub-cat-grid">
@@ -104,6 +112,7 @@ export default {
   data() {
     return {
       category: null,
+      categoryGroup: null,
       threads: [],
       loading: true,
       currentPage: 1,
@@ -112,10 +121,17 @@ export default {
   },
   computed: {
     breadcrumbItems() {
-      return [
-        { title: 'Trang chủ', to: { name: 'Home' } },
-        { title: this.category ? this.category.name : 'Chuyên mục' }
-      ]
+      const items = [{ title: 'Trang chủ', to: { name: 'Home' } }]
+      
+      if (this.categoryGroup) {
+        items.push({ 
+          title: this.categoryGroup.name, 
+          to: { name: 'Home', hash: `#group-${this.categoryGroup.id}` } 
+        })
+      }
+      
+      items.push({ title: this.category ? this.category.name : 'Chuyên mục' })
+      return items
     },
     totalPages() {
       return Math.ceil(this.threads.length / this.itemsPerPage) || 1
@@ -135,9 +151,17 @@ export default {
       const categoryId = this.$route.params.id
       try {
         // Fetch tất cả chuyên mục để tìm tên chuyên mục hiện tại
-        const catRes = await api.get('/categories')
+        const [catRes, groupRes] = await Promise.all([
+          api.get('/categories'),
+          api.get('/category-groups')
+        ])
+        
         const categories = catRes.data
         this.category = categories.find(c => c.id == categoryId)
+
+        if (this.category && this.category.categoryGroupId) {
+          this.categoryGroup = groupRes.data.find(g => g.id === this.category.categoryGroupId)
+        }
 
         // Fetch danh sách bài viết
         const threadRes = await api.get('/threads', { params: { categoryId } })
