@@ -281,8 +281,8 @@ export default {
 
 .image-thumbnail-wrapper {
   position: relative;
-  width: 150px;
-  height: 150px;
+  width: 200px;
+  height: 200px;
   background: #eee;
   border: 1px solid #ddd;
   border-radius: 4px;

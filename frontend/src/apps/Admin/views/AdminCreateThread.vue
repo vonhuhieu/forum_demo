@@ -378,7 +378,7 @@ export default {
           attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
           
           attachedImages.forEach(img => {
-            attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 150px; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
+            attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
           })
           
           attachedHtml += `</div><!-- END ATTACHMENT SECTION --></div>`
@@ -447,7 +447,7 @@ export default {
         attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
         
         this.attachedImages.forEach(img => {
-          attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 150px; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
+          attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
         })
         
         attachedHtml += `</div></div>`
@@ -549,6 +549,17 @@ export default {
   padding: 0.4em;
 }
 
+:deep(.ck-content .image-inline) {
+  margin: 5px !important;
+  display: inline-block !important;
+}
+
+:deep(.ck-content .image-inline img) {
+  width: 200px !important;
+  height: 200px !important;
+  object-fit: cover !important;
+}
+
 .custom-select {
   font-size: 14px;
 }
@@ -626,8 +637,8 @@ export default {
 }
 
 .attached-item img {
-  width: 150px;
-  height: 150px;
+  width: 200px;
+  height: 200px;
   object-fit: cover;
   border: 1px solid #ddd;
   border-radius: 4px;

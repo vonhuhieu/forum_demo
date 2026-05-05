@@ -383,6 +383,11 @@ export default {
 }
 
 :deep(.ql-editor img), :deep(.ql-editor video) { max-width: 100%; height: auto; }
+:deep(.ql-editor .image-inline img) {
+  width: 200px !important;
+  height: 200px !important;
+  object-fit: cover !important;
+}
 :deep(.ql-editor table) { border-collapse: collapse; width: 100%; margin: 1rem 0; }
 :deep(.ql-editor td) { border: 1px solid #ccc; padding: 8px; }
 
