@@ -85,6 +85,8 @@
           </div>
         </div>
       </div>
+
+      <Breadcrumb :items="breadcrumbItems" />
     </main>
   </div>
 </template>

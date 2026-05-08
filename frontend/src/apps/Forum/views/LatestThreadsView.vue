@@ -79,6 +79,8 @@
             />
           </div>
         </div>
+
+        <Breadcrumb :items="breadcrumbItems" />
       </div>
     </main>
 
