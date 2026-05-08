@@ -70,7 +70,7 @@
 
             <div class="editor-container">
               <CustomEditor ref="editor" v-model="form.content" @image-uploaded="handleImageUploaded" />
-              <ImageUploaderPanel ref="uploaderPanel" @insert-images="handleInsertImages" />
+              <ImageUploaderPanel ref="uploaderPanel" v-model:images="attachedImages" @insert-images="handleInsertImages" />
             </div>
 
             <!-- Poll Form -->
@@ -115,6 +115,7 @@ export default {
       selectedLabel: null,
       labelDropdownOpen: false,
       postType: 'discussion',
+      attachedImages: [],
       form: { title: '', content: '', categoryId: '', poll: null, labelId: null }
     }
   },
@@ -132,6 +133,14 @@ export default {
     },
     filteredLabels() {
       return this.labels.filter(l => !l.adminOnly)
+    }
+  },
+  watch: {
+    attachedImages: {
+      handler() {
+        this.syncAttachmentsToEditor()
+      },
+      deep: true
     }
   },
   mounted() {
@@ -176,12 +185,45 @@ export default {
         return
       }
       try {
+        let cleanContent = this.form.content || ''
+        const markers = [
+          /<div[^>]*class="attachment-block"[^>]*>/i,
+          /<p><strong>Đính kèm<\/strong><\/p>/i
+        ]
+        let matchIndex = -1
+        for (const marker of markers) {
+          const match = cleanContent.match(marker)
+          if (match) {
+            matchIndex = match.index
+            break
+          }
+        }
+        if (matchIndex !== -1) {
+          cleanContent = cleanContent.substring(0, matchIndex).trim()
+        }
+
+        let finalContent = cleanContent
+        const attachedImages = this.attachedImages
+
+        if (attachedImages && attachedImages.length > 0) {
+          let attachedHtml = `<div id="attachment-section" class="attachment-block" style="margin-top: 2rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">`
+          attachedHtml += `<div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>`
+          attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
+          
+          attachedImages.forEach(img => {
+            attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
+          })
+          
+          attachedHtml += `</div><!-- END ATTACHMENT SECTION --></div>`
+          finalContent = finalContent.trim() + '\n' + attachedHtml
+        }
+
         const payload = {
           title: this.form.title,
-          content: this.form.content,
+          content: finalContent,
           category: { id: this.catId },
           label: this.form.labelId ? { id: this.form.labelId } : null,
-          attachedImages: JSON.stringify(this.$refs.uploaderPanel.uploadedImages)
+          attachedImages: JSON.stringify(attachedImages)
         }
         if (this.postType === 'poll' && this.form.poll) {
           payload.poll = this.form.poll
@@ -199,9 +241,41 @@ export default {
       }
     },
     handleImageUploaded(image) {
-      if (this.$refs.uploaderPanel) {
-        this.$refs.uploaderPanel.addImage(image)
+      this.attachedImages.push(image)
+    },
+    syncAttachmentsToEditor() {
+      let content = this.form.content || ''
+      
+      const markers = [
+        /<div[^>]*class="attachment-block"[^>]*>/i,
+        /<p><strong>Đính kèm<\/strong><\/p>/i
+      ]
+      let matchIndex = -1
+      for (const marker of markers) {
+        const match = content.match(marker)
+        if (match) {
+          matchIndex = match.index
+          break
+        }
       }
+      if (matchIndex !== -1) {
+        content = content.substring(0, matchIndex).trim()
+      }
+
+      if (this.attachedImages && this.attachedImages.length > 0) {
+        let attachedHtml = `<div class="attachment-block" style="margin-top: 2rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">`
+        attachedHtml += `<div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>`
+        attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
+        
+        this.attachedImages.forEach(img => {
+          attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
+        })
+        
+        attachedHtml += `</div></div>`
+        content = content.trim() + '\n' + attachedHtml
+      }
+
+      this.form.content = content
     }
   }
 }
