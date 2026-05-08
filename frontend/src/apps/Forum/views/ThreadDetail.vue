@@ -101,6 +101,7 @@ export default {
     return {
       thread: null,
       categoryGroup: null,
+      allCategories: [],
       loading: true,
       showLightbox: false,
       activeImageUrl: ''
@@ -119,12 +120,36 @@ export default {
         }
       }
 
-      if (this.thread && this.thread.category) {
+      if (this.thread && this.thread.category && this.allCategories && this.allCategories.length > 0) {
+         let parents = [];
+         let currentParentId = this.thread.category.parentCategoryId;
+         while (currentParentId) {
+             const parent = this.allCategories.find(c => c.id === currentParentId);
+             if (parent) {
+                 parents.unshift(parent);
+                 currentParentId = parent.parentCategoryId;
+             } else {
+                 break;
+             }
+         }
+         parents.forEach(p => {
+             items.push({
+                 title: p.name,
+                 to: { name: 'CategoryDetail', params: { id: p.id } }
+             })
+         });
+         
+         items.push({ 
+           title: this.thread.category.name, 
+           to: { name: 'CategoryDetail', params: { id: this.thread.category.id } } 
+         })
+      } else if (this.thread && this.thread.category) {
         items.push({ 
           title: this.thread.category.name, 
           to: { name: 'CategoryDetail', params: { id: this.thread.category.id } } 
         })
       }
+
       if (this.thread) {
         items.push({ title: this.thread.title })
       }
@@ -178,7 +203,11 @@ export default {
         // Fetch Group Name
         if (this.thread.category && this.thread.category.categoryGroupId) {
           try {
-            const groupRes = await api.get('/category-groups')
+            const [catRes, groupRes] = await Promise.all([
+               api.get('/categories'),
+               api.get('/category-groups')
+            ])
+            this.allCategories = catRes.data
             this.categoryGroup = groupRes.data.find(g => g.id === this.thread.category.categoryGroupId)
           } catch (e) {
             console.error('Lỗi khi tải nhóm chuyên mục:', e)
