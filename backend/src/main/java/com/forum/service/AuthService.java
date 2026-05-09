@@ -60,9 +60,12 @@ public class AuthService {
         return AVATAR_COLORS[index];
     }
 
-    public boolean registerUser(String username, String password, String email) {
+    public void registerUser(String username, String password, String email) {
         if (userRepository.findByUsername(username).isPresent()) {
-            return false;
+            throw new IllegalArgumentException("Tên đăng nhập đã tồn tại");
+        }
+        if (userRepository.findFirstByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Email đã được sử dụng");
         }
 
         User user = new User();
@@ -72,7 +75,5 @@ public class AuthService {
         user.setRoles(Set.of(Constants.ROLE_USER));
         user.setAvatar(getRandomColor());
         userRepository.save(user);
-
-        return true;
     }
 }

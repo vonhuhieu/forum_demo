@@ -33,11 +33,11 @@ public class AuthController {
         String password = registerRequest.get("password");
         String email = registerRequest.get("email");
 
-        boolean isRegistered = authService.registerUser(username, password, email);
-        if (!isRegistered) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Tên đăng nhập đã tồn tại"));
+        try {
+            authService.registerUser(username, password, email);
+            return ResponseEntity.ok(Map.of("message", "Đăng ký thành công"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
-
-        return ResponseEntity.ok(Map.of("message", "Đăng ký thành công"));
     }
 }
