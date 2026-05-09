@@ -13,6 +13,7 @@ import CreateThread from '@/apps/Forum/views/CreateThread.vue'
 import ThreadDetail from '@/apps/Forum/views/ThreadDetail.vue'
 import CategoryView from '@/apps/Forum/views/CategoryView.vue'
 import LatestThreadsView from '@/apps/Forum/views/LatestThreadsView.vue'
+import ForgotPassword from '@/apps/Auth/views/ForgotPassword.vue'
 
 const routes = [
   {
@@ -45,6 +46,11 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: Register
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword
   },
   {
     path: '/create-thread',

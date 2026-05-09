@@ -7,6 +7,12 @@ class AuthService {
   register(userData) {
     return api.post('/auth/register', userData)
   }
+  forgotPassword(email) {
+    return api.post('/auth/forgot-password', { email })
+  }
+  resetPassword(payload) {
+    return api.post('/auth/reset-password', payload)
+  }
 }
 
 export default new AuthService()

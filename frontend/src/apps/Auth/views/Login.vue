@@ -17,10 +17,15 @@
             </span>
           </div>
         </div>
+        <div class="remember-group">
+          <input type="checkbox" id="remember" v-model="rememberMe">
+          <label for="remember">Nhớ mật khẩu</label>
+        </div>
         <div v-if="error" class="error-msg">{{ error }}</div>
         <button type="submit" class="btn-login">VÀO HỆ THỐNG</button>
-        <div style="margin-top: 1rem; text-align: center;">
+        <div style="margin-top: 1rem; text-align: center; display: flex; justify-content: space-between;">
           <router-link :to="{ name: 'Home' }">Quay lại trang chủ</router-link>
+          <router-link :to="{ name: 'ForgotPassword' }" style="color: #e74c3c;">Quên mật khẩu?</router-link>
         </div>
       </form>
     </div>
@@ -37,7 +42,17 @@ export default {
       username: '',
       password: '',
       showPassword: false,
+      rememberMe: false,
       error: ''
+    }
+  },
+  mounted() {
+    const savedUser = localStorage.getItem('remembered_username')
+    const savedPass = localStorage.getItem('remembered_password')
+    if (savedUser && savedPass) {
+      this.username = savedUser
+      this.password = savedPass
+      this.rememberMe = true
     }
   },
   methods: {
@@ -47,6 +62,15 @@ export default {
           username: this.username,
           password: this.password
         })
+
+        if (this.rememberMe) {
+          localStorage.setItem('remembered_username', this.username)
+          localStorage.setItem('remembered_password', this.password)
+        } else {
+          localStorage.removeItem('remembered_username')
+          localStorage.removeItem('remembered_password')
+        }
+
         localStorage.setItem('token', response.data.token)
         localStorage.setItem('user', JSON.stringify(response.data))
         const roles = response.data.roles || []
@@ -77,6 +101,22 @@ export default {
 .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: #1a507a; }
 .form-group input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; outline: none; }
 .form-group input:focus { border-color: #1a507a; }
+
+.remember-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.remember-group input {
+  margin-right: 0.5rem;
+  width: auto;
+  cursor: pointer;
+}
+.remember-group label {
+  color: #1a507a;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
 
 .password-wrapper {
   position: relative;

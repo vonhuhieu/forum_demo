@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import java.util.HashSet;
 import java.util.Set;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -35,6 +37,12 @@ public class User {
 
     @Column
     private String email;
+
+    @Column(name = "reset_code")
+    private String resetCode;
+
+    @Column(name = "reset_code_expiry")
+    private LocalDateTime resetCodeExpiry;
 
     public User(String username, String password, Set<String> roles) {
         this.username = username;

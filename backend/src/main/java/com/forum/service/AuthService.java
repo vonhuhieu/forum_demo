@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Random;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.SimpleMailMessage;
 
 @Service
 public class AuthService {
@@ -74,6 +77,58 @@ public class AuthService {
         user.setEmail(email);
         user.setRoles(Set.of(Constants.ROLE_USER));
         user.setAvatar(getRandomColor());
+        userRepository.save(user);
+    }
+
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
+
+    public void generatePasswordResetCode(String email) {
+        Optional<User> userOpt = userRepository.findFirstByEmail(email);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("Email không tồn tại trong hệ thống");
+        }
+
+        User user = userOpt.get();
+        String code = String.format("%06d", new Random().nextInt(999999));
+        user.setResetCode(code);
+        user.setResetCodeExpiry(java.time.LocalDateTime.now().plusMinutes(15));
+        userRepository.save(user);
+
+        System.out.println("Mã reset mật khẩu cho email " + email + " là: " + code);
+
+        if (mailSender != null) {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setTo(email);
+                message.setSubject("Mã xác nhận lấy lại mật khẩu - Diễn đàn");
+                message.setText("Mã xác nhận của bạn là: " + code + "\nMã này sẽ hết hạn sau 15 phút.");
+                mailSender.send(message);
+            } catch (Exception e) {
+                System.out.println("Lỗi gửi email: " + e.getMessage());
+                // Khong throw exception de van log code ra console cho muc dich test
+            }
+        }
+    }
+
+    public void resetPasswordWithCode(String email, String code, String newPassword) {
+        Optional<User> userOpt = userRepository.findFirstByEmail(email);
+        if (userOpt.isEmpty()) {
+            throw new IllegalArgumentException("Email không tồn tại trong hệ thống");
+        }
+
+        User user = userOpt.get();
+        if (user.getResetCode() == null || !user.getResetCode().equals(code)) {
+            throw new IllegalArgumentException("Mã xác nhận không chính xác");
+        }
+
+        if (user.getResetCodeExpiry() == null || user.getResetCodeExpiry().isBefore(java.time.LocalDateTime.now())) {
+            throw new IllegalArgumentException("Mã xác nhận đã hết hạn");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setResetCode(null);
+        user.setResetCodeExpiry(null);
         userRepository.save(user);
     }
 }
