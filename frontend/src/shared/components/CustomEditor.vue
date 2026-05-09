@@ -198,7 +198,7 @@ export default {
           let currentPos = writer.createPositionAt(paragraph, 0);
 
           urls.forEach((url, index) => {
-            const imageElement = writer.createElement('imageInline', { src: url, resizedWidth: '150px' });
+            const imageElement = writer.createElement('imageInline', { src: url, resizedWidth: '200px' });
             writer.insert(imageElement, currentPos);
             currentPos = writer.createPositionAfter(imageElement);
             
@@ -296,5 +296,11 @@ export default {
 :deep(.ck-content .image-inline) {
   margin: 5px !important;
   display: inline-block !important;
+}
+
+:deep(.ck-content .image-inline img) {
+  width: 200px !important;
+  height: 200px !important;
+  object-fit: cover !important;
 }
 </style>

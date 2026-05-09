@@ -12,8 +12,11 @@
         <!-- Block 2: Danh sách bài viết -->
         <div class="card" style="margin-bottom: 2rem;">
           <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>{{ category ? category.name : 'Chuyên mục' }}</span>
-            <span v-if="category" style="font-size: 0.8rem; font-weight: normal; opacity: 0.8;">{{ category.description }}</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span>{{ category ? category.name : 'Chuyên mục' }}</span>
+              <span v-if="category" style="font-size: 0.8rem; font-weight: normal; opacity: 0.8;">{{ category.description }}</span>
+            </div>
+            <button v-if="isLoggedIn" class="btn-post-thread" @click="goToCreateThread">Đăng bài...</button>
           </div>
 
           <div class="pagination-wrapper" style="padding: 1rem; border-top: 1px solid #eee;">
@@ -26,12 +29,48 @@
 
           <!-- Sub-categories block (New) -->
           <div v-if="category && category.subCategories && category.subCategories.length > 0" class="sub-categories-block">
-            <div class="sub-cat-grid">
-              <router-link v-for="sub in category.subCategories" :key="sub.id" 
-                :to="{ name: 'CategoryDetail', params: { id: sub.id } }" class="sub-cat-item">
-                <span class="sub-cat-icon">📁</span>
-                <span class="sub-cat-name">{{ sub.name }}</span>
-              </router-link>
+            <div class="sub-categories-list">
+              <div v-for="sub in category.subCategories" :key="sub.id" class="category-row">
+                <div class="category-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f39c12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div class="category-info">
+                  <div class="cat-name-row">
+                    <router-link :to="{ name: 'CategoryDetail', params: { id: sub.id } }" class="category-name">
+                      {{ sub.name }}
+                    </router-link>
+                  </div>
+                  <div v-if="sub.description" class="cat-desc">{{ sub.description }}</div>
+                </div>
+                <div class="category-stats">
+                  <div class="stat-item">
+                    <span class="stat-label">Chủ đề</span>
+                    <span class="stat-value">{{ formatNumber(sub.threadCount || 0) }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">Bài viết</span>
+                    <span class="stat-value">{{ formatNumber(sub.postCount || 0) }}</span>
+                  </div>
+                </div>
+                <div class="category-last-thread">
+                  <div v-if="lastThreadByCat[sub.id]" class="last-thread-box">
+                    <div class="last-thread-avatar" :style="{ backgroundColor: lastThreadByCat[sub.id].author && lastThreadByCat[sub.id].author.avatar ? lastThreadByCat[sub.id].author.avatar : '#ccc', color: '#fff' }">
+                      {{ lastThreadByCat[sub.id].author?.username?.charAt(0).toUpperCase() || 'A' }}
+                    </div>
+                    <div class="last-thread-info">
+                      <router-link :to="{ name: 'ThreadDetail', params: { id: lastThreadByCat[sub.id].id } }" class="last-thread-title" :title="lastThreadByCat[sub.id].title">
+                        {{ lastThreadByCat[sub.id].title }}
+                      </router-link>
+                      <div class="last-thread-meta">
+                        <span>{{ formatDate(lastThreadByCat[sub.id].createdAt) }}</span>
+                        <span class="dot">•</span>
+                        <span class="author">{{ lastThreadByCat[sub.id].author?.username || 'Ẩn danh' }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="no-thread" style="color: #999; font-size: 0.85rem;">Chưa có bài viết</div>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -90,6 +129,8 @@
             />
           </div>
         </div>
+
+        <Breadcrumb :items="breadcrumbItems" />
       </div>
     </main>
   </div>
@@ -113,10 +154,22 @@ export default {
     return {
       category: null,
       categoryGroup: null,
+      allCategories: [],
+      lastThreadByCat: {},
       threads: [],
       loading: true,
       currentPage: 1,
-      itemsPerPage: 10
+      itemsPerPage: 10,
+      isLoggedIn: false
+    }
+  },
+  watch: {
+    '$route.params.id': {
+      handler(newId, oldId) {
+        if (newId && newId !== oldId) {
+          this.fetchData()
+        }
+      }
     }
   },
   computed: {
@@ -128,6 +181,26 @@ export default {
           title: this.categoryGroup.name, 
           to: { name: 'Home', hash: `#group-${this.categoryGroup.id}` } 
         })
+      }
+
+      if (this.category && this.allCategories && this.allCategories.length > 0) {
+         let parents = [];
+         let currentParentId = this.category.parentCategoryId;
+         while (currentParentId) {
+             const parent = this.allCategories.find(c => c.id === currentParentId);
+             if (parent) {
+                 parents.unshift(parent);
+                 currentParentId = parent.parentCategoryId;
+             } else {
+                 break;
+             }
+         }
+         parents.forEach(p => {
+             items.push({
+                 title: p.name,
+                 to: { name: 'CategoryDetail', params: { id: p.id } }
+             })
+         });
       }
       
       items.push({ title: this.category ? this.category.name : 'Chuyên mục' })
@@ -143,9 +216,19 @@ export default {
     }
   },
   async mounted() {
+    this.checkAuth()
     await this.fetchData()
   },
   methods: {
+    checkAuth() {
+      const user = localStorage.getItem('user')
+      this.isLoggedIn = !!user
+    },
+    goToCreateThread() {
+      if (this.category) {
+        this.$router.push({ name: 'CreateThread', query: { catId: this.category.id } })
+      }
+    },
     async fetchData() {
       this.loading = true
       const categoryId = this.$route.params.id
@@ -157,6 +240,7 @@ export default {
         ])
         
         const categories = catRes.data
+        this.allCategories = categories
         this.category = categories.find(c => c.id == categoryId)
 
         if (this.category && this.category.categoryGroupId) {
@@ -166,14 +250,37 @@ export default {
         // Fetch danh sách bài viết
         const threadRes = await api.get('/threads', { params: { categoryId } })
         this.threads = threadRes.data
+
+        // Fetch last thread for subcategories
+        if (this.category && this.category.subCategories) {
+          for (const sub of this.category.subCategories) {
+            this.fetchLastThread(sub.id)
+          }
+        }
       } catch (error) {
         console.error('Lỗi khi tải dữ liệu chuyên mục:', error)
       } finally {
         this.loading = false
       }
     },
+    async fetchLastThread(catId) {
+      try {
+        const res = await api.get('/threads', { params: { categoryId: catId, limit: 1 } })
+        if (res.data && res.data.length > 0) {
+          this.lastThreadByCat = { ...this.lastThreadByCat, [catId]: res.data[0] }
+        }
+      } catch (e) {
+        console.error(e)
+      }
+    },
     formatDate(dateStr) {
       return formatForumDate(dateStr)
+    },
+    formatNumber(num) {
+      if (!num) return 0
+      if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
+      if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
+      return num
     }
   }
 }
@@ -187,40 +294,134 @@ export default {
 }
 
 .sub-categories-block {
-  padding: 1rem;
   background-color: #f8f9fa;
   border-bottom: 1px solid #eee;
 }
 
-.sub-cat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 10px;
+.sub-categories-list {
+  display: flex;
+  flex-direction: column;
 }
 
-.sub-cat-item {
+.category-row {
+  display: flex;
+  padding: 12px 15px;
+  border-bottom: 1px solid #f0f2f5;
+  align-items: center;
+  background: white;
+  transition: background-color 0.2s;
+}
+
+.category-row:last-child {
+  border-bottom: none;
+}
+
+.category-row:hover {
+  background: #f9fbfc;
+}
+
+.category-icon {
+  width: 40px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 15px;
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  text-decoration: none;
+}
+
+.category-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.category-name {
+  font-weight: 600;
   color: #1a507a;
+  text-decoration: none;
+  font-size: 1.05rem;
+}
+
+.category-name:hover {
+  text-decoration: underline;
+}
+
+.cat-desc {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 3px;
+}
+
+.category-stats {
+  display: flex;
+  width: 150px;
+  text-align: center;
+  gap: 15px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #999;
+}
+
+.stat-value {
+  font-size: 0.95rem;
   font-weight: 500;
-  transition: all 0.2s;
+  margin-top: 2px;
 }
 
-.sub-cat-item:hover {
-  border-color: #1a507a;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  transform: translateY(-2px);
+.category-last-thread {
+  width: 320px;
+  padding-left: 15px;
+  border-left: 1px solid #eee;
 }
 
-.sub-cat-icon {
-  font-size: 1.2rem;
-  color: #f39c12;
+.last-thread-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.last-thread-avatar {
+  width: 36px;
+  height: 36px;
+  background: #5c6bc0;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.last-thread-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.last-thread-title {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1a507a;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+
+.last-thread-title:hover {
+  text-decoration: underline;
+}
+
+.last-thread-meta {
+  font-size: 0.8rem;
+  color: #888;
 }
 
 .label-tag {
