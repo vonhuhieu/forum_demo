@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/menus", "/api/menus/**").permitAll() 
                 .requestMatchers("/api/statistics", "/api/statistics/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll() // Cho phép xem ảnh/video/tệp đính kèm
+                .requestMatchers("/ws/**").permitAll() // Cho phép thiết lập kết nối WebSocket công khai
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories", "/api/categories/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/category-groups", "/api/category-groups/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/threads", "/api/threads/**").permitAll()

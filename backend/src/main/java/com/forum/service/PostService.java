@@ -4,6 +4,7 @@ import com.forum.dto.PostDTO;
 import com.forum.dto.ResponseDTO;
 import com.forum.entity.Post;
 import com.forum.entity.Thread;
+import com.forum.entity.User;
 import com.forum.mapper.PostMapper;
 import com.forum.repository.PostRepository;
 import com.forum.repository.ThreadRepository;
@@ -24,6 +25,7 @@ public class PostService {
     private final ThreadRepository threadRepository;
     private final UserRepository userRepository;
     private final PostMapper postMapper;
+    private final NotificationService notificationService;
 
     public ResponseDTO<List<PostDTO>> getPostsByThread(Long threadId) {
         List<Post> posts = postRepository.findByThreadIdOrderByCreatedAtAsc(threadId);
@@ -49,7 +51,15 @@ public class PostService {
 
         // Update thread statistics
         thread.setReplyCount(thread.getReplyCount() + 1);
-        threadRepository.save(thread);
+        Thread updatedThread = threadRepository.save(thread);
+
+        // Gửi thông báo tới chủ bài viết realtime + lưu DB
+        try {
+            User authorEntity = post.getAuthor(); // Lấy User object đã resolve ở trên
+            notificationService.sendNewCommentNotification(authorEntity, updatedThread, saved);
+        } catch (Exception e) {
+            // Don't block transaction if notification push errors out
+        }
 
         return ResponseDTO.success(postMapper.toDTO(saved));
     }

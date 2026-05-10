@@ -40,17 +40,20 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    component: Login
+    component: Login,
+    meta: { guestOnly: true }
   },
   {
     path: '/register',
     name: 'Register',
-    component: Register
+    component: Register,
+    meta: { guestOnly: true }
   },
   {
     path: '/forgot-password',
     name: 'ForgotPassword',
-    component: ForgotPassword
+    component: ForgotPassword,
+    meta: { guestOnly: true }
   },
   {
     path: '/create-thread',
@@ -118,14 +121,25 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token')
+
+  // Kiểm tra nếu route yêu cầu Đăng nhập
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    const token = localStorage.getItem('token')
     if (!token) {
       next('/login')
     } else {
       next()
     }
-  } else {
+  } 
+  // Kiểm tra nếu route Dành riêng cho khách chưa đăng nhập (Login/Register)
+  else if (to.matched.some(record => record.meta.guestOnly)) {
+    if (token) {
+      next({ name: 'Home' }) // Nếu đã login rồi thì đẩy về Home
+    } else {
+      next()
+    }
+  }
+  else {
     next()
   }
 })

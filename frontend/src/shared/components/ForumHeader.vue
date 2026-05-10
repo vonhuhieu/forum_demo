@@ -19,6 +19,57 @@
         </nav>
         <div class="nav-right">
           <template v-if="isLoggedIn">
+            
+            <!-- Notification Bell Container -->
+            <div class="notification-bell-container" ref="notifContainer">
+               <button class="btn-icon-bell" @click="toggleNotifDropdown" aria-label="Notifications">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  </svg>
+                  <span class="notif-badge" v-if="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+               </button>
+
+               <!-- Notification Dropdown -->
+               <div class="notif-dropdown" v-show="showNotifDropdown">
+                  <div class="notif-header">
+                     <span class="notif-title">Thông báo</span>
+                     <button class="btn-read-all" v-if="unreadCount > 0" @click.stop="markAllRead">Đánh dấu đã đọc</button>
+                  </div>
+                  
+                  <div class="notif-list" v-if="notifications.length > 0">
+                     <div 
+                       v-for="notif in notifications" 
+                       :key="notif.id" 
+                       class="notif-item" 
+                       :class="{ 'unread': !notif.isRead }"
+                       @click="handleNotifClick(notif)"
+                     >
+                       <div class="notif-avatar-wrapper">
+                          <div class="notif-avatar" :style="{ backgroundColor: notif.actorAvatar || '#3498db' }">
+                             {{ notif.actorUsername ? notif.actorUsername.charAt(0).toUpperCase() : '?' }}
+                          </div>
+                       </div>
+                       <div class="notif-body">
+                          <div class="notif-text">
+                             <strong>{{ notif.actorUsername }}</strong> đã trả lời bài viết <span class="highlight-thread">"{{ notif.threadTitle }}"</span>
+                          </div>
+                          <div class="notif-time">{{ formatTime(notif.createdAt) }}</div>
+                       </div>
+                       <div class="notif-status-dot" v-if="!notif.isRead"></div>
+                     </div>
+                  </div>
+                  
+                  <div class="notif-empty" v-else>
+                     Không có thông báo nào.
+                  </div>
+                  
+                  <div class="notif-footer">
+                     <a href="#" @click.prevent>Xem tất cả thông báo</a>
+                  </div>
+               </div>
+            </div>
+
             <div class="user-info-header">
               <span class="user-avatar-small" :style="{ backgroundColor: currentUser.avatar || '#fff', color: currentUser.avatar ? '#fff' : '#1a507a' }">
                 {{ currentUser.username.charAt(0).toUpperCase() }}
@@ -43,6 +94,8 @@
 
 <script>
 import api from '@/shared/services/api.service'
+import webSocketService from '@/shared/services/websocket.service'
+import { formatForumDate } from '@/shared/utils/date'
 
 export default {
   name: 'ForumHeader',
@@ -50,11 +103,22 @@ export default {
     return {
       menus: [],
       isLoggedIn: false,
-      currentUser: null
+      currentUser: null,
+      showNotifDropdown: false,
+      notifications: [],
+      unreadCount: 0
     }
   },
   async mounted() {
     this.checkAuth()
+    
+    if (this.isLoggedIn && this.currentUser) {
+      this.fetchNotifSummary()
+      this.setupSocket()
+    }
+    
+    document.addEventListener('click', this.handleClickOutside)
+
     try {
       const response = await api.get('/menus')
       this.menus = response.data
@@ -65,6 +129,9 @@ export default {
       ]
     }
   },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside)
+  },
   methods: {
     checkAuth() {
       const user = localStorage.getItem('user')
@@ -74,6 +141,7 @@ export default {
       }
     },
     handleLogout() {
+      webSocketService.disconnect()
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       this.isLoggedIn = false
@@ -84,12 +152,289 @@ export default {
       } else {
         window.location.reload() // Reload to update UI across components
       }
+    },
+    
+    // --- Notification System Logic ---
+    
+    setupSocket() {
+      if (!this.currentUser) return
+      
+      // Connect (reuses existing connection if already active)
+      webSocketService.connect(this.currentUser.username)
+      
+      // Register callback for live push notifications
+      webSocketService.subscribeToNotifications(this.currentUser.username, (newNotif) => {
+        // Add to top of list
+        this.notifications.unshift(newNotif)
+        this.unreadCount++
+        
+        // Optional sound or discrete toast could go here
+      })
+    },
+    
+    async fetchNotifSummary() {
+      try {
+        const [listRes, countRes] = await Promise.all([
+          api.get('/notifications'),
+          api.get('/notifications/unread-count')
+        ])
+        this.notifications = listRes.data
+        this.unreadCount = countRes.data
+      } catch (error) {
+        console.error('Lỗi khi tải thông báo:', error)
+      }
+    },
+    
+    toggleNotifDropdown() {
+      this.showNotifDropdown = !this.showNotifDropdown
+    },
+    
+    handleClickOutside(e) {
+      const container = this.$refs.notifContainer
+      if (container && !container.contains(e.target)) {
+        this.showNotifDropdown = false
+      }
+    },
+    
+    formatTime(dateStr) {
+      return formatForumDate(dateStr)
+    },
+    
+    async markAllRead() {
+      try {
+        await api.put('/notifications/read-all')
+        this.unreadCount = 0
+        this.notifications.forEach(n => n.isRead = true)
+      } catch (e) {
+        console.error(e)
+      }
+    },
+    
+    async handleNotifClick(notif) {
+      this.showNotifDropdown = false
+      
+      // 1. Mark this specific notification as read instantly locally
+      if (!notif.isRead) {
+        notif.isRead = true
+        this.unreadCount = Math.max(0, this.unreadCount - 1)
+        
+        // Fire off the API async background (no wait)
+        try {
+          api.put(`/notifications/${notif.id}/read`)
+        } catch (e) {
+          console.error(e)
+        }
+      }
+      
+      // 2. Route logic: navigate to exact post
+      const routeTarget = {
+         name: 'ThreadDetail',
+         params: { id: notif.threadId }
+      }
+      
+      if (notif.postId) {
+         routeTarget.query = { postId: notif.postId }
+      }
+      
+      this.$router.push(routeTarget)
     }
   }
 }
 </script>
 
 <style scoped>
+.notification-bell-container {
+  position: relative;
+  margin-right: 15px;
+}
+
+.btn-icon-bell {
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 5px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.btn-icon-bell:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.notif-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background-color: #e74c3c;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid #1a507a;
+}
+
+/* Dropdown Shell */
+.notif-dropdown {
+  position: absolute;
+  top: 40px;
+  right: -100px;
+  width: 360px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Standard Arrow pointer at top */
+.notif-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 112px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #f8f9fa;
+}
+
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #eee;
+}
+
+.notif-title {
+  color: #2c3e50;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.btn-read-all {
+  background: none;
+  border: none;
+  color: #3498db;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-read-all:hover {
+  text-decoration: underline;
+}
+
+.notif-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.notif-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 15px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+
+.notif-item:hover {
+  background: #f5f8fa;
+}
+
+.notif-item.unread {
+  background: #f0f7fb;
+}
+
+.notif-avatar-wrapper {
+  flex-shrink: 0;
+}
+
+.notif-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.notif-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.88rem;
+  color: #555;
+  line-height: 1.4;
+}
+
+.notif-text strong {
+  color: #2c3e50;
+}
+
+.highlight-thread {
+  color: #2c3e50;
+  font-style: italic;
+}
+
+.notif-time {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.notif-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3498db;
+  position: absolute;
+  right: 15px;
+  top: calc(50% - 4px);
+}
+
+.notif-empty {
+  padding: 30px;
+  text-align: center;
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.notif-footer {
+  padding: 10px;
+  background: #f8f9fa;
+  border-top: 1px solid #eee;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.notif-footer a {
+  color: #3498db;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.notif-footer a:hover {
+  text-decoration: underline;
+}
 .user-info-header {
   display: flex;
   align-items: center;

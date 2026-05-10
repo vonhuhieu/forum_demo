@@ -78,7 +78,7 @@
         </div>
 
         <!-- REPLY POSTS (#2+) -->
-        <div v-else class="thread-content-card card reply-card">
+        <div v-else class="thread-content-card card reply-card" :id="'post-' + item.id" :class="{ 'highlight-jump': Number(item.id) === Number(highlightedPostId) }">
           <div class="post-layout">
             <div class="post-sidebar">
               <div class="avatar-large" :style="{ backgroundColor: item.author && item.author.avatar ? item.author.avatar : '#ccc', color: '#fff' }">
@@ -218,7 +218,8 @@ export default {
       currentUsername: parsedUser ? parsedUser.username : 'Me',
       currentUserAvatar: parsedUser ? parsedUser.avatar : '#3498db',
       currentPage: 1,
-      itemsPerPage: 10
+      itemsPerPage: 10,
+      highlightedPostId: null
     }
   },
   computed: {
@@ -299,6 +300,9 @@ export default {
   async mounted() {
     await this.fetchThread()
     await this.fetchPosts()
+    
+    // Tự động nhảy tới bình luận nếu URL có chỉ định postId
+    this.jumpToTargetPost()
   },
   watch: {
     replyAttachedImages: {
@@ -306,6 +310,14 @@ export default {
         this.syncAttachmentsToEditor()
       },
       deep: true
+    },
+    // Lắng nghe khi tham số query thay đổi (trong trường hợp click thông báo khi đang ở sẵn trong trang này)
+    '$route.query.postId': {
+      handler(newVal) {
+        if (newVal) {
+          this.jumpToTargetPost()
+        }
+      }
     }
   },
   methods: {
@@ -350,6 +362,39 @@ export default {
       this.currentPage = page;
       // Cuộn mượt về đầu danh sách bình luận/trang khi đổi trang
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    async jumpToTargetPost() {
+      const pId = this.$route.query.postId;
+      if (!pId || !this.posts || this.posts.length === 0) return;
+      
+      // 1. Tìm vị trí tuyệt đối của post này trong mảng (post đầu tiên là số 1, nên reply index + 2)
+      const idx = this.posts.findIndex(p => String(p.id) === String(pId));
+      if (idx === -1) return;
+      
+      const seqNum = idx + 2;
+      
+      // 2. Tính xem nằm ở trang mấy
+      const targetPage = Math.ceil(seqNum / this.itemsPerPage);
+      
+      // 3. Chuyển trang
+      this.currentPage = targetPage;
+      this.highlightedPostId = pId;
+      
+      // 4. Đợi Vue render lại DOM trang mới
+      await this.$nextTick();
+      
+      // 5. Đợi thêm 1 chút xíu để layout ổn định sau đó cuộn
+      setTimeout(() => {
+        const element = document.getElementById(`post-${pId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Hủy bỏ Highlight nhấp nháy sau 4 giây
+          setTimeout(() => {
+             this.highlightedPostId = null;
+          }, 4000);
+        }
+      }, 400);
     },
     processMediaTags(content) {
       if (!content) return ''
@@ -752,6 +797,19 @@ export default {
 
 .btn-post:hover:not(:disabled) {
   background-color: #2980b9;
+}
+
+/* Flash highlighting animation for jumped posts */
+.highlight-jump {
+  animation: flash-glow 3s ease-in-out;
+  position: relative;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3);
+}
+
+@keyframes flash-glow {
+  0% { background-color: #fff2c2; box-shadow: 0 0 15px #f39c12; }
+  30% { background-color: #fff2c2; box-shadow: 0 0 10px #f39c12; }
+  100% { background-color: #ffffff; box-shadow: none; }
 }
 
 .btn-post:disabled {
