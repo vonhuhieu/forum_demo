@@ -24,6 +24,7 @@ import { Ckeditor } from '@ckeditor/ckeditor5-vue'
 import translations from 'ckeditor5/translations/vi.js'
 import {
   ClassicEditor,
+  Plugin,
   Essentials,
   Paragraph,
   Heading,
@@ -57,6 +58,17 @@ import {
 import 'ckeditor5/ckeditor5.css'
 import { MyCustomUploadAdapterPlugin, CustomUploadPlugin, TabIndentPlugin, ClearPastedImageWidthPlugin, EmojiPickerPlugin } from '@/shared/utils/ckeditorPlugins'
 import EmojiPicker from '@/shared/components/EmojiPicker.vue'
+ 
+class QuoteSourcePlugin extends Plugin {
+  static get requires() {
+    return [BlockQuote];
+  }
+  init() {
+    const editor = this.editor;
+    editor.model.schema.extend('blockQuote', { allowAttributes: 'data-source' });
+    editor.conversion.attributeToAttribute({ model: 'data-source', view: 'data-source' });
+  }
+}
 
 export default {
   name: 'CustomEditor',
@@ -130,7 +142,7 @@ export default {
           Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
           Font, Alignment, Link, List, Indent, IndentBlock, Image, ImageUpload, ImageInsert, ImageResize, ImageStyle, ImageToolbar, ImageCaption, ImageTextAlternative, Table,
           MediaEmbed, BlockQuote, FileRepository, TableToolbar, TableColumnResize, Undo, TextTransformation,
-          MyCustomUploadAdapterPlugin, CustomUploadPlugin, TabIndentPlugin, ClearPastedImageWidthPlugin, EmojiPickerPlugin
+          MyCustomUploadAdapterPlugin, CustomUploadPlugin, TabIndentPlugin, ClearPastedImageWidthPlugin, EmojiPickerPlugin, QuoteSourcePlugin
         ],
         toolbar: {
           items: [
@@ -173,7 +185,7 @@ export default {
           decorators: {
             openInNewTab: {
               mode: 'automatic',
-              callback: url => true,
+              callback: url => !url.startsWith('#'),
               attributes: {
                 target: '_blank',
                 rel: 'noopener noreferrer'

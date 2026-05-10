@@ -22,7 +22,7 @@
             
             <!-- Notification Bell Container -->
             <div class="notification-bell-container" ref="notifContainer">
-               <button class="btn-icon-bell" @click="toggleNotifDropdown" aria-label="Notifications">
+               <button class="btn-icon-bell" :class="{ 'shake-animation': isShaking }" @click="toggleNotifDropdown" aria-label="Notifications">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
@@ -106,7 +106,8 @@ export default {
       currentUser: null,
       showNotifDropdown: false,
       notifications: [],
-      unreadCount: 0
+      unreadCount: 0,
+      isShaking: false
     }
   },
   async mounted() {
@@ -157,19 +158,27 @@ export default {
     // --- Notification System Logic ---
     
     setupSocket() {
-      if (!this.currentUser) return
+      if (!this.currentUser || !this.currentUser.id) return
       
-      // Connect (reuses existing connection if already active)
+      // Connect (using username for tracking connection identifier internally in service)
       webSocketService.connect(this.currentUser.username)
       
-      // Register callback for live push notifications
-      webSocketService.subscribeToNotifications(this.currentUser.username, (newNotif) => {
+      // Register callback for live push notifications - USING NUMERICAL USER ID FOR TOPIC
+      webSocketService.subscribeToNotifications(this.currentUser.id, (newNotif) => {
         // Add to top of list
         this.notifications.unshift(newNotif)
         this.unreadCount++
         
-        // Optional sound or discrete toast could go here
+        // Rung chuông hiệu ứng
+        this.triggerShake()
       })
+    },
+    
+    triggerShake() {
+       this.isShaking = true
+       setTimeout(() => {
+          this.isShaking = false
+       }, 1000)
     },
     
     async fetchNotifSummary() {
@@ -264,6 +273,23 @@ export default {
 
 .btn-icon-bell:hover {
   background: rgba(255,255,255,0.1);
+}
+
+/* Bell Shake Animation */
+.shake-animation {
+  animation: bell-shake 0.8s ease-in-out;
+  transform-origin: center top;
+}
+
+@keyframes bell-shake {
+  0% { transform: rotate(0); }
+  15% { transform: rotate(15deg); }
+  30% { transform: rotate(-15deg); }
+  45% { transform: rotate(10deg); }
+  60% { transform: rotate(-10deg); }
+  75% { transform: rotate(5deg); }
+  85% { transform: rotate(-5deg); }
+  100% { transform: rotate(0); }
 }
 
 .notif-badge {

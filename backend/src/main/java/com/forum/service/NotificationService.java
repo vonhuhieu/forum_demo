@@ -50,14 +50,11 @@ public class NotificationService {
         Notification saved = notificationRepository.save(notif);
         NotificationDTO dto = notificationMapper.toDTO(saved);
 
-        // PUSH realtime to socket endpoint specific for this user
+        // PUSH realtime to dynamic topic specific for this user ID
         try {
-            messagingTemplate.convertAndSendToUser(
-                    recipient.getUsername(),
-                    "/queue/notifications",
-                    dto
-            );
-            log.info("Successfully pushed realtime notification to user: {}", recipient.getUsername());
+            String dest = "/topic/notifications/" + recipient.getId();
+            messagingTemplate.convertAndSend(dest, dto);
+            log.info("Successfully pushed realtime notification to topic: {}", dest);
         } catch (Exception e) {
             log.warn("Failed to push realtime websocket message, but record persists in DB: {}", e.getMessage());
         }

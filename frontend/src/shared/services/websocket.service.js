@@ -32,12 +32,6 @@ class WebSocketService {
       this.subscribers.forEach((callbacks, topic) => {
         this._subscribeToClient(topic)
       })
-      
-      // Auto subscribe to private user queue for current logged user
-      if (this.username) {
-         const userTopic = `/user/${this.username}/queue/notifications`
-         this._subscribeToClient(userTopic)
-      }
     }
 
     this.client.onStompError = (frame) => {
@@ -78,8 +72,8 @@ class WebSocketService {
   }
 
   // Specifically shorthand for general notifications
-  subscribeToNotifications(username, callback) {
-    const topic = `/user/${username}/queue/notifications`
+  subscribeToNotifications(userId, callback) {
+    const topic = `/topic/notifications/${userId}`
     this.subscribe(topic, callback)
   }
 

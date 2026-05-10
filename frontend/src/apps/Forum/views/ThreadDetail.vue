@@ -39,7 +39,7 @@
       <template v-for="item in paginatedItems" :key="item.id">
         
         <!-- MAIN POST (#1) -->
-        <div v-if="item.isMain" class="thread-content-card card">
+        <div v-if="item.isMain" class="thread-content-card card" :id="'post-' + item.id" :class="{ 'highlight-jump': String(item.id) === String(highlightedPostId) }">
           <div class="post-layout">
             <div class="post-sidebar">
               <div class="avatar-large" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
@@ -67,7 +67,7 @@
                   <a href="#" class="action-link" @click.prevent>Sửa</a>
                 </div>
                 <div class="right-actions">
-                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(thread.author.username, thread.content)">
+                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(thread.author ? thread.author.username : 'Ẩn danh', thread.content, 'main_thread_entry')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                     Trả lời
                   </a>
@@ -78,7 +78,7 @@
         </div>
 
         <!-- REPLY POSTS (#2+) -->
-        <div v-else class="thread-content-card card reply-card" :id="'post-' + item.id" :class="{ 'highlight-jump': Number(item.id) === Number(highlightedPostId) }">
+        <div v-else class="thread-content-card card reply-card" :id="'post-' + item.id" :class="{ 'highlight-jump': String(item.id) === String(highlightedPostId) }">
           <div class="post-layout">
             <div class="post-sidebar">
               <div class="avatar-large" :style="{ backgroundColor: item.author && item.author.avatar ? item.author.avatar : '#ccc', color: '#fff' }">
@@ -105,7 +105,7 @@
                   <a href="#" class="action-link" @click.prevent>Báo cáo</a>
                 </div>
                 <div class="right-actions">
-                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(item.author.username, item.content)">
+                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(item.author ? item.author.username : 'Ẩn danh', item.content, item.id)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                     Trả lời
                   </a>
@@ -365,31 +365,35 @@ export default {
     },
     async jumpToTargetPost() {
       const pId = this.$route.query.postId;
-      if (!pId || !this.posts || this.posts.length === 0) return;
+      if (!pId) return;
       
-      // 1. Tìm vị trí tuyệt đối của post này trong mảng (post đầu tiên là số 1, nên reply index + 2)
-      const idx = this.posts.findIndex(p => String(p.id) === String(pId));
-      if (idx === -1) return;
+      let targetPage = 1;
       
-      const seqNum = idx + 2;
-      
-      // 2. Tính xem nằm ở trang mấy
-      const targetPage = Math.ceil(seqNum / this.itemsPerPage);
-      
-      // 3. Chuyển trang
+      // 1. Check if Target is main post
+      if (String(pId) === 'main_thread_entry') {
+         targetPage = 1;
+      } else {
+         // 2. Check if Target is in standard posts array
+         if (!this.posts || this.posts.length === 0) return;
+         const idx = this.posts.findIndex(p => String(p.id) === String(pId));
+         if (idx === -1) return;
+         
+         const seqNum = idx + 2;
+         targetPage = Math.ceil(seqNum / this.itemsPerPage);
+      }
+
+      // 3. Switch Page
       this.currentPage = targetPage;
       this.highlightedPostId = pId;
       
-      // 4. Đợi Vue render lại DOM trang mới
+      // 4. Wait for DOM refresh and scroll
       await this.$nextTick();
-      
-      // 5. Đợi thêm 1 chút xíu để layout ổn định sau đó cuộn
       setTimeout(() => {
         const element = document.getElementById(`post-${pId}`);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.scrollIntoView({ behavior: 'auto', block: 'center' });
           
-          // Hủy bỏ Highlight nhấp nháy sau 4 giây
+          // Cancel highlight animation after duration
           setTimeout(() => {
              this.highlightedPostId = null;
           }, 4000);
@@ -413,9 +417,14 @@ export default {
            }
            return `<figure class="media"><video controls style="width: 100%; max-height: 500px; object-fit: contain; background: #000;" src="${fixedUrl}"></video></figure>`
         }
-
         return `<a href="${url}" target="_blank">${url}</a>`
       })
+      
+      if (fixed) {
+        // Apply global wording update from "đã nói" to "đã viết" for render consistency
+        fixed = fixed.replace(/đã nói:<\/strong>/g, 'đã viết:</strong>')
+      }
+      
       return fixed
     },
     formatPostContent(content) {
@@ -491,30 +500,29 @@ export default {
         this.submittingPost = false
       }
     },
-    quotePost(authorName, rawContent) {
+    quotePost(authorName, rawContent, sourceId) {
       if (!this.isLoggedIn) {
         this.$router.push({ name: 'Login' })
         return
       }
       
-      // Create a clean, temporary clone of content to remove previous quotes if present to avoid extreme deep nests
       const tempDiv = document.createElement('div')
       tempDiv.innerHTML = rawContent
       
-      // Remove existing quotes inside to flatten depth, otherwise long threads explode
       const innerQuotes = tempDiv.querySelectorAll('blockquote')
       innerQuotes.forEach(q => q.remove())
 
-      // Remove existing attachments section
       const attachments = tempDiv.querySelector('.attachment-block')
       if (attachments) attachments.remove()
 
       const trimmedContent = tempDiv.innerHTML.trim().substring(0, 1000) // safety trim
-      const quoteHtml = `<blockquote><p><strong>${authorName} đã nói:</strong></p>${trimmedContent}</blockquote><p>&nbsp;</p>`
+      
+      // Use data-source attribute. Preserved cleanly by modified CKEditor plugin without live links inside composer.
+      const sourceAttr = sourceId ? ` data-source="${sourceId}"` : '';
+      const quoteHtml = `<blockquote${sourceAttr}><p><strong>${authorName} đã viết:</strong></p>${trimmedContent}</blockquote><p>&nbsp;</p>`
       
       this.replyForm.content = this.replyForm.content + quoteHtml
       
-      // Scroll down smoothly
       this.$nextTick(() => {
         const element = this.$refs.replyFormContainer
         if (element) {
@@ -573,6 +581,79 @@ export default {
     handleContentClick(e) {
       if (e.target.tagName === 'IMG') {
         this.openLightbox(e.target.src)
+        return
+      }
+
+      // Intercept clicks on quote headers (both future-proof and legacy support)
+      const strongElem = e.target.closest('blockquote p:first-child strong');
+      if (!strongElem) return;
+
+      const blockquote = strongElem.closest('blockquote');
+      let targetId = null;
+
+      // 1. First try loading from dedicated data attribute
+      if (blockquote && blockquote.hasAttribute('data-source')) {
+        targetId = blockquote.getAttribute('data-source');
+      } 
+      // 2. Fallback: Smart Heuristic lookup for legacy quotes that lacked ID references
+      else if (strongElem.textContent) {
+        const text = strongElem.textContent;
+        const match = text.match(/(.*?)\s*đã\s*(?:viết|nói):/i);
+        if (match && match[1]) {
+          const quotedName = match[1].trim();
+          
+          const container = strongElem.closest('.thread-content-card');
+          if (container) {
+            const containerId = container.id.replace('post-', '');
+            
+            const list = [
+              { id: 'main_thread_entry', author: this.thread?.author?.username },
+              ...this.posts.map(p => ({ id: String(p.id), author: p.author?.username }))
+            ];
+            
+            let currentIdx = list.findIndex(i => i.id === containerId);
+            if (currentIdx === -1) currentIdx = list.length; 
+
+            for (let i = currentIdx - 1; i >= 0; i--) {
+               if (list[i].author === quotedName) {
+                 targetId = list[i].id;
+                 break;
+               }
+            }
+          }
+        }
+      }
+
+      if (!targetId) return;
+
+      // 3. Calculate target page number
+      let targetPage = 1;
+      if (targetId === 'main_thread_entry') {
+          targetPage = 1;
+      } else if (this.posts && this.posts.length > 0) {
+          const idx = this.posts.findIndex(p => String(p.id) === String(targetId));
+          if (idx !== -1) {
+             const seqNum = idx + 2;
+             targetPage = Math.ceil(seqNum / this.itemsPerPage);
+          }
+      }
+
+      // 4. Execute branch logic based on page locality
+      if (targetPage === this.currentPage) {
+          // SCENARIO 1: SAME PAGE - Local scroll with highlight effect
+          this.highlightedPostId = targetId;
+          const element = document.getElementById(`post-${targetId}`);
+          if (element) {
+             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+             setTimeout(() => { this.highlightedPostId = null; }, 4000);
+          }
+      } else {
+          // SCENARIO 2: DIFFERENT PAGE - Open in new tab directly focused on target
+          const route = this.$router.resolve({
+             path: this.$route.path,
+             query: { ...this.$route.query, postId: targetId }
+          });
+          window.open(route.href, '_blank');
       }
     },
     openLightbox(url) {
@@ -763,10 +844,10 @@ export default {
 :deep(.ql-editor table) { border-collapse: collapse; width: 100%; margin: 1rem 0; }
 :deep(.ql-editor td) { border: 1px solid #ccc; padding: 8px; }
 
-/* Blockquote styles mirroring modern forums like xamvn */
+/* Blockquote styles updated to match requested reference style (Orange accent) */
 :deep(.ql-editor blockquote), :deep(.ck-content blockquote) {
-  background: #f5f8fa;
-  border-left: 3px solid #3498db;
+  background: #fcfbf7;
+  border-left: 3px solid #e67e22;
   padding: 12px 16px;
   margin: 10px 0;
   font-style: normal;
@@ -776,8 +857,40 @@ export default {
 }
 
 :deep(.ql-editor blockquote p:first-child strong), :deep(.ck-content blockquote p:first-child strong) {
-  color: #2980b9;
+  color: #e67e22;
   font-size: 0.9rem;
+}
+
+/* EXCLUSIVE TO READER (HIDDEN IN EDITOR) */
+.content-body :deep(blockquote p:first-child strong) {
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px;
+  transition: text-decoration 0.2s;
+}
+
+.content-body :deep(blockquote p:first-child strong:hover) {
+  text-decoration: underline !important;
+}
+
+/* Circular Arrow Icon - RENDERER ONLY */
+.content-body :deep(blockquote p:first-child strong::after) {
+  content: '\2191' !important; 
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: #f39c12 !important;
+  color: white !important;
+  border-radius: 50% !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  font-weight: bold !important;
+  text-decoration: none !important;
+  position: relative;
+  top: -1px;
 }
 
 .reply-card {
