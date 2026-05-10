@@ -77,6 +77,9 @@
           <div class="banner-right" style="margin-top: 1rem;">
             <img src="/banner_block_phai.jpg" alt="Banner" style="width: 100%; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" />
           </div>
+          <div class="banner-right" style="margin-top: 1rem;">
+            <img src="/photo_2026-05-09_10-54-26.jpg" alt="Banner" style="width: 100%; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" />
+          </div>
         </aside>
       </div>
     </main>

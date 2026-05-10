@@ -181,3 +181,25 @@ export function ClearPastedImageWidthPlugin(editor) {
     });
   });
 }
+// Plugin Mở Hộp Chọn Emoji/Sticker
+export function EmojiPickerPlugin(editor) {
+  editor.ui.componentFactory.add('emojiPicker', locale => {
+    const view = new ButtonView(locale);
+
+    // Icon mặt cười
+    const emojiIcon = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-4-8a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm8 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm-4 5c-2.33 0-4.31-1.46-5.11-3.5h10.22c-.8 2.04-2.78 3.5-5.11 3.5z"/></svg>';
+
+    view.set({
+      label: 'Chèn biểu tượng cảm xúc (Emoji)',
+      icon: emojiIcon,
+      tooltip: true
+    });
+
+    view.on('execute', (evt) => {
+      // Khi click vào button, bắn sự kiện custom của Editor để Vue cha bắt và hiển thị Picker
+      editor.fire('openEmojiPicker', { domTarget: view.element });
+    });
+
+    return view;
+  });
+}

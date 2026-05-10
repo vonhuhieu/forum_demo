@@ -26,42 +26,128 @@
         <PollDisplay :pollData="thread.poll" @vote-updated="handleVoteUpdated" />
       </div>
 
-      <div class="thread-content-card card">
-        <div class="post-layout">
-          <div class="post-sidebar">
-            <div class="avatar-large" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
-              {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
-            </div>
-            <div class="author-name-large">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</div>
-            <div class="author-title">Yếu sinh lý</div>
-          </div>
-          
-          <div class="post-main">
-            <div class="post-meta-top">
-              <span class="post-time-top">{{ formatDate(thread.createdAt) }}</span>
-              <div class="post-actions-top">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                <span class="post-number">#1</span>
+      <!-- Top Pagination Bar -->
+      <div class="pagination-wrapper" v-if="totalPages > 1" style="margin-bottom: 1rem;">
+        <ForumPagination 
+          :current-page="currentPage" 
+          :total-pages="totalPages" 
+          @page-changed="changePage"
+        />
+      </div>
+
+      <!-- Unified Content Loop (Main Post & Replies) -->
+      <template v-for="item in paginatedItems" :key="item.id">
+        
+        <!-- MAIN POST (#1) -->
+        <div v-if="item.isMain" class="thread-content-card card">
+          <div class="post-layout">
+            <div class="post-sidebar">
+              <div class="avatar-large" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
+                {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
               </div>
+              <div class="author-name-large">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</div>
+              <div class="author-title">Yếu sinh lý</div>
             </div>
             
-            <div class="content-body ql-editor" v-html="thread.content" @click="handleContentClick"></div>
-            
-            <div class="post-meta-bottom">
-              <div class="left-actions">
-                <a href="#" class="action-link" @click.prevent>Báo cáo</a>
-                <a href="#" class="action-link" @click.prevent>Sửa</a>
+            <div class="post-main">
+              <div class="post-meta-top">
+                <span class="post-time-top">{{ formatDate(thread.createdAt) }}</span>
+                <div class="post-actions-top">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                  <span class="post-number">#1</span>
+                </div>
               </div>
-              <div class="right-actions">
-                <a href="#" class="action-link reply-link" @click.prevent>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
-                  Trả lời
-                </a>
+              
+              <div class="content-body ql-editor" v-html="thread.content" @click="handleContentClick"></div>
+              
+              <div class="post-meta-bottom">
+                <div class="left-actions">
+                  <a href="#" class="action-link" @click.prevent>Báo cáo</a>
+                  <a href="#" class="action-link" @click.prevent>Sửa</a>
+                </div>
+                <div class="right-actions">
+                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(thread.author.username, thread.content)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                    Trả lời
+                  </a>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- REPLY POSTS (#2+) -->
+        <div v-else class="thread-content-card card reply-card">
+          <div class="post-layout">
+            <div class="post-sidebar">
+              <div class="avatar-large" :style="{ backgroundColor: item.author && item.author.avatar ? item.author.avatar : '#ccc', color: '#fff' }">
+                {{ item.author ? item.author.username.charAt(0).toUpperCase() : '?' }}
+              </div>
+              <div class="author-name-large">{{ item.author ? item.author.username : 'Ẩn danh' }}</div>
+              <div class="author-title">Thành viên</div>
+            </div>
+            
+            <div class="post-main">
+              <div class="post-meta-top">
+                <span class="post-time-top">{{ formatDate(item.createdAt) }}</span>
+                <div class="post-actions-top">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                  <span class="post-number">#{{ item.seqNumber }}</span>
+                </div>
+              </div>
+              
+              <div class="content-body ql-editor" v-html="formatPostContent(item.content)" @click="handleContentClick"></div>
+              
+              <div class="post-meta-bottom">
+                <div class="left-actions">
+                  <a href="#" class="action-link" @click.prevent>Báo cáo</a>
+                </div>
+                <div class="right-actions">
+                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(item.author.username, item.content)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
+                    Trả lời
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Bottom Pagination Bar -->
+      <div class="pagination-wrapper" v-if="totalPages > 1" style="margin-top: 1rem; margin-bottom: 1rem;">
+        <ForumPagination 
+          :current-page="currentPage" 
+          :total-pages="totalPages" 
+          @page-changed="changePage"
+        />
+      </div>
+
+      <!-- Reply Editor Container -->
+      <div ref="replyFormContainer" class="reply-box-wrapper card" style="margin-top: 2rem;" v-if="isLoggedIn">
+        <div class="post-layout">
+          <div class="post-sidebar" style="background: #f8f9fa; border-right: none;">
+             <div class="avatar-large" :style="{ backgroundColor: currentUserAvatar || '#ccc', color: '#fff' }">
+                {{ currentUsername ? currentUsername.charAt(0).toUpperCase() : '?' }}
+             </div>
+          </div>
+          <div class="post-main" style="padding: 0; border: 1px solid #e0e0e0;">
+             <CustomEditor ref="replyEditor" v-model="replyForm.content" @image-uploaded="handleImageUploaded" />
+             <ImageUploaderPanel ref="uploaderPanel" v-model:images="replyAttachedImages" @insert-images="handleInsertImages" style="padding: 10px; background: #fdfdfd; border-top: 1px solid #eee;" />
+             
+             <div class="editor-footer" style="padding: 15px; display: flex; justify-content: flex-end; background: #f8f9fa; border-top: 1px solid #eee;">
+               <button class="btn-post" :disabled="submittingPost" @click="submitReply">
+                 {{ submittingPost ? 'Đang gửi...' : 'Gửi trả lời' }}
+               </button>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else class="card" style="margin-top: 2rem; padding: 2rem; text-align: center; background: #f8f9fa; border: 1px dashed #bbb;">
+        Bạn phải <router-link to="/login" style="color: #3498db; font-weight: bold;">đăng nhập</router-link> để có thể trả lời bài viết này.
       </div>
 
       <Breadcrumb :items="breadcrumbItems" />
@@ -90,6 +176,10 @@ import api from '@/shared/services/api.service'
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import PollDisplay from '@/shared/components/PollDisplay.vue'
+import CustomEditor from '@/shared/components/CustomEditor.vue'
+import ImageUploaderPanel from '@/shared/components/ImageUploaderPanel.vue'
+import ForumPagination from '@/shared/components/ForumPagination.vue'
+import { alertSuccess, alertError } from '@/shared/utils/swal'
 import { formatForumDate } from '@/shared/utils/date'
 
 export default {
@@ -97,16 +187,38 @@ export default {
   components: {
     ForumHeader,
     Breadcrumb,
-    PollDisplay
+    PollDisplay,
+    CustomEditor,
+    ImageUploaderPanel,
+    ForumPagination
   },
   data() {
+    const userStr = localStorage.getItem('user')
+    let parsedUser = null
+    try {
+      if (userStr) parsedUser = JSON.parse(userStr)
+    } catch (e) {
+      console.error('Error parsing stored user')
+    }
+
     return {
       thread: null,
+      posts: [],
       categoryGroup: null,
       allCategories: [],
       loading: true,
       showLightbox: false,
-      activeImageUrl: ''
+      activeImageUrl: '',
+      replyForm: {
+        content: ''
+      },
+      replyAttachedImages: [],
+      submittingPost: false,
+      isLoggedIn: !!localStorage.getItem('token'),
+      currentUsername: parsedUser ? parsedUser.username : 'Me',
+      currentUserAvatar: parsedUser ? parsedUser.avatar : '#3498db',
+      currentPage: 1,
+      itemsPerPage: 10
     }
   },
   computed: {
@@ -167,10 +279,34 @@ export default {
         }
       }
       return []
+    },
+    totalPages() {
+      if (!this.thread) return 1;
+      const totalCount = 1 + (this.posts ? this.posts.length : 0);
+      return Math.ceil(totalCount / this.itemsPerPage) || 1;
+    },
+    paginatedItems() {
+      if (!this.thread) return [];
+      const combined = [
+        { id: 'main_thread_entry', isMain: true, ...this.thread, seqNumber: 1 },
+        ...this.posts.map((p, idx) => ({ ...p, isMain: false, seqNumber: idx + 2 }))
+      ];
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return combined.slice(start, end);
     }
   },
   async mounted() {
     await this.fetchThread()
+    await this.fetchPosts()
+  },
+  watch: {
+    replyAttachedImages: {
+      handler() {
+        this.syncAttachmentsToEditor()
+      },
+      deep: true
+    }
   },
   methods: {
     async fetchThread() {
@@ -179,26 +315,7 @@ export default {
         this.thread = response.data
         
         let content = this.thread.content || ''
-        
-        // Transform <oembed> tags (legacy CKEditor format) to <iframe>
-        content = content.replace(/<oembed\s+url="([^"]+)"><\/oembed>/gi, (match, url) => {
-          const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
-          const ytMatch = url.match(youtubeRegex)
-          if (ytMatch && ytMatch[1]) {
-            return `<iframe width="100%" height="450" src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
-          }
-          
-          if (url.match(/\.(mp4|webm|ogg|avi|mov)(\?.*)?$/i)) {
-             let fixedUrl = url;
-             const uploadsIndex = fixedUrl.indexOf('/uploads/');
-             if (uploadsIndex !== -1) {
-                 fixedUrl = fixedUrl.substring(uploadsIndex);
-             }
-             return `<figure class="media"><video controls style="width: 100%; max-height: 500px; object-fit: contain; background: #000;" src="${fixedUrl}"></video></figure>`
-          }
-
-          return `<a href="${url}" target="_blank">${url}</a>`
-        })
+        content = this.processMediaTags(content)
 
         this.thread = { ...response.data, content }
 
@@ -220,6 +337,185 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    async fetchPosts() {
+      try {
+        const response = await api.get(`/posts/thread/${this.$route.params.id}`)
+        this.posts = response.data || []
+      } catch (error) {
+        console.error('Lỗi khi tải bài bình luận:', error)
+      }
+    },
+    changePage(page) {
+      this.currentPage = page;
+      // Cuộn mượt về đầu danh sách bình luận/trang khi đổi trang
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    processMediaTags(content) {
+      if (!content) return ''
+      let fixed = content.replace(/<oembed\s+url="([^"]+)"><\/oembed>/gi, (match, url) => {
+        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
+        const ytMatch = url.match(youtubeRegex)
+        if (ytMatch && ytMatch[1]) {
+          return `<iframe width="100%" height="450" src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+        }
+        
+        if (url.match(/\.(mp4|webm|ogg|avi|mov)(\?.*)?$/i)) {
+           let fixedUrl = url;
+           const uploadsIndex = fixedUrl.indexOf('/uploads/');
+           if (uploadsIndex !== -1) {
+               fixedUrl = fixedUrl.substring(uploadsIndex);
+           }
+           return `<figure class="media"><video controls style="width: 100%; max-height: 500px; object-fit: contain; background: #000;" src="${fixedUrl}"></video></figure>`
+        }
+
+        return `<a href="${url}" target="_blank">${url}</a>`
+      })
+      return fixed
+    },
+    formatPostContent(content) {
+      return this.processMediaTags(content)
+    },
+    async submitReply() {
+      if (!this.replyForm.content.trim()) {
+        alertError('Vui lòng nhập nội dung trả lời')
+        return
+      }
+
+      try {
+        this.submittingPost = true
+        
+        // Clean up old attachment HTML if exists
+        let cleanContent = this.replyForm.content || ''
+        const markers = [
+          /<div[^>]*class="attachment-block"[^>]*>/i,
+          /<p><strong>Đính kèm<\/strong><\/p>/i
+        ]
+        let matchIndex = -1
+        for (const marker of markers) {
+          const match = cleanContent.match(marker)
+          if (match) {
+            matchIndex = match.index
+            break
+          }
+        }
+        if (matchIndex !== -1) {
+          cleanContent = cleanContent.substring(0, matchIndex).trim()
+        }
+
+        let finalContent = cleanContent
+        const attachedImages = this.replyAttachedImages
+
+        if (attachedImages && attachedImages.length > 0) {
+          let attachedHtml = `<div id="attachment-section" class="attachment-block" style="margin-top: 2rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">`
+          attachedHtml += `<div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>`
+          attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
+          attachedImages.forEach(img => {
+            attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
+          })
+          attachedHtml += `</div></div>`
+          finalContent = finalContent.trim() + '\n' + attachedHtml
+        }
+
+        const payload = {
+          content: finalContent,
+          threadId: this.thread.id,
+          attachedImages: JSON.stringify(attachedImages)
+        }
+
+        await api.post('/posts', payload)
+        
+        alertSuccess('Gửi trả lời thành công')
+        this.replyForm.content = ''
+        this.replyAttachedImages = []
+        
+        
+        // Reload posts
+        await this.fetchPosts()
+        
+        // Chuyển sang trang cuối cùng để thấy bài mình vừa viết
+        this.currentPage = this.totalPages
+        
+        this.$nextTick(() => {
+          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        })
+      } catch (error) {
+        console.error(error)
+        alertError('Không thể gửi câu trả lời')
+      } finally {
+        this.submittingPost = false
+      }
+    },
+    quotePost(authorName, rawContent) {
+      if (!this.isLoggedIn) {
+        this.$router.push({ name: 'Login' })
+        return
+      }
+      
+      // Create a clean, temporary clone of content to remove previous quotes if present to avoid extreme deep nests
+      const tempDiv = document.createElement('div')
+      tempDiv.innerHTML = rawContent
+      
+      // Remove existing quotes inside to flatten depth, otherwise long threads explode
+      const innerQuotes = tempDiv.querySelectorAll('blockquote')
+      innerQuotes.forEach(q => q.remove())
+
+      // Remove existing attachments section
+      const attachments = tempDiv.querySelector('.attachment-block')
+      if (attachments) attachments.remove()
+
+      const trimmedContent = tempDiv.innerHTML.trim().substring(0, 1000) // safety trim
+      const quoteHtml = `<blockquote><p><strong>${authorName} đã nói:</strong></p>${trimmedContent}</blockquote><p>&nbsp;</p>`
+      
+      this.replyForm.content = this.replyForm.content + quoteHtml
+      
+      // Scroll down smoothly
+      this.$nextTick(() => {
+        const element = this.$refs.replyFormContainer
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      })
+    },
+    handleInsertImages(urls, type) {
+      if (this.$refs.replyEditor && this.$refs.replyEditor.insertImages) {
+        this.$refs.replyEditor.insertImages(urls, type)
+      }
+    },
+    handleImageUploaded(image) {
+      this.replyAttachedImages.push(image)
+    },
+    syncAttachmentsToEditor() {
+      let content = this.replyForm.content || ''
+      
+      const markers = [
+        /<div[^>]*class="attachment-block"[^>]*>/i,
+        /<p><strong>Đính kèm<\/strong><\/p>/i
+      ]
+      let matchIndex = -1
+      for (const marker of markers) {
+        const match = content.match(marker)
+        if (match) {
+          matchIndex = match.index
+          break
+        }
+      }
+      if (matchIndex !== -1) {
+        content = content.substring(0, matchIndex).trim()
+      }
+
+      if (this.replyAttachedImages && this.replyAttachedImages.length > 0) {
+        let attachedHtml = `<div class="attachment-block" style="margin-top: 2rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">`
+        attachedHtml += `<div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>`
+        attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
+        this.replyAttachedImages.forEach(img => {
+          attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
+        })
+        attachedHtml += `</div></div>`
+        content = content.trim() + '\n' + attachedHtml
+      }
+
+      this.replyForm.content = content
     },
     formatDate(dateStr) {
       return formatForumDate(dateStr)
@@ -421,6 +717,52 @@ export default {
 }
 :deep(.ql-editor table) { border-collapse: collapse; width: 100%; margin: 1rem 0; }
 :deep(.ql-editor td) { border: 1px solid #ccc; padding: 8px; }
+
+/* Blockquote styles mirroring modern forums like xamvn */
+:deep(.ql-editor blockquote), :deep(.ck-content blockquote) {
+  background: #f5f8fa;
+  border-left: 3px solid #3498db;
+  padding: 12px 16px;
+  margin: 10px 0;
+  font-style: normal;
+  color: #657786;
+  border-radius: 4px;
+  position: relative;
+}
+
+:deep(.ql-editor blockquote p:first-child strong), :deep(.ck-content blockquote p:first-child strong) {
+  color: #2980b9;
+  font-size: 0.9rem;
+}
+
+.reply-card {
+  margin-top: 10px !important;
+}
+
+.btn-post {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-post:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.btn-post:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:deep(.ck-editor__editable) {
+  min-height: 150px;
+}
+
 
 .attached-section {
   margin-top: 1.5rem;

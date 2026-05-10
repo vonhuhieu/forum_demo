@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/threads", "/api/threads/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/polls", "/api/polls/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/labels", "/api/labels/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/posts", "/api/posts/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);

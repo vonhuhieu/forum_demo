@@ -8,6 +8,14 @@
       :disabled="disabled"
       @ready="onEditorReady"
     ></ckeditor>
+
+    <!-- Reusable Emoji & Sticker Picker -->
+    <EmojiPicker
+      :visible="showEmojiPicker"
+      :target-element="emojiPickerTarget"
+      @close="showEmojiPicker = false"
+      @select="handleEmojiSelect"
+    />
   </div>
 </template>
 
@@ -43,15 +51,18 @@ import {
   FileRepository,
   TableToolbar,
   TableColumnResize,
-  Undo
+  Undo,
+  TextTransformation
 } from 'ckeditor5'
 import 'ckeditor5/ckeditor5.css'
-import { MyCustomUploadAdapterPlugin, CustomUploadPlugin, TabIndentPlugin, ClearPastedImageWidthPlugin } from '@/shared/utils/ckeditorPlugins'
+import { MyCustomUploadAdapterPlugin, CustomUploadPlugin, TabIndentPlugin, ClearPastedImageWidthPlugin, EmojiPickerPlugin } from '@/shared/utils/ckeditorPlugins'
+import EmojiPicker from '@/shared/components/EmojiPicker.vue'
 
 export default {
   name: 'CustomEditor',
   components: {
-    ckeditor: Ckeditor
+    ckeditor: Ckeditor,
+    EmojiPicker
   },
   props: {
     modelValue: {
@@ -67,6 +78,8 @@ export default {
   data() {
     return {
       editorInstance: null,
+      showEmojiPicker: false,
+      emojiPickerTarget: null,
       editor: ClassicEditor,
       editorConfig: {
         licenseKey: 'GPL',
@@ -116,8 +129,8 @@ export default {
         plugins: [
           Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
           Font, Alignment, Link, List, Indent, IndentBlock, Image, ImageUpload, ImageInsert, ImageResize, ImageStyle, ImageToolbar, ImageCaption, ImageTextAlternative, Table,
-          MediaEmbed, BlockQuote, FileRepository, TableToolbar, TableColumnResize, Undo,
-          MyCustomUploadAdapterPlugin, CustomUploadPlugin, TabIndentPlugin, ClearPastedImageWidthPlugin
+          MediaEmbed, BlockQuote, FileRepository, TableToolbar, TableColumnResize, Undo, TextTransformation,
+          MyCustomUploadAdapterPlugin, CustomUploadPlugin, TabIndentPlugin, ClearPastedImageWidthPlugin, EmojiPickerPlugin
         ],
         toolbar: {
           items: [
@@ -133,10 +146,23 @@ export default {
             '|',
             'outdent', 'indent',
             '|',
-            'link', 'insertImage', 'customUpload', 'insertTable', 'mediaEmbed', 'blockQuote',
+            'link', 'insertImage', 'customUpload', 'emojiPicker', 'insertTable', 'mediaEmbed', 'blockQuote',
             '|',
             'undo', 'redo'
           ]
+        },
+        typing: {
+          transformations: {
+            include: [ 'symbols', 'mathematical', 'typography', 'quotes' ],
+            extra: [
+              { from: ':)', to: '😊' },
+              { from: ';)', to: '😉' },
+              { from: ':D', to: '😀' },
+              { from: ':(', to: '☹️' },
+              { from: '<3', to: '❤️' },
+              { from: ':*', to: '😘' }
+            ]
+          }
         },
         table: {
           contentToolbar: [
@@ -178,10 +204,42 @@ export default {
   methods: {
     onEditorReady(editor) {
       this.editorInstance = editor;
+      
       editor.on('imageUploaded', (evt, data) => {
         this.$emit('image-uploaded', data);
       });
+
+      // Lắng nghe sự kiện click nút Picker từ Plugin
+      editor.on('openEmojiPicker', (evt, data) => {
+        this.emojiPickerTarget = data.domTarget;
+        this.showEmojiPicker = !this.showEmojiPicker;
+      });
+
       this.$emit('ready', editor);
+    },
+    handleEmojiSelect(item) {
+      if (!this.editorInstance) return;
+
+      this.editorInstance.model.change(writer => {
+        const selection = this.editorInstance.model.document.selection;
+        let insertPosition = selection.getFirstPosition();
+
+        if (item.type === 'unicode') {
+          // Chèn chữ thuần (emoji text)
+          writer.insertText(item.value, selection.getAttributes(), insertPosition);
+        } else if (item.type === 'image') {
+          // Chèn Inline Image cho stickers
+          const imageElement = writer.createElement('imageInline', { 
+            src: item.value, 
+            alt: item.name,
+            resizedWidth: '24px' // Kích thước cố định nhỏ gọn cho sticker trong dòng văn bản
+          });
+          writer.insert(imageElement, insertPosition);
+        }
+      });
+
+      // Focus trả lại editor để gõ tiếp
+      this.editorInstance.editing.view.focus();
     },
     insertImages(urls, type = 'full') {
       if (!this.editorInstance) return;
@@ -292,15 +350,29 @@ export default {
   margin-left: 1.5em !important;
 }
 
-/* Image inline spacing for thumbnails */
+/* Image inline spacing for thumbnails and emojis */
 :deep(.ck-content .image-inline) {
-  margin: 5px !important;
+  margin: 0 2px !important;
   display: inline-block !important;
+  vertical-align: middle;
 }
 
 :deep(.ck-content .image-inline img) {
-  width: 200px !important;
-  height: 200px !important;
-  object-fit: cover !important;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
 }
+
+/* Ensure inserted stickers don't blow up but preserve their intrinsic aspect ratio */
+:deep(.ck-content .image-inline[src*="twemoji"]),
+:deep(.ck-content .image-inline[src*=".svg"]),
+:deep(.ck-content .image-inline[src*=".png"]) {
+   max-width: 24px;
+}
+/* Actually, easier to just target explicit attribute in code later or just set default max-height for non-resized items */
+:deep(.ck-content .image-inline:not([style*="width"])) {
+  max-width: 24px; 
+}
+/* Wait, let's just ensure stickers look consistent by targeting their dimensions when inserted */
+
 </style>
