@@ -119,17 +119,20 @@
           </div>
           <div class="category-last-thread">
             <div v-if="lastThreadByCat[cat.id]" class="last-thread-box">
-              <div class="last-thread-avatar" :style="{ backgroundColor: lastThreadByCat[cat.id].author && lastThreadByCat[cat.id].author.avatar ? lastThreadByCat[cat.id].author.avatar : '#ccc', color: '#fff' }">
-                {{ lastThreadByCat[cat.id].author?.username?.charAt(0).toUpperCase() || 'A' }}
+              <div class="last-thread-avatar" :style="{ backgroundColor: (lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.avatar || '#ccc', color: '#fff' }">
+                {{ ((lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.username || 'A').charAt(0).toUpperCase() }}
               </div>
               <div class="last-thread-info">
                 <router-link :to="{ name: 'ThreadDetail', params: { id: lastThreadByCat[cat.id].id } }" class="last-thread-title">
-                  {{ lastThreadByCat[cat.id].title }}
+                  <span v-if="lastThreadByCat[cat.id].label" class="label-tag-mini" :style="{ backgroundColor: lastThreadByCat[cat.id].label.colorCode, color: lastThreadByCat[cat.id].label.textColor, borderColor: lastThreadByCat[cat.id].label.borderColor || 'transparent' }">
+                    {{ lastThreadByCat[cat.id].label.name }}
+                  </span>
+                  <span class="title-txt">{{ lastThreadByCat[cat.id].title }}</span>
                 </router-link>
                 <div class="last-thread-meta">
-                  <span>{{ formatDate(lastThreadByCat[cat.id].createdAt) }}</span>
+                  <span>{{ formatDate(lastThreadByCat[cat.id].lastPostAt || lastThreadByCat[cat.id].createdAt) }}</span>
                   <span class="dot">•</span>
-                  <span class="author">{{ lastThreadByCat[cat.id].author?.username }}</span>
+                  <span class="author">{{ (lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.username || 'Ẩn danh' }}</span>
                 </div>
               </div>
             </div>
@@ -362,15 +365,40 @@ export default {
 }
 
 .last-thread-title {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.95rem;
   font-weight: 500;
   color: #1a507a;
   text-decoration: none;
+  margin-bottom: 2px;
+  min-width: 0;
+}
+
+.last-thread-title .title-txt {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 2px;
+  flex: 1;
+}
+
+.last-thread-title:hover .title-txt {
+  text-decoration: underline;
+}
+
+.label-tag-mini {
+  padding: 1px 5px;
+  font-size: 0.7rem;
+  border-radius: 3px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1.2;
+  flex-shrink: 0;
 }
 
 .last-thread-meta {
