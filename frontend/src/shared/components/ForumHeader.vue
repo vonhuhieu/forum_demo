@@ -132,6 +132,9 @@ export default {
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside)
+    if (this.notifUnsubscribe) {
+      this.notifUnsubscribe()
+    }
   },
   methods: {
     checkAuth() {
@@ -163,8 +166,13 @@ export default {
       // Connect (using username for tracking connection identifier internally in service)
       webSocketService.connect(this.currentUser.username)
       
+      // Clean up existing subscription if present
+      if (this.notifUnsubscribe) {
+        this.notifUnsubscribe()
+      }
+
       // Register callback for live push notifications - USING NUMERICAL USER ID FOR TOPIC
-      webSocketService.subscribeToNotifications(this.currentUser.id, (newNotif) => {
+      this.notifUnsubscribe = webSocketService.subscribeToNotifications(this.currentUser.id, (newNotif) => {
         // Add to top of list
         this.notifications.unshift(newNotif)
         this.unreadCount++

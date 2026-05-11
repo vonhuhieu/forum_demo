@@ -6,6 +6,7 @@ class WebSocketService {
     this.client = null
     this.connected = false
     this.subscribers = new Map() // topic -> Array of callback functions
+    this.activeSubscriptions = new Map() // topic -> Stomp Subscription Object
     this.username = null
   }
 
@@ -28,7 +29,7 @@ class WebSocketService {
       this.connected = true
       console.log('WebSocket Connected Successfully: ' + frame)
       
-      // Subscribe to existing queued subscriptions
+      // Subscribe all unique topics to client
       this.subscribers.forEach((callbacks, topic) => {
         this._subscribeToClient(topic)
       })
@@ -41,6 +42,8 @@ class WebSocketService {
 
     this.client.onWebSocketClose = () => {
        this.connected = false
+       // Invalidate subscriptions on close
+       this.activeSubscriptions.clear()
     }
 
     this.client.activate()
@@ -48,14 +51,18 @@ class WebSocketService {
 
   _subscribeToClient(topic) {
     if (!this.client || !this.connected) return
+    // Avoid duplicate actual subscription calls to the broker
+    if (this.activeSubscriptions.has(topic)) return
     
-    this.client.subscribe(topic, (message) => {
+    const sub = this.client.subscribe(topic, (message) => {
       if (message.body) {
         const payload = JSON.parse(message.body)
         const callbacks = this.subscribers.get(topic) || []
         callbacks.forEach(cb => cb(payload))
       }
     })
+    
+    this.activeSubscriptions.set(topic, sub)
   }
 
   subscribe(topic, callback) {
@@ -65,16 +72,39 @@ class WebSocketService {
     
     this.subscribers.get(topic).push(callback)
     
-    // If already connected, push active subscription instantly to backend
+    // If already connected, ensure underlying subscription is pushed only once
     if (this.connected) {
       this._subscribeToClient(topic)
+    }
+    
+    // Return unsubsribe helper function
+    return () => this.unsubscribe(topic, callback)
+  }
+
+  unsubscribe(topic, callback) {
+    if (!this.subscribers.has(topic)) return
+    
+    const callbacks = this.subscribers.get(topic)
+    const index = callbacks.indexOf(callback)
+    if (index > -1) {
+      callbacks.splice(index, 1)
+    }
+    
+    // If no more application listeners, remove actual broker subscription
+    if (callbacks.length === 0) {
+      this.subscribers.delete(topic)
+      const activeSub = this.activeSubscriptions.get(topic)
+      if (activeSub) {
+        activeSub.unsubscribe()
+        this.activeSubscriptions.delete(topic)
+      }
     }
   }
 
   // Specifically shorthand for general notifications
   subscribeToNotifications(userId, callback) {
     const topic = `/topic/notifications/${userId}`
-    this.subscribe(topic, callback)
+    return this.subscribe(topic, callback)
   }
 
   disconnect() {
@@ -84,6 +114,7 @@ class WebSocketService {
     }
     this.connected = false
     this.subscribers.clear()
+    this.activeSubscriptions.clear()
     this.username = null
   }
 }
