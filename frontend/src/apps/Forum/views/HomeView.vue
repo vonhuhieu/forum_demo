@@ -32,15 +32,15 @@
               </div>
               <div v-else class="latest-threads-list">
                 <div v-for="thread in latestThreads" :key="thread.id" class="latest-thread-item">
-                  <div class="lt-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#e0e0e0', color: thread.author && thread.author.avatar ? '#fff' : '#555' }">
-                    {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
+                  <div class="lt-avatar" :style="{ backgroundColor: (thread.lastPostAuthor || thread.author)?.avatar || '#e0e0e0', color: '#fff' }">
+                    {{ ((thread.lastPostAuthor || thread.author)?.username || 'A').charAt(0).toUpperCase() }}
                   </div>
                   <div class="lt-content">
                     <div class="lt-title">
                       <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }" :title="thread.title">{{ thread.title }}</router-link>
                     </div>
                     <div class="lt-meta">
-                      Mới nhất: {{ thread.author ? thread.author.username : 'Ẩn danh' }} &middot; {{ formatDate(thread.createdAt) }}
+                      Mới nhất: {{ (thread.lastPostAuthor || thread.author)?.username || 'Ẩn danh' }} &middot; {{ formatDate(thread.lastPostAt || thread.createdAt) }}
                     </div>
                     <div class="lt-category">
                       <router-link :to="{ name: 'CategoryDetail', params: { id: thread.category?.id } }">{{ thread.category?.name || 'Không rõ' }}</router-link>
@@ -295,12 +295,10 @@ export default {
 }
 
 .lt-title {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   font-weight: 500;
   margin-bottom: 4px;
   font-size: 0.95rem;
+  word-break: break-word;
 }
 
 .lt-title a {
@@ -317,9 +315,7 @@ export default {
   font-size: 0.8rem;
   color: #666;
   margin-bottom: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .lt-category {
