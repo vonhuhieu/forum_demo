@@ -37,7 +37,12 @@
                   </div>
                   <div class="lt-content">
                     <div class="lt-title">
-                      <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }" :title="thread.title">{{ thread.title }}</router-link>
+                      <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }" :title="thread.title">
+                        <span v-if="thread.label" class="label-tag-mini" :style="{ backgroundColor: thread.label.colorCode, color: thread.label.textColor, borderColor: thread.label.borderColor || 'transparent' }">
+                          {{ thread.label.name }}
+                        </span>
+                        <span class="lt-title-text">{{ thread.title }}</span>
+                      </router-link>
                     </div>
                     <div class="lt-meta">
                       Mới nhất: {{ (thread.lastPostAuthor || thread.author)?.username || 'Ẩn danh' }} &middot; {{ formatDate(thread.lastPostAt || thread.createdAt) }}
@@ -302,13 +307,34 @@ export default {
 }
 
 .lt-title a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: #2c3e50;
   text-decoration: none;
 }
 
-.lt-title a:hover {
+.lt-title a:hover .lt-title-text {
   color: #1a507a;
   text-decoration: underline;
+}
+
+.lt-title-text {
+  flex: 1;
+}
+
+.label-tag-mini {
+  padding: 1px 5px;
+  font-size: 0.7rem;
+  border-radius: 3px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  line-height: 1.2;
+  flex-shrink: 0;
 }
 
 .lt-meta {
