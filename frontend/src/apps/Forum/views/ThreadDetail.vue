@@ -217,7 +217,7 @@ export default {
       isLoggedIn: !!localStorage.getItem('token'),
       currentUsername: parsedUser ? parsedUser.username : 'Me',
       currentUserAvatar: parsedUser ? parsedUser.avatar : '#3498db',
-      currentPage: 1,
+      currentPage: Number(this.$route.query.page) || 1,
       itemsPerPage: 10,
       highlightedPostId: null
     }
@@ -316,6 +316,13 @@ export default {
       handler(newVal) {
         if (newVal) {
           this.jumpToTargetPost()
+        }
+      }
+    },
+    '$route.query.page': {
+      handler(newVal) {
+        if (newVal) {
+          this.currentPage = Number(newVal) || 1
         }
       }
     }

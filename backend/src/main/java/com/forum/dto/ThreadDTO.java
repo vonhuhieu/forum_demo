@@ -18,4 +18,7 @@ public class ThreadDTO {
     private boolean active = true;
     private PollDTO poll;
     private String attachedImages;
+    private Long lastPostId;
+    private UserDTO lastPostAuthor;
+    private LocalDateTime lastPostAt;
 }

@@ -12,4 +12,5 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findByThreadIdOrderByCreatedAtAsc(Long threadId);
     Page<Post> findByThreadId(Long threadId, Pageable pageable);
+    java.util.Optional<Post> findFirstByThreadIdOrderByCreatedAtDesc(Long threadId);
 }

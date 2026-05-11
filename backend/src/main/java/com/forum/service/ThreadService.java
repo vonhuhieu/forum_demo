@@ -21,6 +21,7 @@ public class ThreadService {
     private final UserRepository userRepository;
     private final ThreadMapper threadMapper;
     private final com.forum.repository.PollVoteRepository pollVoteRepository;
+    private final com.forum.repository.PostRepository postRepository;
 
     public ResponseDTO<List<ThreadDTO>> getAllThreads(Long categoryId) {
         List<Thread> threads;
@@ -29,18 +30,50 @@ public class ThreadService {
         } else {
             threads = threadRepository.findAllByOrderByCreatedAtDesc();
         }
-        return ResponseDTO.success(threadMapper.toDTOList(threads));
+        List<ThreadDTO> dtos = threadMapper.toDTOList(threads);
+        enrichThreads(dtos);
+        return ResponseDTO.success(dtos);
     }
 
     public ResponseDTO<List<ThreadDTO>> getLatestThreads() {
-        return ResponseDTO.success(threadMapper.toDTOList(threadRepository.findTop10ByOrderByCreatedAtDesc()));
+        List<ThreadDTO> dtos = threadMapper.toDTOList(threadRepository.findTop10ByOrderByCreatedAtDesc());
+        enrichThreads(dtos);
+        return ResponseDTO.success(dtos);
     }
 
     public ResponseDTO<ThreadDTO> getThreadById(Long id) {
         return threadRepository.findById(id).map(thread -> {
             thread.setViewCount(thread.getViewCount() + 1);
-            return ResponseDTO.success(threadMapper.toDTO(threadRepository.save(thread)));
+            ThreadDTO dto = threadMapper.toDTO(threadRepository.save(thread));
+            enrichThread(dto);
+            return ResponseDTO.success(dto);
         }).orElseThrow(() -> new RuntimeException("Thread not found"));
+    }
+
+    private void enrichThreads(List<ThreadDTO> dtos) {
+        if (dtos != null) {
+            for (ThreadDTO dto : dtos) {
+                enrichThread(dto);
+            }
+        }
+    }
+
+    private void enrichThread(ThreadDTO dto) {
+        if (dto == null || dto.getId() == null) return;
+        
+        postRepository.findFirstByThreadIdOrderByCreatedAtDesc(dto.getId()).ifPresent(post -> {
+            dto.setLastPostId(post.getId());
+            dto.setLastPostAt(post.getCreatedAt());
+            
+            if (post.getAuthor() != null) {
+                com.forum.dto.UserDTO userDTO = new com.forum.dto.UserDTO();
+                userDTO.setId(post.getAuthor().getId());
+                userDTO.setUsername(post.getAuthor().getUsername());
+                userDTO.setEmail(post.getAuthor().getEmail());
+                userDTO.setAvatar(post.getAuthor().getAvatar());
+                dto.setLastPostAuthor(userDTO);
+            }
+        });
     }
 
     public ResponseDTO<ThreadDTO> createThread(ThreadDTO threadDTO) {
