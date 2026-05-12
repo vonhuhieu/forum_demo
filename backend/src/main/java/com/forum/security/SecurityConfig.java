@@ -29,16 +29,23 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/menus", "/api/menus/**").permitAll() 
-                .requestMatchers("/api/statistics", "/api/statistics/**").permitAll()
-                .requestMatchers("/uploads/**").permitAll() // Cho phép xem ảnh/video/tệp đính kèm
-                .requestMatchers("/ws/**").permitAll() // Cho phép thiết lập kết nối WebSocket công khai
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/menus", "/api/menus/**").permitAll() 
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/statistics", "/api/statistics/**").permitAll() // Cho phép công khai xem thống kê diễn đàn
+                .requestMatchers("/uploads/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
+                // Cấu hình GET công khai
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories", "/api/categories/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/category-groups", "/api/category-groups/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/threads", "/api/threads/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/polls", "/api/polls/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/labels", "/api/labels/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/posts", "/api/posts/**").permitAll()
+                // Cấu hình bảo vệ cho tác vụ ADMIN
+                .requestMatchers("/api/menus/**").hasRole("ADMIN")
+                .requestMatchers("/api/categories/**").hasRole("ADMIN")
+                .requestMatchers("/api/category-groups/**").hasRole("ADMIN")
+                .requestMatchers("/api/labels/**").hasRole("ADMIN")
+                // Còn lại yêu cầu đăng nhập
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);

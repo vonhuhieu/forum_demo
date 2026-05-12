@@ -64,7 +64,7 @@ const routes = [
   {
     path: '/admin',
     component: AdminLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresAdmin: true },
     children: [
       {
         path: 'menu',
@@ -122,26 +122,43 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
+  
+  let userRoles = []
+  try {
+    const userStr = localStorage.getItem('user')
+    if (userStr) {
+      const userData = JSON.parse(userStr)
+      userRoles = userData.roles || []
+    }
+  } catch (e) {
+    userRoles = []
+  }
 
-  // Kiểm tra nếu route yêu cầu Đăng nhập
-  if (to.matched.some(record => record.meta.requiresAuth)) {
+  const isAuthRequired = to.matched.some(record => record.meta.requiresAuth)
+  const isAdminRequired = to.matched.some(record => record.meta.requiresAdmin)
+  const isGuestOnly = to.matched.some(record => record.meta.guestOnly)
+
+  if (isAuthRequired) {
     if (!token) {
-      next('/login')
-    } else {
-      next()
+      return next('/login')
     }
+    
+    // Kiểm tra quyền Admin
+    if (isAdminRequired && !userRoles.includes('ROLE_ADMIN')) {
+      return next({ name: 'Home' }) // Không có quyền Admin đẩy về Trang chủ
+    }
+    
+    return next()
   } 
-  // Kiểm tra nếu route Dành riêng cho khách chưa đăng nhập (Login/Register)
-  else if (to.matched.some(record => record.meta.guestOnly)) {
+  
+  if (isGuestOnly) {
     if (token) {
-      next({ name: 'Home' }) // Nếu đã login rồi thì đẩy về Home
-    } else {
-      next()
+      return next({ name: 'Home' })
     }
+    return next()
   }
-  else {
-    next()
-  }
+
+  next()
 })
 
 export default router

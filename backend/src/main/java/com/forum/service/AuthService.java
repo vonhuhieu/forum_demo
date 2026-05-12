@@ -27,9 +27,6 @@ public class AuthService {
     @Autowired
     private JwtUtils jwtUtils;
 
-    @Autowired
-    private JwtUtils jwtUtils;
-
     public Map<String, Object> authenticateUser(String username, String password) {
         Optional<User> userOpt = userRepository.findByUsername(username)
                 .filter(user -> user.getUsername().equalsIgnoreCase(username)) // Bảo vệ chống trùng lặp do collation CSDL
@@ -44,7 +41,7 @@ public class AuthService {
                 userRepository.save(user);
             }
 
-            String token = jwtUtils.generateJwtToken(username);
+            String token = jwtUtils.generateJwtToken(username, user.getRoles());
             java.util.Map<String, Object> response = new java.util.HashMap<>();
             response.put("id", user.getId());
             response.put("token", token);
