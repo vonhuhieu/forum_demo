@@ -51,6 +51,7 @@ public class PostService {
 
         // Update thread statistics
         thread.setReplyCount(thread.getReplyCount() + 1);
+        thread.setLastPostAt(saved.getCreatedAt());
         Thread updatedThread = threadRepository.save(thread);
 
         // Gửi thông báo tới chủ bài viết realtime + lưu DB

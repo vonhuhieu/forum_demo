@@ -4,6 +4,7 @@ import com.forum.dto.ResponseDTO;
 import com.forum.dto.ThreadDTO;
 import com.forum.entity.Thread;
 import com.forum.mapper.ThreadMapper;
+import com.forum.repository.NotificationRepository;
 import com.forum.repository.ThreadRepository;
 import com.forum.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +23,21 @@ public class ThreadService {
     private final ThreadMapper threadMapper;
     private final com.forum.repository.PollVoteRepository pollVoteRepository;
     private final com.forum.repository.PostRepository postRepository;
+    private final NotificationRepository notificationRepository;
 
-    public ResponseDTO<List<ThreadDTO>> getAllThreads(Long categoryId) {
+    public ResponseDTO<List<ThreadDTO>> getAllThreads(Long categoryId, Integer limit) {
         List<Thread> threads;
         if (categoryId != null) {
-            threads = threadRepository.findAllByCategoryIdOrderByPinnedDescCreatedAtDesc(categoryId);
+            if (limit != null && limit == 1) {
+                // Dành cho các ô tóm tắt "Bài viết cuối", lấy tuyệt đối 1 bài mới phản hồi nhất bỏ qua Ghim
+                threads = threadRepository.findFirstByCategoryIdOrderByLastPostAtDesc(categoryId)
+                        .map(java.util.Collections::singletonList)
+                        .orElse(java.util.Collections.emptyList());
+            } else {
+                threads = threadRepository.findAllByCategoryIdOrderByPinnedDescLastPostAtDesc(categoryId);
+            }
         } else {
-            threads = threadRepository.findAllByOrderByCreatedAtDesc();
+            threads = threadRepository.findAllByOrderByLastPostAtDesc();
         }
         List<ThreadDTO> dtos = threadMapper.toDTOList(threads);
         enrichThreads(dtos);
@@ -36,7 +45,7 @@ public class ThreadService {
     }
 
     public ResponseDTO<List<ThreadDTO>> getLatestThreads() {
-        List<ThreadDTO> dtos = threadMapper.toDTOList(threadRepository.findTop10ByOrderByCreatedAtDesc());
+        List<ThreadDTO> dtos = threadMapper.toDTOList(threadRepository.findTop10ByOrderByLastPostAtDesc());
         enrichThreads(dtos);
         return ResponseDTO.success(dtos);
     }
@@ -182,6 +191,9 @@ public class ThreadService {
 
     public ResponseDTO<Void> deleteThread(Long id) {
         threadRepository.findById(id).ifPresent(thread -> {
+            // Delete associated notifications first
+            notificationRepository.deleteByThreadId(id);
+            
             if (thread.getPoll() != null) {
                 pollVoteRepository.deleteByPollId(thread.getPoll().getId());
             }

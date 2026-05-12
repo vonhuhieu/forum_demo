@@ -16,7 +16,8 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
     @Query("UPDATE Thread t SET t.label = null WHERE t.label.id = :labelId")
     void removeLabelFromThreads(@org.springframework.data.repository.query.Param("labelId") Long labelId);
 
-    List<Thread> findAllByCategoryIdOrderByPinnedDescCreatedAtDesc(Long categoryId);
-    List<Thread> findAllByOrderByCreatedAtDesc();
-    List<Thread> findTop10ByOrderByCreatedAtDesc();
+    List<Thread> findAllByCategoryIdOrderByPinnedDescLastPostAtDesc(Long categoryId);
+    List<Thread> findAllByOrderByLastPostAtDesc();
+    List<Thread> findTop10ByOrderByLastPostAtDesc();
+    java.util.Optional<Thread> findFirstByCategoryIdOrderByLastPostAtDesc(Long categoryId);
 }

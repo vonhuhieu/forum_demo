@@ -41,8 +41,17 @@ public class Thread {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
+    private LocalDateTime lastPostAt;
+
     private int viewCount = 0;
     private int replyCount = 0;
+
+    @PrePersist
+    protected void onCreate() {
+        if (this.lastPostAt == null) {
+            this.lastPostAt = LocalDateTime.now();
+        }
+    }
 
     private boolean pinned = false;
     private boolean active = true;

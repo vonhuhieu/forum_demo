@@ -17,8 +17,10 @@ public class ThreadController {
     private final ThreadService threadService;
 
     @GetMapping
-    public ResponseEntity<ResponseDTO<List<ThreadDTO>>> getAllThreads(@RequestParam(required = false) Long categoryId) {
-        return ResponseEntity.ok(threadService.getAllThreads(categoryId));
+    public ResponseEntity<ResponseDTO<List<ThreadDTO>>> getAllThreads(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Integer limit) {
+        return ResponseEntity.ok(threadService.getAllThreads(categoryId, limit));
     }
 
     @GetMapping("/latest")
