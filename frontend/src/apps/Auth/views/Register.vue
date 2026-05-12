@@ -130,11 +130,12 @@ export default {
 
 <style scoped>
 .login-page {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   background-color: #004a7c;
+  padding: 2rem 1rem;
 }
 .login-card { width: 400px; }
 .login-form { padding: 2rem; }
