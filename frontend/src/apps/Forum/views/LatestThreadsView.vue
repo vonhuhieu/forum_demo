@@ -39,8 +39,19 @@
                 </div>
                 <div class="thread-meta">
                   <span class="author-name">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
-                  <span>{{ formatDate(thread.createdAt) }}</span>
-                  <span class="meta-category">{{ thread.category ? thread.category.name : 'N/A' }}</span>
+                  <span class="dot-divider">•</span>
+                  <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }" class="meta-link">{{ formatDate(thread.createdAt) }}</router-link>
+                  
+                  <span class="quick-pages" v-if="getThreadPages(thread.replyCount).length > 0">
+                    <router-link 
+                      v-for="p in getThreadPages(thread.replyCount)" 
+                      :key="p" 
+                      :to="{ name: 'ThreadDetail', params: { id: thread.id }, query: { page: p } }"
+                      class="page-badge"
+                    >
+                      {{ p }}
+                    </router-link>
+                  </span>
                 </div>
               </div>
               <div class="thread-stats">
@@ -55,11 +66,15 @@
               </div>
               <div class="thread-last-post">
                 <div class="last-post-info">
-                  <span class="last-post-time">{{ formatDate(thread.createdAt) }}</span>
-                  <span class="last-post-author">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
+                  <router-link 
+                    :to="thread.lastPostId ? { name: 'ThreadDetail', params: { id: thread.id }, query: { postId: thread.lastPostId } } : { name: 'ThreadDetail', params: { id: thread.id } }" 
+                    class="last-post-time-link">
+                    {{ formatDate(thread.lastPostAt || thread.createdAt) }}
+                  </router-link>
+                  <span class="last-post-author">{{ (thread.lastPostAuthor || thread.author)?.displayName || (thread.lastPostAuthor || thread.author)?.username || 'Ẩn danh' }}</span>
                 </div>
-                <div class="last-post-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
-                  {{ thread.author ? (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() : 'A' }}
+                <div class="last-post-avatar" :style="{ backgroundColor: (thread.lastPostAuthor || thread.author)?.avatar || '#ccc', color: '#fff' }">
+                  {{ ((thread.lastPostAuthor || thread.author)?.displayName || (thread.lastPostAuthor || thread.author)?.username || 'A').charAt(0).toUpperCase() }}
                 </div>
               </div>
             </div>
@@ -212,6 +227,17 @@ export default {
     },
     formatDate(dateStr) {
       return formatForumDate(dateStr)
+    },
+    getThreadPages(replyCount) {
+      const itemsPerPage = 10;
+      const totalItems = 1 + (replyCount || 0);
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+      
+      if (totalPages <= 1) return [];
+      if (totalPages === 2) return [2];
+      if (totalPages === 3) return [2, 3];
+      
+      return [totalPages - 2, totalPages - 1, totalPages];
     }
   }
 }
@@ -258,8 +284,50 @@ export default {
   gap: 5px;
 }
 
-.meta-category {
+.dot-divider {
+  font-size: 0.85rem;
+  color: #bbb;
+}
+
+.meta-link {
+  color: #8c8c8c;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.meta-link:hover {
+  text-decoration: underline;
+}
+
+.quick-pages {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.page-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  border: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
   color: #666;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 3px;
+  text-decoration: none;
+  font-weight: normal;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-badge:hover {
+  background-color: #1a507a;
+  border-color: #1a507a;
+  color: white;
+  font-weight: bold;
 }
 
 .thread-last-post {
@@ -274,6 +342,22 @@ export default {
 .last-post-info {
   display: flex;
   flex-direction: column;
+}
+
+.last-post-time-link {
+  font-size: 0.85rem;
+  color: #2980b9;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.last-post-time-link:hover {
+  text-decoration: underline;
+}
+
+.last-post-author {
+  font-size: 0.8rem;
+  color: #444;
 }
 
 .last-post-avatar {
