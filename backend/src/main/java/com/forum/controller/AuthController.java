@@ -32,9 +32,10 @@ public class AuthController {
         String username = registerRequest.get("username");
         String password = registerRequest.get("password");
         String email = registerRequest.get("email");
+        String displayName = registerRequest.get("displayName");
 
         try {
-            authService.registerUser(username, password, email);
+            authService.registerUser(username, password, email, displayName);
             return ResponseEntity.ok(Map.of("message", "Đăng ký thành công"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

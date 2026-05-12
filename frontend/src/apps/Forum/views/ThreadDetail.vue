@@ -13,7 +13,7 @@
         <div class="thread-meta-bar">
           <div class="author-info">
             <svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <span class="author-name">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
+            <span class="author-name">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
             <span class="meta-dot">·</span>
             <svg class="meta-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             <span class="post-time">{{ formatDate(thread.createdAt) }}</span>
@@ -43,9 +43,9 @@
           <div class="post-layout">
             <div class="post-sidebar">
               <div class="avatar-large" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
-                {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
+                {{ thread.author ? (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() : 'A' }}
               </div>
-              <div class="author-name-large">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</div>
+              <div class="author-name-large">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</div>
               <div class="author-title">Yếu sinh lý</div>
             </div>
             
@@ -67,7 +67,7 @@
                   <a href="#" class="action-link" @click.prevent>Sửa</a>
                 </div>
                 <div class="right-actions">
-                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(thread.author ? thread.author.username : 'Ẩn danh', thread.content, 'main_thread_entry')">
+                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh', thread.content, 'main_thread_entry')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                     Trả lời
                   </a>
@@ -82,9 +82,9 @@
           <div class="post-layout">
             <div class="post-sidebar">
               <div class="avatar-large" :style="{ backgroundColor: item.author && item.author.avatar ? item.author.avatar : '#ccc', color: '#fff' }">
-                {{ item.author ? item.author.username.charAt(0).toUpperCase() : '?' }}
+                {{ item.author ? (item.author.displayName || item.author.username).charAt(0).toUpperCase() : '?' }}
               </div>
-              <div class="author-name-large">{{ item.author ? item.author.username : 'Ẩn danh' }}</div>
+              <div class="author-name-large">{{ item.author ? (item.author.displayName || item.author.username) : 'Ẩn danh' }}</div>
               <div class="author-title">Thành viên</div>
             </div>
             
@@ -105,7 +105,7 @@
                   <a href="#" class="action-link" @click.prevent>Báo cáo</a>
                 </div>
                 <div class="right-actions">
-                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(item.author ? item.author.username : 'Ẩn danh', item.content, item.id)">
+                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(item.author ? (item.author.displayName || item.author.username) : 'Ẩn danh', item.content, item.id)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                     Trả lời
                   </a>
@@ -215,7 +215,7 @@ export default {
       replyAttachedImages: [],
       submittingPost: false,
       isLoggedIn: !!localStorage.getItem('token'),
-      currentUsername: parsedUser ? parsedUser.username : 'Me',
+      currentUsername: parsedUser ? (parsedUser.displayName || parsedUser.username) : 'Me',
       currentUserAvatar: parsedUser ? parsedUser.avatar : '#3498db',
       currentPage: Number(this.$route.query.page) || 1,
       itemsPerPage: 10,
@@ -614,8 +614,8 @@ export default {
             const containerId = container.id.replace('post-', '');
             
             const list = [
-              { id: 'main_thread_entry', author: this.thread?.author?.username },
-              ...this.posts.map(p => ({ id: String(p.id), author: p.author?.username }))
+              { id: 'main_thread_entry', author: this.thread?.author?.displayName || this.thread?.author?.username },
+              ...this.posts.map(p => ({ id: String(p.id), author: p.author?.displayName || p.author?.username }))
             ];
             
             let currentIdx = list.findIndex(i => i.id === containerId);

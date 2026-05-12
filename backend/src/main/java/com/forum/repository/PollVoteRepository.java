@@ -14,12 +14,12 @@ public interface PollVoteRepository extends JpaRepository<PollVote, Long> {
     void deleteByPollId(Long pollId);
     void deleteByOptionId(Long optionId);
 
-    @org.springframework.data.jpa.repository.Query("SELECT new com.forum.dto.PollVoteDetailDTO(pv.id, u.username, po.id, po.optionText) " +
+    @org.springframework.data.jpa.repository.Query("SELECT new com.forum.dto.PollVoteDetailDTO(pv.id, u.username, u.displayName, po.id, po.optionText) " +
             "FROM PollVote pv " +
             "JOIN pv.user u " +
             "JOIN pv.option po " +
             "WHERE pv.poll.id = :pollId " +
-            "AND (:keyword IS NULL OR :keyword = '' OR LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "AND (:keyword IS NULL OR :keyword = '' OR LOWER(u.username) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.displayName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:optionId IS NULL OR po.id = :optionId)")
     org.springframework.data.domain.Page<com.forum.dto.PollVoteDetailDTO> findVotesByPollIdWithFilters(
             @org.springframework.data.repository.query.Param("pollId") Long pollId,

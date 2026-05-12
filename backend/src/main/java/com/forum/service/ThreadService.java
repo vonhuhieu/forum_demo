@@ -78,6 +78,7 @@ public class ThreadService {
                 com.forum.dto.UserDTO userDTO = new com.forum.dto.UserDTO();
                 userDTO.setId(post.getAuthor().getId());
                 userDTO.setUsername(post.getAuthor().getUsername());
+                userDTO.setDisplayName(post.getAuthor().getDisplayName());
                 userDTO.setEmail(post.getAuthor().getEmail());
                 userDTO.setAvatar(post.getAuthor().getAvatar());
                 dto.setLastPostAuthor(userDTO);

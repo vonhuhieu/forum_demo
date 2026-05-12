@@ -6,9 +6,9 @@
     <div class="header-right">
       <div class="user-info" v-if="currentUser">
         <span class="user-avatar" :style="{ backgroundColor: currentUser.avatar || '#fff', color: currentUser.avatar ? '#fff' : '#1a507a' }">
-          {{ currentUser.username.charAt(0).toUpperCase() }}
+          {{ (currentUser.displayName || currentUser.username).charAt(0).toUpperCase() }}
         </span>
-        <span class="user-name">Chào, {{ currentUser.username }}</span>
+        <span class="user-name">Chào, {{ currentUser.displayName || currentUser.username }}</span>
       </div>
     </div>
   </header>

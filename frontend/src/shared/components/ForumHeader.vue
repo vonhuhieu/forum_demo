@@ -47,12 +47,12 @@
                      >
                        <div class="notif-avatar-wrapper">
                           <div class="notif-avatar" :style="{ backgroundColor: notif.actorAvatar || '#3498db' }">
-                             {{ notif.actorUsername ? notif.actorUsername.charAt(0).toUpperCase() : '?' }}
+                             {{ (notif.actorDisplayName || notif.actorUsername || '?').charAt(0).toUpperCase() }}
                           </div>
                        </div>
                        <div class="notif-body">
                           <div class="notif-text">
-                             <strong>{{ notif.actorUsername }}</strong> đã trả lời bài viết <span class="highlight-thread">"{{ notif.threadTitle }}"</span>
+                             <strong>{{ notif.actorDisplayName || notif.actorUsername }}</strong> đã trả lời bài viết <span class="highlight-thread">"{{ notif.threadTitle }}"</span>
                           </div>
                           <div class="notif-time">{{ formatTime(notif.createdAt) }}</div>
                        </div>
@@ -72,9 +72,9 @@
 
             <div class="user-info-header">
               <span class="user-avatar-small" :style="{ backgroundColor: currentUser.avatar || '#fff', color: currentUser.avatar ? '#fff' : '#1a507a' }">
-                {{ currentUser.username.charAt(0).toUpperCase() }}
+                {{ (currentUser.displayName || currentUser.username).charAt(0).toUpperCase() }}
               </span>
-              <span class="user-greeting">Chào, {{ currentUser.username }}</span>
+              <span class="user-greeting">Chào, {{ currentUser.displayName || currentUser.username }}</span>
             </div>
             <button @click="handleLogout" class="btn-logout-small">Thoát</button>
           </template>

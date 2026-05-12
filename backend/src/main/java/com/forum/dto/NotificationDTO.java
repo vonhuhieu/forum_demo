@@ -12,6 +12,7 @@ public class NotificationDTO {
     
     private Long actorId;
     private String actorUsername;
+    private String actorDisplayName;
     private String actorAvatar;
     
     private Long threadId;

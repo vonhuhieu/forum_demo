@@ -12,6 +12,7 @@ public interface NotificationMapper {
 
     @Mapping(source = "actor.id", target = "actorId")
     @Mapping(source = "actor.username", target = "actorUsername")
+    @Mapping(source = "actor.displayName", target = "actorDisplayName")
     @Mapping(source = "actor.avatar", target = "actorAvatar")
     @Mapping(source = "thread.id", target = "threadId")
     @Mapping(source = "thread.title", target = "threadTitle")

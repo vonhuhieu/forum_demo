@@ -5,7 +5,13 @@
       <form @submit.prevent="handleRegister" class="login-form">
         <div class="form-group">
           <label>Tên đăng nhập <span class="required">*</span></label>
-          <input v-model="username" required placeholder="Nhập tên đăng nhập">
+          <input v-model="username" required pattern="^[a-zA-Z0-9_]{3,20}$" title="Chỉ cho phép chữ cái không dấu, số và dấu gạch dưới (3-20 ký tự)" placeholder="Chỉ dùng chữ, số, gạch dưới (3-20 ký tự)">
+          <small class="hint">Tên này dùng để đăng nhập và không đổi được.</small>
+        </div>
+        <div class="form-group">
+          <label>Tên hiển thị</label>
+          <input v-model="displayName" placeholder="Nhập tên sẽ hiện trên diễn đàn (có thể đổi)">
+          <small class="hint">Để trống nếu muốn lấy Tên đăng nhập làm Tên hiển thị.</small>
         </div>
         <div class="form-group">
           <label>Email <span class="required">*</span></label>
@@ -55,6 +61,7 @@ export default {
   data() {
     return {
       username: '',
+      displayName: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -91,6 +98,12 @@ export default {
         return
       }
 
+      const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+      if (!usernameRegex.test(this.username)) {
+        this.error = 'Tên đăng nhập không hợp lệ. Chỉ được phép chứa chữ không dấu, số, gạch dưới (3-20 kí tự) và không có dấu cách.'
+        return
+      }
+
       if (this.password !== this.confirmPassword) {
         this.error = 'Mật khẩu xác nhận không khớp'
         return
@@ -98,6 +111,7 @@ export default {
       try {
         await AuthService.register({
           username: this.username,
+          displayName: this.displayName,
           password: this.password,
           email: this.email,
           recaptcha: recaptchaResponse
@@ -127,8 +141,9 @@ export default {
 .form-group { margin-bottom: 1.5rem; }
 .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: #1a507a; }
 .required { color: #e74c3c; margin-left: 2px; }
-.form-group input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; outline: none; }
+.form-group input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px; outline: none; margin-bottom: 4px; }
 .form-group input:focus { border-color: #1a507a; }
+.hint { font-size: 0.75rem; color: #777; display: block; margin-bottom: 0.25rem; }
 
 .password-wrapper {
   position: relative;

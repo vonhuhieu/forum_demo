@@ -27,7 +27,7 @@
           <div class="thread-list">
             <div v-for="thread in paginatedThreads" :key="thread.id" class="thread-row">
               <div class="thread-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
-                {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
+                {{ thread.author ? (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() : 'A' }}
               </div>
               <div class="thread-main">
                 <div class="thread-title">
@@ -38,7 +38,7 @@
                   <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }">{{ thread.title }}</router-link>
                 </div>
                 <div class="thread-meta">
-                  <span class="author-name">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
+                  <span class="author-name">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
                   <span>{{ formatDate(thread.createdAt) }}</span>
                   <span class="meta-category">{{ thread.category ? thread.category.name : 'N/A' }}</span>
                 </div>
@@ -56,10 +56,10 @@
               <div class="thread-last-post">
                 <div class="last-post-info">
                   <span class="last-post-time">{{ formatDate(thread.createdAt) }}</span>
-                  <span class="last-post-author">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
+                  <span class="last-post-author">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
                 </div>
                 <div class="last-post-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
-                  {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
+                  {{ thread.author ? (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() : 'A' }}
                 </div>
               </div>
             </div>

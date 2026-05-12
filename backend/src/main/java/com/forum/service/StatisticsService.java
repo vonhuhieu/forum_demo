@@ -30,7 +30,7 @@ public class StatisticsService {
         long totalMembers = userRepository.count();
         
         String latestMember = userRepository.findFirstByOrderByIdDesc()
-                .map(User::getUsername)
+                .map(u -> org.springframework.util.StringUtils.hasText(u.getDisplayName()) ? u.getDisplayName() : u.getUsername())
                 .orElse("Chưa có");
 
         return StatisticsDTO.builder()

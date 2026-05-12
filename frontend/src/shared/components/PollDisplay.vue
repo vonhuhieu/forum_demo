@@ -139,7 +139,7 @@
       </template>
       
       <template #item-username="{ item }">
-        <strong>{{ item.username }}</strong>
+        <strong>{{ item.displayName || item.username }}</strong>
       </template>
     </TableModal>
   </div>

@@ -55,7 +55,7 @@
                 <div class="category-last-thread">
                   <div v-if="lastThreadByCat[sub.id]" class="last-thread-box">
                     <div class="last-thread-avatar" :style="{ backgroundColor: lastThreadByCat[sub.id].author && lastThreadByCat[sub.id].author.avatar ? lastThreadByCat[sub.id].author.avatar : '#ccc', color: '#fff' }">
-                      {{ lastThreadByCat[sub.id].author?.username?.charAt(0).toUpperCase() || 'A' }}
+                      {{ ((lastThreadByCat[sub.id].author?.displayName || lastThreadByCat[sub.id].author?.username) || 'A').charAt(0).toUpperCase() }}
                     </div>
                     <div class="last-thread-info">
                       <router-link :to="{ name: 'ThreadDetail', params: { id: lastThreadByCat[sub.id].id } }" class="last-thread-title" :title="lastThreadByCat[sub.id].title">
@@ -64,7 +64,7 @@
                       <div class="last-thread-meta">
                         <span>{{ formatDate(lastThreadByCat[sub.id].createdAt) }}</span>
                         <span class="dot">•</span>
-                        <span class="author">{{ lastThreadByCat[sub.id].author?.username || 'Ẩn danh' }}</span>
+                        <span class="author">{{ lastThreadByCat[sub.id].author?.displayName || lastThreadByCat[sub.id].author?.username || 'Ẩn danh' }}</span>
                       </div>
                     </div>
                   </div>
@@ -77,7 +77,7 @@
           <div class="thread-list">
             <div v-for="thread in paginatedThreads" :key="thread.id" class="thread-row">
               <div class="thread-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
-                {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
+                {{ thread.author ? (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() : 'A' }}
               </div>
               <div class="thread-main">
                 <div class="thread-title">
@@ -88,7 +88,7 @@
                   <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }">{{ thread.title }}</router-link>
                 </div>
                 <div class="thread-meta">
-                  <span class="author-name">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
+                  <span class="author-name">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
                   <span>{{ formatDate(thread.createdAt) }}</span>
                   <span class="meta-category">{{ thread.category ? thread.category.name : 'N/A' }}</span>
                 </div>
@@ -106,10 +106,10 @@
               <div class="thread-last-post">
                 <div class="last-post-info">
                   <span class="last-post-time">{{ formatDate(thread.createdAt) }}</span>
-                  <span class="last-post-author">{{ thread.author ? thread.author.username : 'Ẩn danh' }}</span>
+                  <span class="last-post-author">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
                 </div>
                 <div class="last-post-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
-                  {{ thread.author ? thread.author.username.charAt(0).toUpperCase() : 'A' }}
+                  {{ thread.author ? (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() : 'A' }}
                 </div>
               </div>
             </div>

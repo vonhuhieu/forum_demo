@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 public class PollVoteDetailDTO {
     private Long id;
     private String username;
+    private String displayName;
     private Long optionId;
     private String optionText;
 }

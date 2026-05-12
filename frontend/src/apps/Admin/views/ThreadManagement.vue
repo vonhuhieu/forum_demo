@@ -39,7 +39,7 @@
       </template>
 
       <template #item-author="{ item }">
-        {{ item.author ? item.author.username : 'Ẩn danh' }}
+        {{ item.author ? (item.author.displayName || item.author.username) : 'Ẩn danh' }}
       </template>
 
       <template #item-category="{ item }">
@@ -89,7 +89,7 @@ export default {
         const k = this.filter.keyword.trim().toLowerCase()
         result = result.filter(t => 
           (t.title && t.title.toLowerCase().includes(k)) ||
-          (t.author && t.author.username && t.author.username.toLowerCase().includes(k)) ||
+          (t.author && ((t.author.username && t.author.username.toLowerCase().includes(k)) || (t.author.displayName && t.author.displayName.toLowerCase().includes(k)))) ||
           (t.category && t.category.name && t.category.name.toLowerCase().includes(k))
         )
       }

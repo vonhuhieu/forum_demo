@@ -27,15 +27,12 @@ public class AuthService {
     @Autowired
     private JwtUtils jwtUtils;
 
-    private static final String[] AVATAR_COLORS = {
-            "#f44336", "#e91e63", "#9c27b0", "#673ab7", "#3f51b5",
-            "#2196f3", "#03a9f4", "#00bcd4", "#009688", "#4caf50",
-            "#8bc34a", "#cddc39", "#ffc107", "#ff9800", "#ff5722",
-            "#795548", "#607d8b"
-    };
+    @Autowired
+    private JwtUtils jwtUtils;
 
     public Map<String, Object> authenticateUser(String username, String password) {
         Optional<User> userOpt = userRepository.findByUsername(username)
+                .filter(user -> user.getUsername().equalsIgnoreCase(username)) // Bảo vệ chống trùng lặp do collation CSDL
                 .filter(user -> passwordEncoder.matches(password, user.getPassword()));
 
         if (userOpt.isPresent()) {
@@ -48,23 +45,30 @@ public class AuthService {
             }
 
             String token = jwtUtils.generateJwtToken(username);
-            return Map.of(
-                    "id", user.getId(),
-                    "token", token,
-                    "username", username,
-                    "roles", user.getRoles(),
-                    "avatar", user.getAvatar()
-            );
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("id", user.getId());
+            response.put("token", token);
+            response.put("username", user.getUsername());
+            response.put("displayName", user.getDisplayName()); // Có thể null
+            response.put("roles", user.getRoles());
+            response.put("avatar", user.getAvatar());
+            return response;
         }
         return null;
     }
 
     private String getRandomColor() {
-        int index = (int) (Math.random() * AVATAR_COLORS.length);
-        return AVATAR_COLORS[index];
+        int hue = new Random().nextInt(360);
+        // Trả về màu HSL sáng đẹp (Hue, 70% bão hòa, 45% độ sáng)
+        return String.format("hsl(%d, 70%%, 45%%)", hue);
     }
 
-    public void registerUser(String username, String password, String email) {
+    public void registerUser(String username, String password, String email, String displayName) {
+        // Kiểm định định dạng tài khoản nghiêm ngặt
+        if (username == null || !username.matches("^[a-zA-Z0-9_]{3,20}$")) {
+            throw new IllegalArgumentException("Tên đăng nhập không hợp lệ. Chỉ bao gồm chữ cái, số, gạch dưới (3-20 ký tự) và KHÔNG dấu/khoảng trắng.");
+        }
+
         if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Tên đăng nhập đã tồn tại");
         }
@@ -76,6 +80,11 @@ public class AuthService {
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
         user.setEmail(email);
+        
+        if (org.springframework.util.StringUtils.hasText(displayName)) {
+            user.setDisplayName(displayName.trim());
+        }
+
         user.setRoles(Set.of(Constants.ROLE_USER));
         user.setAvatar(getRandomColor());
         userRepository.save(user);

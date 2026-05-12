@@ -33,7 +33,7 @@
               <div v-else class="latest-threads-list">
                 <div v-for="thread in latestThreads" :key="thread.id" class="latest-thread-item">
                   <div class="lt-avatar" :style="{ backgroundColor: (thread.lastPostAuthor || thread.author)?.avatar || '#e0e0e0', color: '#fff' }">
-                    {{ ((thread.lastPostAuthor || thread.author)?.username || 'A').charAt(0).toUpperCase() }}
+                    {{ ((thread.lastPostAuthor || thread.author)?.displayName || (thread.lastPostAuthor || thread.author)?.username || 'A').charAt(0).toUpperCase() }}
                   </div>
                   <div class="lt-content">
                     <div class="lt-title">
@@ -45,7 +45,7 @@
                       </router-link>
                     </div>
                     <div class="lt-meta">
-                      Mới nhất: {{ (thread.lastPostAuthor || thread.author)?.username || 'Ẩn danh' }} &middot; {{ formatDate(thread.lastPostAt || thread.createdAt) }}
+                      Mới nhất: {{ (thread.lastPostAuthor || thread.author)?.displayName || (thread.lastPostAuthor || thread.author)?.username || 'Ẩn danh' }} &middot; {{ formatDate(thread.lastPostAt || thread.createdAt) }}
                     </div>
                     <div class="lt-category">
                       <router-link :to="{ name: 'CategoryDetail', params: { id: thread.category?.id } }">{{ thread.category?.name || 'Không rõ' }}</router-link>
