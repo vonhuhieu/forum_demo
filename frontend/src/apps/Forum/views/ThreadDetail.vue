@@ -289,7 +289,7 @@ export default {
     paginatedItems() {
       if (!this.thread) return [];
       const combined = [
-        { id: 'main_thread_entry', isMain: true, ...this.thread, seqNumber: 1 },
+        { ...this.thread, id: 'main_thread_entry', isMain: true, seqNumber: 1 },
         ...this.posts.map((p, idx) => ({ ...p, isMain: false, seqNumber: idx + 2 }))
       ];
       const start = (this.currentPage - 1) * this.itemsPerPage;
