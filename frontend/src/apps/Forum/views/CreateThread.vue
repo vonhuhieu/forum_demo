@@ -113,6 +113,8 @@ export default {
     return {
       catId: this.$route.query.catId,
       category: null,
+      categoryGroup: null,
+      allCategories: [],
       labels: [],
       selectedLabel: null,
       labelDropdownOpen: false,
@@ -124,12 +126,39 @@ export default {
   computed: {
     breadcrumbItems() {
       const items = [{ title: 'Trang chủ', to: { name: 'Home' } }]
-      if (this.category) {
+      
+      if (this.categoryGroup) {
+        items.push({ 
+          title: this.categoryGroup.name, 
+          to: { name: 'Home', hash: `#group-${this.categoryGroup.id}` } 
+        })
+      }
+
+      if (this.category && this.allCategories && this.allCategories.length > 0) {
+        let parents = [];
+        let currentParentId = this.category.parentCategoryId;
+        while (currentParentId) {
+          const parent = this.allCategories.find(c => c.id === currentParentId);
+          if (parent) {
+            parents.unshift(parent);
+            currentParentId = parent.parentCategoryId;
+          } else {
+            break;
+          }
+        }
+        parents.forEach(p => {
+          items.push({
+            title: p.name,
+            to: { name: 'CategoryDetail', params: { id: p.id } }
+          })
+        });
+
         items.push({ 
           title: this.category.name, 
           to: { name: 'CategoryDetail', params: { id: this.category.id } } 
         })
       }
+      
       items.push({ title: 'Đăng bài mới' })
       return items
     },
@@ -175,8 +204,18 @@ export default {
     async fetchCategory() {
       if (!this.catId) return
       try {
-        const response = await api.get('/categories')
-        this.category = response.data.find(c => c.id == this.catId)
+        const [catRes, groupRes] = await Promise.all([
+          api.get('/categories'),
+          api.get('/category-groups')
+        ])
+        
+        const categories = catRes.data
+        this.allCategories = categories
+        this.category = categories.find(c => c.id == this.catId)
+
+        if (this.category && this.category.categoryGroupId) {
+          this.categoryGroup = groupRes.data.find(g => g.id === this.category.categoryGroupId)
+        }
       } catch (error) {
         console.error('Error fetching category:', error)
       }
