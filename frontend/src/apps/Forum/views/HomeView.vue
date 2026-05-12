@@ -304,12 +304,11 @@ export default {
   margin-bottom: 4px;
   font-size: 0.95rem;
   word-break: break-word;
+  line-height: 1.5;
 }
 
 .lt-title a {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: block;
   color: #2c3e50;
   text-decoration: none;
 }
@@ -320,7 +319,7 @@ export default {
 }
 
 .lt-title-text {
-  flex: 1;
+  vertical-align: middle;
 }
 
 .label-tag-mini {
@@ -328,13 +327,15 @@ export default {
   font-size: 0.7rem;
   border-radius: 3px;
   font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-block;
+  vertical-align: middle;
   border: 1px solid transparent;
   white-space: nowrap;
-  line-height: 1.2;
+  line-height: 1;
+  margin-right: 6px;
   flex-shrink: 0;
+  position: relative;
+  top: -1px;
 }
 
 .lt-meta {
