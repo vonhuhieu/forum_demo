@@ -59,12 +59,23 @@
                 </div>
               </div>
               
-              <div class="content-body ql-editor" v-html="thread.content" @click="handleContentClick"></div>
+              <div v-if="editingItemId === item.id" class="inline-edit-box">
+                <CustomEditor ref="inlineEditEditor" v-model="editForm.content" minHeight="150px" @image-uploaded="handleEditImageUploaded" />
+                <ImageUploaderPanel ref="inlineEditUploader" v-model:images="editAttachedImages" @insert-images="handleEditInsertImages" style="padding: 10px; background: #fdfdfd; border-top: 1px solid #eee;" />
+                <div class="edit-actions-footer">
+                  <button class="btn-save" :disabled="submittingEdit" @click="submitEdit(item)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Lưu
+                  </button>
+                  <button class="btn-cancel-edit" @click="cancelEditing">Hủy</button>
+                </div>
+              </div>
+              <div v-else class="content-body ql-editor" v-html="thread.content" @click="handleContentClick"></div>
               
-              <div class="post-meta-bottom">
+              <div class="post-meta-bottom" v-if="editingItemId !== item.id">
                 <div class="left-actions">
                   <a href="#" class="action-link" @click.prevent>Báo cáo</a>
-                  <a href="#" class="action-link" @click.prevent>Sửa</a>
+                  <a href="#" class="action-link" v-if="canEdit(item)" @click.prevent="startEditing(item)">Sửa</a>
                 </div>
                 <div class="right-actions">
                   <a href="#" class="action-link reply-link" @click.prevent="quotePost(thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh', thread.content, 'main_thread_entry')">
@@ -98,11 +109,23 @@
                 </div>
               </div>
               
-              <div class="content-body ql-editor" v-html="formatPostContent(item.content)" @click="handleContentClick"></div>
+              <div v-if="editingItemId === item.id" class="inline-edit-box">
+                <CustomEditor ref="inlineEditEditor" v-model="editForm.content" minHeight="150px" @image-uploaded="handleEditImageUploaded" />
+                <ImageUploaderPanel ref="inlineEditUploader" v-model:images="editAttachedImages" @insert-images="handleEditInsertImages" style="padding: 10px; background: #fdfdfd; border-top: 1px solid #eee;" />
+                <div class="edit-actions-footer">
+                  <button class="btn-save" :disabled="submittingEdit" @click="submitEdit(item)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                    Lưu
+                  </button>
+                  <button class="btn-cancel-edit" @click="cancelEditing">Hủy</button>
+                </div>
+              </div>
+              <div v-else class="content-body ql-editor" v-html="formatPostContent(item.content)" @click="handleContentClick"></div>
               
-              <div class="post-meta-bottom">
+              <div class="post-meta-bottom" v-if="editingItemId !== item.id">
                 <div class="left-actions">
                   <a href="#" class="action-link" @click.prevent>Báo cáo</a>
+                  <a href="#" class="action-link" v-if="canEdit(item)" @click.prevent="startEditing(item)">Sửa</a>
                 </div>
                 <div class="right-actions">
                   <a href="#" class="action-link reply-link" @click.prevent="quotePost(item.author ? (item.author.displayName || item.author.username) : 'Ẩn danh', item.content, item.id)">
@@ -134,7 +157,7 @@
              </div>
           </div>
           <div class="post-main" style="padding: 0; border: 1px solid #e0e0e0;">
-             <CustomEditor ref="replyEditor" v-model="replyForm.content" @image-uploaded="handleImageUploaded" />
+             <CustomEditor ref="replyEditor" v-model="replyForm.content" minHeight="150px" @image-uploaded="handleImageUploaded" />
              <ImageUploaderPanel ref="uploaderPanel" v-model:images="replyAttachedImages" @insert-images="handleInsertImages" style="padding: 10px; background: #fdfdfd; border-top: 1px solid #eee;" />
              
              <div class="editor-footer" style="padding: 15px; display: flex; justify-content: flex-end; background: #f8f9fa; border-top: 1px solid #eee;">
@@ -219,7 +242,14 @@ export default {
       currentUserAvatar: parsedUser ? parsedUser.avatar : '#3498db',
       currentPage: Number(this.$route.query.page) || 1,
       itemsPerPage: 10,
-      highlightedPostId: null
+      highlightedPostId: null,
+      currentUser: parsedUser,
+      editingItemId: null,
+      editForm: {
+        content: ''
+      },
+      editAttachedImages: [],
+      submittingEdit: false
     }
   },
   computed: {
@@ -308,6 +338,12 @@ export default {
     replyAttachedImages: {
       handler() {
         this.syncAttachmentsToEditor()
+      },
+      deep: true
+    },
+    editAttachedImages: {
+      handler() {
+        this.syncEditAttachmentsToEditor()
       },
       deep: true
     },
@@ -672,6 +708,128 @@ export default {
       this.showLightbox = false
       this.activeImageUrl = ''
       document.body.style.overflow = ''
+    },
+    stripAttachments(content) {
+      if (!content) return ''
+      let cleanContent = content
+      const markers = [
+        /<div[^>]*class="attachment-block"[^>]*>/i,
+        /<p><strong>Đính kèm<\/strong><\/p>/i
+      ]
+      let matchIndex = -1
+      for (const marker of markers) {
+        const match = cleanContent.match(marker)
+        if (match) {
+          matchIndex = match.index
+          break
+        }
+      }
+      if (matchIndex !== -1) {
+        cleanContent = cleanContent.substring(0, matchIndex).trim()
+      }
+      return cleanContent
+    },
+    canEdit(item) {
+      if (!this.isLoggedIn || !this.currentUser) return false;
+      const author = item.isMain ? this.thread.author : item.author;
+      if (!author) return false;
+      return this.currentUser.username === author.username;
+    },
+    startEditing(item) {
+      this.editingItemId = item.id;
+      const rawContent = item.isMain ? this.thread.content : item.content;
+      this.editForm.content = this.stripAttachments(rawContent);
+      
+      try {
+        const imgsStr = item.isMain ? this.thread.attachedImages : item.attachedImages;
+        this.editAttachedImages = imgsStr ? JSON.parse(imgsStr) : [];
+      } catch (e) {
+        this.editAttachedImages = [];
+      }
+    },
+    cancelEditing() {
+      this.editingItemId = null;
+      this.editForm.content = '';
+      this.editAttachedImages = [];
+    },
+    async submitEdit(item) {
+      let cleanContent = this.stripAttachments(this.editForm.content);
+      if (!cleanContent.trim()) {
+        alertError('Nội dung không được để trống');
+        return;
+      }
+
+      try {
+        this.submittingEdit = true;
+        let finalContent = cleanContent;
+        const attachedImages = this.editAttachedImages;
+
+        if (attachedImages && attachedImages.length > 0) {
+          let attachedHtml = `<div id="attachment-section" class="attachment-block" style="margin-top: 2rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">`
+          attachedHtml += `<div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>`
+          attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
+          attachedImages.forEach(img => {
+            attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
+          })
+          attachedHtml += `</div></div>`
+          finalContent = finalContent.trim() + '\n' + attachedHtml
+        }
+
+        if (item.isMain) {
+          const payload = {
+            title: this.thread.title,
+            content: finalContent,
+            attachedImages: JSON.stringify(attachedImages),
+            category: this.thread.category,
+            label: this.thread.label
+          }
+          await api.put(`/threads/${this.thread.id}`, payload);
+          await this.fetchThread();
+        } else {
+          const payload = {
+            content: finalContent,
+            attachedImages: JSON.stringify(attachedImages)
+          }
+          await api.put(`/posts/${item.id}`, payload);
+          await this.fetchPosts();
+        }
+
+        alertSuccess('Cập nhật nội dung thành công');
+        this.cancelEditing();
+      } catch (error) {
+        console.error('Lỗi cập nhật:', error);
+        alertError('Không thể cập nhật nội dung');
+      } finally {
+        this.submittingEdit = false;
+      }
+    },
+    handleEditInsertImages(urls, type) {
+      if (this.$refs.inlineEditEditor) {
+        const editor = Array.isArray(this.$refs.inlineEditEditor) ? this.$refs.inlineEditEditor[0] : this.$refs.inlineEditEditor;
+        if (editor && editor.insertImages) {
+          editor.insertImages(urls, type);
+        }
+      }
+    },
+    handleEditImageUploaded(image) {
+      this.editAttachedImages.push(image);
+    },
+    syncEditAttachmentsToEditor() {
+      let content = this.editForm.content || '';
+      content = this.stripAttachments(content);
+
+      if (this.editAttachedImages && this.editAttachedImages.length > 0) {
+        let attachedHtml = `<div class="attachment-block" style="margin-top: 2rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">`
+        attachedHtml += `<div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>`
+        attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
+        this.editAttachedImages.forEach(img => {
+          attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
+        })
+        attachedHtml += `</div></div>`
+        content = content.trim() + '\n' + attachedHtml
+      }
+
+      this.editForm.content = content;
     }
   }
 }
@@ -1042,5 +1200,73 @@ export default {
   max-height: calc(100% - 60px);
   object-fit: contain;
   transition: transform 0.3s;
+}
+
+/* Inline Editing Styles */
+.inline-edit-box {
+  border: 1px solid #dcdcdc;
+  border-radius: 4px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fff;
+  margin: 15px;
+  overflow: hidden;
+}
+
+.inline-edit-box:focus-within {
+  border-color: #3498db;
+  box-shadow: 0 0 8px rgba(52, 152, 219, 0.25);
+}
+
+.edit-actions-footer {
+  padding: 12px 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  background: #f8f9fa;
+  border-top: 1px solid #eee;
+}
+
+.btn-save {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.2s;
+}
+
+.btn-save:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-cancel-edit {
+  background-color: #7f8c8d;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-cancel-edit:hover {
+  background-color: #95a5a6;
+}
+
+.btn-icon {
+  display: inline-block;
+  vertical-align: middle;
 }
 </style>

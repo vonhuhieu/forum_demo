@@ -29,4 +29,13 @@ public class PostController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ResponseDTO<PostDTO>> updatePost(@PathVariable Long id, @RequestBody PostDTO postDTO) {
+        try {
+            return ResponseEntity.ok(postService.updatePost(id, postDTO));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).build();
+        }
+    }
 }

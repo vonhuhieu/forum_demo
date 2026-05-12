@@ -1,5 +1,5 @@
 <template>
-  <div class="custom-editor-wrapper">
+  <div class="custom-editor-wrapper" :style="{ '--editor-min-height': minHeight }">
     <ckeditor 
       :editor="editor" 
       :model-value="modelValue" 
@@ -84,6 +84,10 @@ export default {
     disabled: {
       type: Boolean,
       default: false
+    },
+    minHeight: {
+      type: String,
+      default: '400px'
     }
   },
   emits: ['update:modelValue', 'ready', 'image-uploaded'],
@@ -308,11 +312,11 @@ export default {
 <style scoped>
 .custom-editor-wrapper {
   background: white;
-  min-height: 400px;
+  min-height: var(--editor-min-height, 400px);
 }
 
 :deep(.ck-editor__editable) {
-  min-height: 400px;
+  min-height: var(--editor-min-height, 400px);
   font-size: 16px;
   line-height: 1.6;
 }

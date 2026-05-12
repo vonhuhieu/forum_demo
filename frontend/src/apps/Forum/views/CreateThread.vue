@@ -270,8 +270,11 @@ export default {
           payload.poll = this.form.poll
         }
         
-        await api.post('/threads', payload)
-        this.$router.push({ name: 'Home' })
+        const res = await api.post('/threads', payload)
+        const newThread = res.data
+        
+        alertSuccess('Đăng bài viết thành công')
+        this.$router.push({ name: 'ThreadDetail', params: { id: newThread.id } })
       } catch (error) {
         alertError('Lỗi khi đăng bài')
       }

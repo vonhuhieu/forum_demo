@@ -64,4 +64,23 @@ public class PostService {
 
         return ResponseDTO.success(postMapper.toDTO(saved));
     }
+
+    public ResponseDTO<PostDTO> updatePost(Long id, PostDTO postDTO) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        // Lấy username từ SecurityContext để kiểm tra quyền sở hữu
+        String currentUsername = (String) org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        
+        if (post.getAuthor() == null || !post.getAuthor().getUsername().equals(currentUsername)) {
+            throw new RuntimeException("You are not authorized to edit this post");
+        }
+
+        post.setContent(postDTO.getContent());
+        post.setAttachedImages(postDTO.getAttachedImages());
+
+        Post saved = postRepository.save(post);
+        return ResponseDTO.success(postMapper.toDTO(saved));
+    }
 }
