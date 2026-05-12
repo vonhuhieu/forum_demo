@@ -29,7 +29,7 @@ public class AuthService {
 
     public Map<String, Object> authenticateUser(String username, String password) {
         Optional<User> userOpt = userRepository.findByUsername(username)
-                .filter(user -> user.getUsername().equalsIgnoreCase(username)) // Bảo vệ chống trùng lặp do collation CSDL
+                .filter(user -> user.getUsername().equals(username)) // Bắt buộc khớp chính xác chữ hoa/thường
                 .filter(user -> passwordEncoder.matches(password, user.getPassword()));
 
         if (userOpt.isPresent()) {
