@@ -24,6 +24,7 @@ public class ThreadService {
     private final com.forum.repository.PollVoteRepository pollVoteRepository;
     private final com.forum.repository.PostRepository postRepository;
     private final NotificationRepository notificationRepository;
+    private final ReactionService reactionService;
 
     public ResponseDTO<List<ThreadDTO>> getAllThreads(Long categoryId, Integer limit) {
         List<Thread> threads;
@@ -84,6 +85,10 @@ public class ThreadService {
                 dto.setLastPostAuthor(userDTO);
             }
         });
+
+        // Enrich reactions
+        dto.setReactionSummary(reactionService.getSummaryForThread(dto.getId()));
+        dto.setCurrentUserReaction(reactionService.getCurrentUserReactionForThread(dto.getId()));
     }
 
     public ResponseDTO<ThreadDTO> createThread(ThreadDTO threadDTO) {

@@ -2,6 +2,7 @@ package com.forum.dto;
 
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class ThreadDTO {
@@ -21,4 +22,8 @@ public class ThreadDTO {
     private Long lastPostId;
     private UserDTO lastPostAuthor;
     private LocalDateTime lastPostAt;
+    
+    // Reactions fields
+    private List<ReactionSummaryDTO> reactionSummary;
+    private ReactionIconDTO currentUserReaction;
 }

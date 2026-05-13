@@ -26,10 +26,25 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostMapper postMapper;
     private final NotificationService notificationService;
+    private final ReactionService reactionService;
 
     public ResponseDTO<List<PostDTO>> getPostsByThread(Long threadId) {
         List<Post> posts = postRepository.findByThreadIdOrderByCreatedAtAsc(threadId);
-        return ResponseDTO.success(postMapper.toDTOList(posts));
+        List<PostDTO> dtos = postMapper.toDTOList(posts);
+        enrichPosts(dtos);
+        return ResponseDTO.success(dtos);
+    }
+
+    private void enrichPosts(List<PostDTO> dtos) {
+        if (dtos != null) {
+            dtos.forEach(this::enrichPost);
+        }
+    }
+
+    private void enrichPost(PostDTO dto) {
+        if (dto == null || dto.getId() == null) return;
+        dto.setReactionSummary(reactionService.getSummaryForPost(dto.getId()));
+        dto.setCurrentUserReaction(reactionService.getCurrentUserReactionForPost(dto.getId()));
     }
 
     public ResponseDTO<PostDTO> createPost(PostDTO postDTO) {
@@ -62,7 +77,9 @@ public class PostService {
             // Don't block transaction if notification push errors out
         }
 
-        return ResponseDTO.success(postMapper.toDTO(saved));
+        PostDTO resultDto = postMapper.toDTO(saved);
+        enrichPost(resultDto);
+        return ResponseDTO.success(resultDto);
     }
 
     public ResponseDTO<PostDTO> updatePost(Long id, PostDTO postDTO) {
@@ -81,6 +98,8 @@ public class PostService {
         post.setAttachedImages(postDTO.getAttachedImages());
 
         Post saved = postRepository.save(post);
-        return ResponseDTO.success(postMapper.toDTO(saved));
+        PostDTO resultDto = postMapper.toDTO(saved);
+        enrichPost(resultDto);
+        return ResponseDTO.success(resultDto);
     }
 }

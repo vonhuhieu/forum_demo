@@ -81,12 +81,26 @@
               </div>
               <div v-else class="content-body ql-editor" v-html="thread.content" @click="handleContentClick"></div>
               
+              <!-- Reaction Summary for Main Post (XenForo Style) -->
+              <div class="reactions-bar-container" v-if="thread.reactionSummary && thread.reactionSummary.length > 0">
+                <ReactionSummary :summary="thread.reactionSummary" />
+              </div>
+              
               <div class="post-meta-bottom" v-if="editingItemId !== item.id">
                 <div class="left-actions">
                   <a href="#" class="action-link" @click.prevent>Báo cáo</a>
                   <a href="#" class="action-link" v-if="canEdit(item)" @click.prevent="startEditing(item)">Sửa</a>
                 </div>
                 <div class="right-actions">
+                  <!-- Reactions for Main Post positioned on the right -->
+                  <ReactionButton 
+                    v-if="canShowReactionForMainPost"
+                    :targetId="thread.id"
+                    type="thread"
+                    :allIcons="reactionIconsList"
+                    :userReaction="thread.currentUserReaction"
+                    @reaction-changed="fetchThread"
+                  />
                   <a href="#" class="action-link reply-link" @click.prevent="quotePost(thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh', thread.content, 'main_thread_entry')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                     Trả lời
@@ -140,12 +154,26 @@
               </div>
               <div v-else class="content-body ql-editor" v-html="formatPostContent(item.content)" @click="handleContentClick"></div>
               
+              <!-- Reaction Summary for Reply Item (XenForo Style) -->
+              <div class="reactions-bar-container" v-if="item.reactionSummary && item.reactionSummary.length > 0">
+                <ReactionSummary :summary="item.reactionSummary" />
+              </div>
+              
               <div class="post-meta-bottom" v-if="editingItemId !== item.id">
                 <div class="left-actions">
                   <a href="#" class="action-link" @click.prevent>Báo cáo</a>
                   <a href="#" class="action-link" v-if="canEdit(item)" @click.prevent="startEditing(item)">Sửa</a>
                 </div>
                 <div class="right-actions">
+                  <!-- Reactions for Reply Item positioned on the right -->
+                  <ReactionButton 
+                    v-if="canShowReactionForReply(item)"
+                    :targetId="item.id"
+                    type="post"
+                    :allIcons="reactionIconsList"
+                    :userReaction="item.currentUserReaction"
+                    @reaction-changed="reloadPostsOnly"
+                  />
                   <a href="#" class="action-link reply-link" @click.prevent="quotePost(item.author ? (item.author.displayName || item.author.username) : 'Ẩn danh', item.content, item.id)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                     Trả lời
@@ -231,6 +259,8 @@ import ImageUploaderPanel from '@/shared/components/ImageUploaderPanel.vue'
 import ForumPagination from '@/shared/components/ForumPagination.vue'
 import { alertSuccess, alertError } from '@/shared/utils/swal'
 import { formatForumDate } from '@/shared/utils/date'
+import ReactionButton from '@/shared/components/ReactionButton.vue'
+import ReactionSummary from '@/shared/components/ReactionSummary.vue'
 
 export default {
   name: 'ThreadDetail',
@@ -240,7 +270,9 @@ export default {
     PollDisplay,
     CustomEditor,
     ImageUploaderPanel,
-    ForumPagination
+    ForumPagination,
+    ReactionButton,
+    ReactionSummary
   },
   data() {
     const userStr = localStorage.getItem('user')
@@ -276,7 +308,8 @@ export default {
         content: ''
       },
       editAttachedImages: [],
-      submittingEdit: false
+      submittingEdit: false,
+      reactionIconsList: []
     }
   },
   computed: {
@@ -352,9 +385,14 @@ export default {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       return combined.slice(start, end);
+    },
+    canShowReactionForMainPost() {
+      if (!this.isLoggedIn || !this.thread || !this.thread.author || !this.currentUser) return false;
+      return String(this.thread.author.id) !== String(this.currentUser.id);
     }
   },
   async mounted() {
+    await this.fetchReactionIcons()
     await this.fetchThread()
     await this.fetchPosts()
     
@@ -379,6 +417,21 @@ export default {
     }
   },
   methods: {
+    async fetchReactionIcons() {
+      try {
+        const res = await api.get('/reaction-icons');
+        this.reactionIconsList = res.data || [];
+      } catch (e) {
+        console.error('Lỗi khi tải Icons Reaction:', e);
+      }
+    },
+    canShowReactionForReply(item) {
+      if (!this.isLoggedIn || !item || !item.author || !this.currentUser) return false;
+      return String(item.author.id) !== String(this.currentUser.id);
+    },
+    async reloadPostsOnly() {
+      await this.fetchPosts();
+    },
     async fetchThread() {
       try {
         const response = await api.get(`/threads/${this.$route.params.id}`)
@@ -1236,5 +1289,21 @@ export default {
 .btn-icon {
   display: inline-block;
   vertical-align: middle;
+}
+
+/* Flexbox Patch for Aligning Actions Inline */
+.left-actions, .right-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 15px !important;
+  position: relative;
+}
+
+/* XenForo-style statistics bubble container */
+.reactions-bar-container {
+  padding: 0 15px 10px 15px;
+  margin-top: -5px;
+  display: flex;
+  align-items: center;
 }
 </style>

@@ -40,11 +40,13 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/polls", "/api/polls/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/labels", "/api/labels/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/posts", "/api/posts/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reaction-icons", "/api/reaction-icons/**").permitAll()
                 // Cấu hình bảo vệ cho tác vụ ADMIN
                 .requestMatchers("/api/menus/**").hasRole("ADMIN")
                 .requestMatchers("/api/categories/**").hasRole("ADMIN")
                 .requestMatchers("/api/category-groups/**").hasRole("ADMIN")
                 .requestMatchers("/api/labels/**").hasRole("ADMIN")
+                .requestMatchers("/api/reaction-icons/**").hasRole("ADMIN")
                 // Còn lại yêu cầu đăng nhập
                 .anyRequest().authenticated()
             )
