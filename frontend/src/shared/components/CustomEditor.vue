@@ -381,14 +381,11 @@ export default {
 
 /* Ensure inserted stickers don't blow up but preserve their intrinsic aspect ratio */
 :deep(.ck-content .image-inline[src*="twemoji"]),
-:deep(.ck-content .image-inline[src*=".svg"]),
-:deep(.ck-content .image-inline[src*=".png"]) {
-   max-width: 24px;
+:deep(.ck-content img[src*="twemoji"]) {
+   max-width: 24px !important;
+   width: 24px !important;
+   height: 24px !important;
+   display: inline-block !important;
 }
-/* Actually, easier to just target explicit attribute in code later or just set default max-height for non-resized items */
-:deep(.ck-content .image-inline:not([style*="width"])) {
-  max-width: 24px; 
-}
-/* Wait, let's just ensure stickers look consistent by targeting their dimensions when inserted */
 
 </style>

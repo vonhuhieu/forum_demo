@@ -172,7 +172,8 @@ export function ClearPastedImageWidthPlugin(editor) {
           // Nếu ảnh có mang theo kích thước từ trang web cũ, xóa nó đi để ảnh bung 100%, trừ thumbnail
           if (item && item.hasAttribute('resizedWidth')) {
             const currentWidth = item.getAttribute('resizedWidth');
-            if (currentWidth !== '150px') {
+            // Không xóa chiều rộng nếu là ảnh thumbnail (150px) hoặc icon/sticker (24px)
+            if (currentWidth !== '150px' && currentWidth !== '24px') {
               writer.removeAttribute('resizedWidth', item);
             }
           }

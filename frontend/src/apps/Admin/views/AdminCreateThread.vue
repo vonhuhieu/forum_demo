@@ -555,9 +555,9 @@ export default {
 }
 
 :deep(.ck-content .image-inline img) {
-  width: 200px !important;
-  height: 200px !important;
-  object-fit: cover !important;
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .custom-select {
