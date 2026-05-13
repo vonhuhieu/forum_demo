@@ -7,8 +7,10 @@
 
       <div class="thread-header card">
         <div class="thread-title-full">
-          <span v-if="thread.label" class="label-tag" :style="{ backgroundColor: thread.label.colorCode, color: thread.label.textColor, borderColor: thread.label.borderColor || 'transparent' }">{{ thread.label.name }}</span>
-          <h1>{{ thread.title }}</h1>
+          <h1>
+            <span v-if="thread.label" class="label-tag" :style="{ backgroundColor: thread.label.colorCode, color: thread.label.textColor, borderColor: thread.label.borderColor || 'transparent' }">{{ thread.label.name }}</span>
+            {{ thread.title }}
+          </h1>
         </div>
         <div class="thread-meta-bar">
           <div class="author-info">
@@ -860,9 +862,6 @@ export default {
 .thread-title-full {
   padding: 1.2rem 1.5rem;
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
   border-bottom: 1px solid #eee;
 }
 
@@ -871,16 +870,23 @@ export default {
   font-size: 1.4rem;
   color: #333;
   font-weight: 500;
+  line-height: 1.4;
 }
 
 .label-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
   padding: 2px 8px;
   font-size: 0.85rem;
   border-radius: 4px;
   font-weight: 600;
-  display: inline-block;
-  margin-bottom: 10px;
   border: 1px solid transparent;
+  margin-right: 8px;
+  vertical-align: middle;
+  position: relative;
+  top: -2px;
 }
 
 .thread-meta-bar {
