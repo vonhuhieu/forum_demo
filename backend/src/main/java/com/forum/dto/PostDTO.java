@@ -16,4 +16,5 @@ public class PostDTO {
     // Reactions fields
     private List<ReactionSummaryDTO> reactionSummary;
     private ReactionIconDTO currentUserReaction;
+    private List<UserDTO> recentReactors;
 }

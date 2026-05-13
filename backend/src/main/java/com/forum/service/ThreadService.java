@@ -89,6 +89,7 @@ public class ThreadService {
         // Enrich reactions
         dto.setReactionSummary(reactionService.getSummaryForThread(dto.getId()));
         dto.setCurrentUserReaction(reactionService.getCurrentUserReactionForThread(dto.getId()));
+        dto.setRecentReactors(reactionService.getRecentReactorsForThread(dto.getId()));
     }
 
     public ResponseDTO<ThreadDTO> createThread(ThreadDTO threadDTO) {

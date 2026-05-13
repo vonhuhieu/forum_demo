@@ -20,9 +20,13 @@ public interface ReactionRepository extends JpaRepository<Reaction, Long> {
 
     void deleteByUserIdAndPostId(Long userId, Long postId);
 
-    @Query("SELECT r.reactionIcon, COUNT(r) FROM Reaction r WHERE r.thread.id = :threadId GROUP BY r.reactionIcon")
+    @Query("SELECT r.reactionIcon, COUNT(r), MAX(r.updatedAt) FROM Reaction r WHERE r.thread.id = :threadId GROUP BY r.reactionIcon")
     List<Object[]> aggregateByThreadId(@Param("threadId") Long threadId);
 
-    @Query("SELECT r.reactionIcon, COUNT(r) FROM Reaction r WHERE r.post.id = :postId GROUP BY r.reactionIcon")
+    @Query("SELECT r.reactionIcon, COUNT(r), MAX(r.updatedAt) FROM Reaction r WHERE r.post.id = :postId GROUP BY r.reactionIcon")
     List<Object[]> aggregateByPostId(@Param("postId") Long postId);
+
+    List<Reaction> findTop3ByThreadIdOrderByUpdatedAtDesc(Long threadId);
+
+    List<Reaction> findTop3ByPostIdOrderByUpdatedAtDesc(Long postId);
 }

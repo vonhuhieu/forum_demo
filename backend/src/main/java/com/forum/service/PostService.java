@@ -45,6 +45,7 @@ public class PostService {
         if (dto == null || dto.getId() == null) return;
         dto.setReactionSummary(reactionService.getSummaryForPost(dto.getId()));
         dto.setCurrentUserReaction(reactionService.getCurrentUserReactionForPost(dto.getId()));
+        dto.setRecentReactors(reactionService.getRecentReactorsForPost(dto.getId()));
     }
 
     public ResponseDTO<PostDTO> createPost(PostDTO postDTO) {

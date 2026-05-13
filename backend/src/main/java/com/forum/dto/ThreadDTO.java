@@ -26,4 +26,5 @@ public class ThreadDTO {
     // Reactions fields
     private List<ReactionSummaryDTO> reactionSummary;
     private ReactionIconDTO currentUserReaction;
+    private List<UserDTO> recentReactors;
 }

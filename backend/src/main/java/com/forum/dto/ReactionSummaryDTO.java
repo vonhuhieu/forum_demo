@@ -3,6 +3,7 @@ package com.forum.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -10,4 +11,5 @@ import lombok.NoArgsConstructor;
 public class ReactionSummaryDTO {
     private ReactionIconDTO reactionIcon;
     private long count;
+    private LocalDateTime latestInteractionTime;
 }

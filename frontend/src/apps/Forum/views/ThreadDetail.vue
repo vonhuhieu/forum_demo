@@ -85,7 +85,7 @@
               
               <!-- Reaction Summary for Main Post (XenForo Style) -->
               <div class="reactions-bar-container" v-if="thread.reactionSummary && thread.reactionSummary.length > 0">
-                <ReactionSummary :summary="thread.reactionSummary" />
+                <ReactionSummary :summary="thread.reactionSummary" :recentReactors="thread.recentReactors" />
               </div>
               
               <div class="post-meta-bottom" v-if="editingItemId !== item.id">
@@ -158,7 +158,7 @@
               
               <!-- Reaction Summary for Reply Item (XenForo Style) -->
               <div class="reactions-bar-container" v-if="item.reactionSummary && item.reactionSummary.length > 0">
-                <ReactionSummary :summary="item.reactionSummary" />
+                <ReactionSummary :summary="item.reactionSummary" :recentReactors="item.recentReactors" />
               </div>
               
               <div class="post-meta-bottom" v-if="editingItemId !== item.id">

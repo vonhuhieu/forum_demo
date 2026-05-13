@@ -129,12 +129,40 @@ public class ReactionService {
         if (results == null) return summaries;
         
         for (Object[] row : results) {
-            if (row != null && row.length == 2) {
+            if (row != null && row.length == 3) {
                 ReactionIcon icon = (ReactionIcon) row[0];
                 Long count = (Long) row[1];
-                summaries.add(new ReactionSummaryDTO(reactionIconService.convertToDTO(icon), count));
+                java.time.LocalDateTime latestTime = (java.time.LocalDateTime) row[2];
+                summaries.add(new ReactionSummaryDTO(reactionIconService.convertToDTO(icon), count, latestTime));
             }
         }
         return summaries;
+    }
+
+    private com.forum.dto.UserDTO mapUserToDTO(User user) {
+        if (user == null) return null;
+        com.forum.dto.UserDTO dto = new com.forum.dto.UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setDisplayName(user.getDisplayName());
+        dto.setEmail(user.getEmail());
+        dto.setAvatar(user.getAvatar());
+        return dto;
+    }
+
+    public List<com.forum.dto.UserDTO> getRecentReactorsForThread(Long threadId) {
+        List<Reaction> reactions = reactionRepository.findTop3ByThreadIdOrderByUpdatedAtDesc(threadId);
+        return reactions.stream()
+                .map(Reaction::getUser)
+                .map(this::mapUserToDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public List<com.forum.dto.UserDTO> getRecentReactorsForPost(Long postId) {
+        List<Reaction> reactions = reactionRepository.findTop3ByPostIdOrderByUpdatedAtDesc(postId);
+        return reactions.stream()
+                .map(Reaction::getUser)
+                .map(this::mapUserToDTO)
+                .collect(java.util.stream.Collectors.toList());
     }
 }
