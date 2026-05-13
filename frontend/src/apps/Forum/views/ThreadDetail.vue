@@ -61,6 +61,15 @@
               
               <div v-if="editingItemId === item.id" class="inline-edit-box">
                 <CustomEditor ref="inlineEditEditor" v-model="editForm.content" minHeight="150px" @image-uploaded="handleEditImageUploaded" />
+                
+                <!-- Khối xem trước đính kèm khi sửa nhanh bài viết gốc -->
+                <div v-if="editAttachedImages && editAttachedImages.length > 0" class="attachment-block" style="margin: 1rem 1.5rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">
+                  <div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>
+                  <div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">
+                    <img v-for="(img, idx) in editAttachedImages" :key="idx" :src="img.url" :alt="img.name" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: zoom-in;" />
+                  </div>
+                </div>
+
                 <ImageUploaderPanel ref="inlineEditUploader" v-model:images="editAttachedImages" @insert-images="handleEditInsertImages" style="padding: 10px; background: #fdfdfd; border-top: 1px solid #eee;" />
                 <div class="edit-actions-footer">
                   <button class="btn-save" :disabled="submittingEdit" @click="submitEdit(item)">
@@ -111,6 +120,15 @@
               
               <div v-if="editingItemId === item.id" class="inline-edit-box">
                 <CustomEditor ref="inlineEditEditor" v-model="editForm.content" minHeight="150px" @image-uploaded="handleEditImageUploaded" />
+                
+                <!-- Khối xem trước đính kèm khi sửa nhanh bài viết -->
+                <div v-if="editAttachedImages && editAttachedImages.length > 0" class="attachment-block" style="margin: 1rem 1.5rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">
+                  <div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>
+                  <div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">
+                    <img v-for="(img, idx) in editAttachedImages" :key="idx" :src="img.url" :alt="img.name" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: zoom-in;" />
+                  </div>
+                </div>
+
                 <ImageUploaderPanel ref="inlineEditUploader" v-model:images="editAttachedImages" @insert-images="handleEditInsertImages" style="padding: 10px; background: #fdfdfd; border-top: 1px solid #eee;" />
                 <div class="edit-actions-footer">
                   <button class="btn-save" :disabled="submittingEdit" @click="submitEdit(item)">
@@ -158,6 +176,15 @@
           </div>
           <div class="post-main" style="padding: 0; border: 1px solid #e0e0e0;">
              <CustomEditor ref="replyEditor" v-model="replyForm.content" minHeight="150px" @image-uploaded="handleImageUploaded" />
+             
+             <!-- Khối xem trước đính kèm chân bình luận -->
+             <div v-if="replyAttachedImages && replyAttachedImages.length > 0" class="attachment-block" style="margin: 1rem 1.5rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">
+               <div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>
+               <div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">
+                 <img v-for="(img, idx) in replyAttachedImages" :key="idx" :src="img.url" :alt="img.name" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: zoom-in;" />
+               </div>
+             </div>
+
              <ImageUploaderPanel ref="uploaderPanel" v-model:images="replyAttachedImages" @insert-images="handleInsertImages" style="padding: 10px; background: #fdfdfd; border-top: 1px solid #eee;" />
              
              <div class="editor-footer" style="padding: 15px; display: flex; justify-content: flex-end; background: #f8f9fa; border-top: 1px solid #eee;">
@@ -335,18 +362,6 @@ export default {
     this.jumpToTargetPost()
   },
   watch: {
-    replyAttachedImages: {
-      handler() {
-        this.syncAttachmentsToEditor()
-      },
-      deep: true
-    },
-    editAttachedImages: {
-      handler() {
-        this.syncEditAttachmentsToEditor()
-      },
-      deep: true
-    },
     // Lắng nghe khi tham số query thay đổi (trong trường hợp click thông báo khi đang ở sẵn trong trang này)
     '$route.query.postId': {
       handler(newVal) {
@@ -581,38 +596,7 @@ export default {
     handleImageUploaded(image) {
       this.replyAttachedImages.push(image)
     },
-    syncAttachmentsToEditor() {
-      let content = this.replyForm.content || ''
-      
-      const markers = [
-        /<div[^>]*class="attachment-block"[^>]*>/i,
-        /<p><strong>Đính kèm<\/strong><\/p>/i
-      ]
-      let matchIndex = -1
-      for (const marker of markers) {
-        const match = content.match(marker)
-        if (match) {
-          matchIndex = match.index
-          break
-        }
-      }
-      if (matchIndex !== -1) {
-        content = content.substring(0, matchIndex).trim()
-      }
 
-      if (this.replyAttachedImages && this.replyAttachedImages.length > 0) {
-        let attachedHtml = `<div class="attachment-block" style="margin-top: 2rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">`
-        attachedHtml += `<div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>`
-        attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
-        this.replyAttachedImages.forEach(img => {
-          attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
-        })
-        attachedHtml += `</div></div>`
-        content = content.trim() + '\n' + attachedHtml
-      }
-
-      this.replyForm.content = content
-    },
     formatDate(dateStr) {
       return formatForumDate(dateStr)
     },
@@ -814,23 +798,7 @@ export default {
     handleEditImageUploaded(image) {
       this.editAttachedImages.push(image);
     },
-    syncEditAttachmentsToEditor() {
-      let content = this.editForm.content || '';
-      content = this.stripAttachments(content);
 
-      if (this.editAttachedImages && this.editAttachedImages.length > 0) {
-        let attachedHtml = `<div class="attachment-block" style="margin-top: 2rem; border-top: 1px dashed #ddd; padding-top: 1.5rem;">`
-        attachedHtml += `<div class="attachment-label" style="font-weight: bold; color: #1a507a; margin-bottom: 1rem; font-size: 0.95rem;">Đính kèm</div>`
-        attachedHtml += `<div class="attachment-list" style="display: flex; flex-wrap: wrap; gap: 15px;">`
-        this.editAttachedImages.forEach(img => {
-          attachedHtml += `<img src="${img.url}" alt="${img.name}" style="width: 200px; height: 200px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; display: inline-block; margin: 5px;" />`
-        })
-        attachedHtml += `</div></div>`
-        content = content.trim() + '\n' + attachedHtml
-      }
-
-      this.editForm.content = content;
-    }
   }
 }
 </script>
