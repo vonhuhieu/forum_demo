@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.3
+-- version 5.2.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 05, 2026 at 10:31 AM
+-- Generation Time: May 13, 2026 at 11:37 PM
 -- Server version: 8.4.3
--- PHP Version: 8.3.30
+-- PHP Version: 8.3.26
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -62,8 +62,7 @@ INSERT INTO `categories` (`id`, `active`, `description`, `name`, `position_order
 (21, b'1', '', 'VIP (Pro Max)', 2, 3, NULL),
 (22, b'1', '', 'MMO - Làm giàu không khó', 2, 2, NULL),
 (23, b'1', '', 'Đầu tư Tiền ảo - Chứng khoán', 3, 2, NULL),
-(24, b'1', '', 'Đầu trộm, đuôi cướp', 4, 2, NULL),
-(25, b'1', '', 'test popup coi có hoạt động đúng chưa', 2, 1, 17);
+(24, b'1', '', 'Đầu trộm, đuôi cướp', 4, 2, NULL);
 
 -- --------------------------------------------------------
 
@@ -111,11 +110,7 @@ INSERT INTO `labels` (`id`, `color_code`, `name`, `text_color`, `border_color`, 
 (6, '#7cc3e0', 'Kiến thức', '#fff', '#53b0d6', b'0'),
 (7, '#008000', 'Có video', '#fff', '#004d00', b'0'),
 (8, '#4169e1', 'Có ảnh', '#fff', '#214cce', b'0'),
-(9, '#ffff91', 'Video + ảnh', '#000', '#e6e687', b'0'),
-(10, '#edf6fd', 'Bán', '#2577b1', '#bcdef5', b'1'),
-(11, '#ffff91', '⭐ UY TÍN ⭐', '#000', '#e6e687', b'1'),
-(12, '#ffcb00', 'Cảnh báo lừa đảo', '#000', '#cca200', b'1'),
-(13, '#e20000', 'Chú ý', '#fff', '#af0000', b'1');
+(9, '#ffff91', 'Video + ảnh', '#000', '#e6e687', b'0');
 
 -- --------------------------------------------------------
 
@@ -146,6 +141,31 @@ INSERT INTO `menus` (`id`, `active`, `position_order`, `title`, `url`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `id` bigint NOT NULL,
+  `content` text,
+  `created_at` datetime(6) DEFAULT NULL,
+  `is_read` bit(1) NOT NULL,
+  `type` enum('NEW_COMMENT','QUOTE','MENTION') DEFAULT NULL,
+  `actor_id` bigint DEFAULT NULL,
+  `post_id` bigint DEFAULT NULL,
+  `recipient_id` bigint NOT NULL,
+  `thread_id` bigint DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `notifications`
+--
+
+INSERT INTO `notifications` (`id`, `content`, `created_at`, `is_read`, `type`, `actor_id`, `post_id`, `recipient_id`, `thread_id`) VALUES
+(28, NULL, '2026-05-13 15:53:44.052628', b'0', 'NEW_COMMENT', 38, 142, 37, 189);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `polls`
 --
 
@@ -160,13 +180,6 @@ CREATE TABLE `polls` (
   `thread_id` bigint NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Dumping data for table `polls`
---
-
-INSERT INTO `polls` (`id`, `allow_change_vote`, `closed_at`, `max_choices`, `public_voting`, `question`, `show_result_without_vote`, `thread_id`) VALUES
-(5, b'0', '2026-05-04 09:23:03.820000', 1, b'1', 'Kiểu bơi này dễ nhất', b'1', 143);
-
 -- --------------------------------------------------------
 
 --
@@ -180,16 +193,6 @@ CREATE TABLE `poll_options` (
   `poll_id` bigint NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Dumping data for table `poll_options`
---
-
-INSERT INTO `poll_options` (`id`, `option_text`, `vote_count`, `poll_id`) VALUES
-(14, 'Ếch', 0, 5),
-(15, 'Sải', 0, 5),
-(16, 'Bướm', 0, 5),
-(17, 'Chó', 0, 5);
-
 -- --------------------------------------------------------
 
 --
@@ -202,6 +205,78 @@ CREATE TABLE `poll_votes` (
   `poll_id` bigint NOT NULL,
   `user_id` bigint NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `posts`
+--
+
+CREATE TABLE `posts` (
+  `id` bigint NOT NULL,
+  `attached_images` text,
+  `content` text NOT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `author_id` bigint DEFAULT NULL,
+  `thread_id` bigint DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `posts`
+--
+
+INSERT INTO `posts` (`id`, `attached_images`, `content`, `created_at`, `updated_at`, `author_id`, `thread_id`) VALUES
+(142, '[]', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">tao thấy né nhất là mấy con mê phim hàn quốc ra, đm tính cách thì hãm lol mơ mộng như phim, chuyện tình muốn lúc nào cũng đẹp như tranh hở tý là xúc động là khóc, là giận dỗi đime sợ hãi</span></p>', '2026-05-13 15:53:44.051118', '2026-05-13 15:53:44.051118', 38, 189);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `reactions`
+--
+
+CREATE TABLE `reactions` (
+  `id` bigint NOT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `post_id` bigint DEFAULT NULL,
+  `reaction_icon_id` bigint NOT NULL,
+  `thread_id` bigint DEFAULT NULL,
+  `user_id` bigint NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `reactions`
+--
+
+INSERT INTO `reactions` (`id`, `created_at`, `updated_at`, `post_id`, `reaction_icon_id`, `thread_id`, `user_id`) VALUES
+(6, '2026-05-13 17:45:20.576609', '2026-05-13 17:45:20.576609', NULL, 2, 189, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `reaction_icons`
+--
+
+CREATE TABLE `reaction_icons` (
+  `id` bigint NOT NULL,
+  `color` varchar(255) NOT NULL,
+  `icon` varchar(255) NOT NULL,
+  `order_index` int NOT NULL,
+  `tooltip` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `reaction_icons`
+--
+
+INSERT INTO `reaction_icons` (`id`, `color`, `icon`, `order_index`, `tooltip`) VALUES
+(1, '#2577b1', 'like', 1, 'Like'),
+(2, '#E81C27', 'love', 2, 'Ngon'),
+(3, '#FDCA47', 'haha', 3, 'Haha'),
+(4, '#FDCA47', 'wow', 4, 'Ảo vãi loz'),
+(5, '#FDCA47', 'sad', 5, 'Buồn'),
+(6, '#FF4D4D', 'angry', 5, 'Địt mẹ mày');
 
 -- --------------------------------------------------------
 
@@ -221,37 +296,16 @@ CREATE TABLE `threads` (
   `author_id` bigint DEFAULT NULL,
   `category_id` bigint DEFAULT NULL,
   `label_id` bigint DEFAULT NULL,
-  `attached_images` text
+  `attached_images` text,
+  `last_post_at` datetime(6) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `threads`
 --
 
-INSERT INTO `threads` (`id`, `active`, `content`, `created_at`, `pinned`, `reply_count`, `title`, `view_count`, `author_id`, `category_id`, `label_id`, `attached_images`) VALUES
-(122, b'0', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">tao tổng hợp lại, thằng nào rp đc nhiều nội dung cp tao thưởng cạk</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">nhớ inbox, tag nhiều quá tao đéo đọc hết đc</span></p>', '2026-05-01 05:01:52.146879', b'0', 0, 'Thấy nội dung CP, inbox tao report nhận thưởng', 5, 1, 4, NULL, NULL),
-(123, b'0', '<p>Tự do thoải mái, cố gắng đăng đúng box giúp tao khỏi phải move, lương chỉ có 6 triệu/1 tháng nên bọn mày thương tao</p><p>- Không Quảng cáo, lôi kéo mem<br>- Không được đăng CP<br>- Không được đăng BVS - SHIT hoặc những thứ tương tự<br>- PBVM không được đăng đi đăng lại 1 nội dung, hoặc quá cực đoan, dùng từ ngữ kích động như mấy thằng thần kinh<br>- Không Lợi dụng up bài trong chợ cóc quá nhiều cũng bị ban vì quá rác forum, đã cho lên top thì bọn mày nên trân trọng<br>- Không được share hàng có phí (vì hiện tại lừa đảo tại xamvn khá nhiều)</p>', '2026-05-01 07:43:22.122958', b'0', 0, 'Nội quy ngắn gọn của xamvn', 3, 1, 4, NULL, NULL),
-(124, b'0', '<h4 style=\"margin-left:0px;\">Nhóm kín víp prồ, đỉnh của chóp <img class=\"image_resized\" style=\"aspect-ratio:64/64;height:auto;width:1.467em;\" src=\"https://cdn.jsdelivr.net/joypixels/assets/6.6/png/unicode/64/1f449.png\" alt=\"👉\" width=\"64\" height=\"64\"> <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://t.me/xamvailon\">xamvn</a>​</h4><p><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Nhân dịp 30/4, tao miễn phí 200 slot tham gia nhóm, ai nhanh thì được </span><img style=\"height:auto;\" src=\"https://xamvn.cyou/styles/default/xenforo/smilies/nemgach/beauty.gif\" alt=\"{beauty}\" width=\"40\" height=\"40\"></p>', '2026-05-01 07:43:52.938801', b'0', 0, 'Xamvn mới tạo nhóm telegram kín, phí tham gia 500usdt/1 tháng', 0, 1, 4, NULL, NULL),
-(125, b'0', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Lập cái box </span><span style=\"color:rgb(44,130,201);\"><strong>chợ cóc</strong></span><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\"> đéo thèm đăng, cứ phải để tao cho cái nhãn lừa đảo với move vào box </span><span style=\"color:rgb(44,130,201);\"><strong>đầu trộm, đuôi cướp</strong></span><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\"> mới chịu!</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Tao đã thông báo rồi đó !</span></p>', '2026-05-01 07:44:11.136708', b'0', 0, 'Mấy tml đăng tin mua bán đéo đúng box tao cho cái nhãn \"Lừa đảo\" cho bớt khôn vặt!', 0, 1, 4, NULL, NULL),
-(126, b'0', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Chuyện là hôm nay được nghỉ lễ 30/4</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">4 ngày nên em vợ tao muốn lên thăm chị gái</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Sáng đi xe về mệt quá buổi trưa vợ chồng tao nằm trong phòng mà có mỗi 1 cái máy lạnh thế là con em vợ ra sofa nằm cho mát. Tao dậy thì thấy cảnh này. Tao phải làm gì để con thú trong tao không trỗi dậy đây mấy tml?</span><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.cyou/[url=https%3A//zpic.app/view/7Rc6R1lW][img]https%3A//zpi.cx/b/h6sK2Jluit.jpeg-webp[/img][/url]\">[url=https://zpic.app/view/7Rc6R1lW]</a></p>', '2026-05-01 07:44:34.942848', b'0', 0, 'Em vợ nghỉ lễ lên chơi', 0, 1, 4, NULL, NULL),
-(127, b'0', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Bày tui vs mn</span></p>', '2026-05-01 07:45:01.697675', b'0', 0, 'Cách tải video sex từ web viet69 sieudamtv QMH các bác nào biết ko', 0, 1, 4, NULL, NULL),
-(128, b'0', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Có ai giống t k, thích show cho ng khác coi t nắc con ny t nữa </span><img style=\"height:auto;\" src=\"https://xamvn.cyou/data/assets/smilies/24.gif\" alt=\"=))\" width=\"30\" height=\"18\"><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\"> mình dây đít bự mê vl</span></p>', '2026-05-01 07:46:28.308056', b'0', 0, 'Cuckold, show ny', 0, 1, 4, NULL, NULL),
-(129, b'0', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Tao làm mmo tháng đút túi 50 60m, mà tán gái khó quá muốn tìm 1 người bình thường ưu nhìn k quá xấu là đc, t nhắn tin trên app hẹn hò fb fail toàn tập luôn.</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Đa số k rep, có người rep 1,2 câu xong biến mất</span></p>', '2026-05-01 07:47:00.804142', b'0', 0, 'Xấu trai, có tiền mà giờ tán gái khó thật', 0, 1, 4, NULL, NULL),
-(130, b'0', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lễ lộc ở nhà chán vãi đái nên tự nhiên có ý tưởng hay là lập 1 cái group telegram để ae vô đó chia sẻ ảnh chụp lén của chị họ em họ hay bạn bè cùng lớp chẳng hạn, thằng nào hứng thú thì ib tele @dukkannh nha, do mới lên ý tưởng th nên t kiếm đông đông r mới tạo nhóm nha ae, demo ae xem chị họ t trc:</span></p>', '2026-05-01 07:47:24.300262', b'0', 0, 't tính lập group chụp/quay lén họ hàng, bạn bè,..', 0, 1, 4, NULL, NULL),
-(131, b'0', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Hi anh em, đang loanh quanh trần cung, mình đi đạp mái chỉ thích được thổi kèn chứ k có nhu cầu đút vào lắm, xin anh em list hàng em nào chuyên bộ môn bú liếm để check phát, MB hệ giá rẻ càng tốt ạ</span></p>', '2026-05-01 07:48:14.033712', b'0', 0, 'Đang gần HQV , anh em cho xin hàng checkerviet nào chuyên dịch vụ thổi kèn với', 1, 1, 4, NULL, NULL),
-(132, b'0', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">qua con ny t đi họp lớp về say khướt lôi nó ra địt thì quần lót ướt nhẹp địt cứ có cảm giác nhóp nhép ướt sẵn hơi bọt trắng như vừa địt nhau xong t vừa ghen vừa nứng</span></p>', '2026-05-01 07:48:55.774477', b'0', 0, 'thằng nào địt ny khi mới đi tiệc về như t không', 5, 1, 4, NULL, NULL),
-(133, b'1', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Danh sách này tao nhặt nhạnh từ các bài viết trong xamvn này</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Bọn này có đặc điểm chung là nạp tiền vào thì dễ, hoặc khuyến mãi hay bào khuyến mãi rất bịp, nhưng chơi thắng nhiều muốn rút thì đéo cho, nhiều thằng còn bị khóa tài khoản vì \"gian lận\" hoặc \"vi phạm chính sách\" </span><img src=\"/uploads/6b283b92-76dc-4076-b0ab-75da97934766.gif\" alt=\":ROFLMAO:\" width=\"22\" height=\"22\"><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\"> , tao cũng đéo hiểu chơi cá độ thì làm sao mà gian lận đc nữa </span><img src=\"/uploads/84b124ea-99ce-486b-8915-a51789f2df59.gif\" alt=\":ROFLMAO:\" width=\"22\" height=\"22\"><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Các bài viết tố cáo bọn mày có thể xem thêm ở link này: </span><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.link/forums/26/\">https://xamvn.link/forums/26/</a><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Danh sách này tao sẽ update thường xuyên, nếu được </span><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.cyou/members/1/\">@ManhThuong</a><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\"> và </span><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.cyou/members/23959/\">@Ủn Hý</a><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\"> giúp tao edit bài, cùng nhau chung tay tiêu diệt bọn nhà cái</span><br><br><br><strong>(Ấn Ctrl+F gõ tên nhà check cho nhanh)</strong><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>Sao789</strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\"> lừa đảo, không cho rút tiền, app chứa virus hack tài khoản ngân hàng</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>QH88</strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\"> lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>Fun88 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>Jun88 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>Bk8 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>SunWin </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>188Bet </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>Kubet </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">(rất nhiều phốt)</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>SM66 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>FB88 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>QH88 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>Miso88 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>Five88 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>Rw88 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>039vip </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>Hk88 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>W88 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- </span><strong>5679 </strong><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">lừa đảo</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Bọn mày nhà cái lừa đảo hay app sập nào thì bốc phốt và bình luận vào đây</span></p>', '2026-05-01 08:32:09.856562', b'0', 0, 'Danh sách các nhà cái lừa đảo, bọn mày nên tránh xa kẻo hối hận', 2, 1, 5, NULL, NULL),
-(134, b'1', '<p><span style=\"color:rgb(226,80,65);\"><strong>LINK ĐĂNG KÝ THAM GIA <img style=\"height:auto;\" src=\"https://cdn.jsdelivr.net/joypixels/assets/6.6/png/unicode/64/1f449.png\" alt=\"👉\" width=\"64\" height=\"64\"> </strong></span><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://au88link.pro/w1\"><span style=\"color:rgb(44,130,201);font-size:22px;\"><strong>68GAME BÀI</strong></span></a><br><br><br>&nbsp;</p><h3 style=\"margin-left:0px;\">68GAMEBAI – Sân Chơi Đẳng Cấp Cho Tín Đồ Game Bài​</h3><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Trong thời đại số hóa bùng nổ như hiện nay, việc lựa chọn một cổng game uy tín, đa dạng, dễ thao tác và hỗ trợ tốt là yếu tố then chốt quyết định trải nghiệm cá cược có thực sự thăng hoa hay không. Giữa hàng loạt cái tên chen chân trên thị trường, 68GAMEBAI nổi lên như một biểu tượng của sự đẳng cấp, an toàn và trọn vẹn – một sân chơi đúng nghĩa cho những tín đồ game bài đang khao khát vừa giải trí vừa tìm kiếm phần thưởng giá trị.</span><br><br>&nbsp;</p><h3 style=\"margin-left:0px;\">Cổng game top 1 thị trường – Nơi hội tụ đỉnh cao giải trí​</h3><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Không phải ngẫu nhiên mà 68GAMEBAI được cộng đồng game thủ vinh danh là cổng game top 1 thị trường.Từ giao diện đến chất lượng vận hành, tất cả đều được chăm chút kỹ lưỡng với định hướng mang lại trải nghiệm “chạm là mê, chơi là cuốn”.</span><br><br><br><br>&nbsp;</p><ul><li data-list-item-id=\"e7be400736add338cbccfce13745237b2\">Giao diện của 68GAMEBAI sử dụng tông màu sang trọng, dễ nhìn, bố cục rõ ràng cùng các nút tính năng được sắp xếp khoa học, giúp thao tác nhanh chóng, thuận tiện trên mọi thiết bị.</li><li data-list-item-id=\"eb877067ff82228ef5665efcdfeeb07c3\">Cổng game cũng luôn đảm bảo tính ổn định trong mọi khung giờ, kể cả khi hàng chục nghìn tài khoản đăng nhập cùng lúc.<br>Tốc độ phản hồi nhanh, load game mượt mà và không bị lag giật là yếu tố giữ chân game thủ lâu dài.</li><li data-list-item-id=\"e7a1f463a3bd4ede531fb524317ee2ba2\">Nhờ công nghệ tối ưu server kết hợp với thuật toán bảo mật tiên tiến, 68GAMEBAI luôn là điểm đến đáng tin cậy để bạn vừa chơi game, vừa an tâm về dữ liệu cá nhân và tài sản cá cược.</li></ul><h3 style=\"margin-left:0px;\">Nạp rút nhanh – Không chờ đợi, không rườm rà​</h3><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Một trong những yếu tố khiến 68GAMEBAI được đánh giá cao hơn hẳn các cổng game khác chính là hệ thống nạp rút siêu tốc. Người dùng có thể nạp tiền qua nhiều phương thức như chuyển khoản ngân hàng, ví điện tử phổ biến, mã thẻ hoặc QR code. Thao tác chỉ mất vài bước đơn giản, tiền sẽ cập bến tài khoản chỉ sau vài chục giây.</span><br><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/626392/\" alt=\"1771564072205.png\" width=\"800\" height=\"400\"></p><p><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">8GAMEBAI nạp rút nhanh</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Quan trọng hơn, khâu rút tiền tại 68GAMEBAI cực kỳ minh bạch và không có tình trạng làm khó, chờ đợi xét duyệt như nhiều nơi khác. Cổng game cam kết xử lý rút tiền chỉ trong 2 – 5 phút sau khi xác nhận lệnh, dù là giờ cao điểm hay khuya muộn. Chính điều này đã tạo nên sự uy tín bền vững cho thương hiệu 68GAMEBAI suốt thời gian qua.</span><br><br>&nbsp;</p><h3 style=\"margin-left:0px;\">Đa dạng trò chơi – Từ truyền thống đến thời thượng​</h3><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Không chỉ đơn thuần là một cổng game giải trí, 68GAMEBAI mang đến một hệ sinh thái trò chơi phong phú, trải dài từ các tựa game bài kinh điển đến những trò chơi hiện đại mang đậm chất công nghệ. Đây không chỉ là nơi để bạn giải trí mà còn là thế giới cá cược đúng nghĩa dành cho mọi lứa tuổi, mọi sở thích. Tại 68GAMEBAI, kho trò chơi khổng lồ luôn được cập nhật liên tục để theo kịp xu hướng toàn cầu, giúp người dùng không bao giờ cảm thấy nhàm chán.</span><br><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/626389/\" alt=\"1771564072223.png\" width=\"800\" height=\"400\"></p><p><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Kho trò chơi đa dạng tại 68GAMEBAI</span><br><br>&nbsp;</p><h4 style=\"margin-left:0px;\">Game bài kinh điển​</h4><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Những ai đam mê phong cách cổ điển có thể thỏa mãn cùng các game bài truyền thống như Tiến lên miền Nam, Phỏm, Liêng, Xì tố hay Sâm lốc. Giao diện sắc nét, âm thanh chân thực cùng hệ thống cược linh hoạt tạo nên cảm giác như đang ngồi trong một sòng bài đẳng cấp. Mỗi bàn chơi đều có nhiều mức đặt cược, phù hợp từ người mới đến cao thủ lâu năm.</span><br><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/626387/\" alt=\"1771564072237.png\" width=\"800\" height=\"400\"></p><p><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Game bài kinh điển đều có mặt tại 68GAMEBAI</span><br><br>&nbsp;</p><h4 style=\"margin-left:0px;\">Tài xỉu siêu hấp dẫn​</h4><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Với những ai yêu thích sự nhanh gọn, Tài xỉu sẽ là lựa chọn hoàn hảo. Chỉ với vài giây, kết quả sẽ được công bố, mang đến trải nghiệm hồi hộp như đang ngồi cạnh dealer thực thụ. Tỷ lệ trả thưởng được thiết kế hấp dẫn, giúp người tham gia dễ dàng nhân đôi, nhân ba tài khoản chỉ trong chớp mắt.</span><br><br>&nbsp;</p><h4 style=\"margin-left:0px;\">Nổ hũ uy tín​</h4><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Không thể không nhắc đến các dòng game giải trí có thưởng như nổ hũ uy tín – nơi mà cơ hội “nổ hũ đổi đời” luôn chờ đón. Những tựa game nổ hũ tại 68GAMEBAI không chỉ sở hữu chủ đề đa dạng như thần tài, Ai Cập, vũ trụ mà còn được thiết kế với hiệu ứng mãn nhãn, âm thanh sống động và cơ chế giải thưởng cực khủng, mang lại trải nghiệm quay hũ cực kỳ phấn khích.</span><br><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/626391/\" alt=\"1771564072254.png\" width=\"800\" height=\"400\"></p><p><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Nổ hũ trúng lớn tại 68GAMEBAI</span><br><br>&nbsp;</p><h4 style=\"margin-left:0px;\">Avitado – game máy bay thời thượng​</h4><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Đặc biệt, Avitado – game máy bay hiện đại là điểm sáng công nghệ đáng tự hào tại cổng game này. Với cách chơi đơn giản nhưng không kém phần cuốn hút, người tham gia có thể điều khiển chiến đấu cơ để tiêu diệt mục tiêu, thu về phần thưởng dựa trên kỹ năng và chiến lược.</span><br><br>&nbsp;</p><h4 style=\"margin-left:0px;\">Xóc đĩa mini​</h4><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Xóc đĩa mini – một trò chơi dân gian quen thuộc với cách chơi cực kỳ đơn giản – cũng đã được 68GAMEBAI nâng cấp với giao diện hiện đại, tốc độ xử lý nhanh và kết quả minh bạch. Chỉ cần vài thao tác chạm là bạn đã có thể biết ngay thắng thua, tạo nên nhịp chơi dồn dập nhưng vẫn đầy kịch tính.</span><br><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/626390/\" alt=\"1771564072270.png\" width=\"800\" height=\"400\"></p><p><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Xóc đĩa mở ra,trúng lớn vỡ oà</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Sự kết hợp hài hòa giữa game truyền thống và hiện đại đã giúp 68GAMEBAI chiếm trọn cảm tình của cộng đồng cá cược mọi độ tuổi, từ dân lâu năm đến tân thủ.</span><br><br>&nbsp;</p><h3 style=\"margin-left:0px;\">Cổng game có trách nhiệm – Chung tay vì cộng đồng​</h3><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Giữa một thị trường cạnh tranh khốc liệt, 68GAMEBAI không chỉ chạy theo lợi nhuận mà còn tích cực thể hiện vai trò trách nhiệm với xã hội. Nhiều chương trình thiện nguyện đã được tổ chức thường xuyên như:</span><br><br><br><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/626388/\" alt=\"1771564072286.png\" width=\"800\" height=\"400\"></p><p><br>&nbsp;</p><ul><li data-list-item-id=\"ea8b425e3e36713d1f258b431a03f395e\">Ủng hộ quỹ học bổng cho học sinh vùng cao.</li><li data-list-item-id=\"eaaf38641f0f4801a7a3bead3f4ffa7e3\">Tài trợ mái ấm tình thương cho người nghèo.</li><li data-list-item-id=\"e37b3a96487731ffcb0c0a9f0c6188fc6\">Hỗ trợ thực phẩm, thuốc men cho người dân gặp thiên tai.</li></ul><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Việc kết hợp yếu tố kinh doanh và chia sẻ đã giúp thương hiệu 68GAMEBAI không chỉ lớn mạnh về quy mô mà còn ghi điểm tuyệt đối trong lòng cộng đồng. Đây chính là cổng game hiếm hoi dám thể hiện tầm vóc qua hành động cụ thể, không dừng lại ở lời hứa sáo rỗng.</span><br><br>&nbsp;</p><h3 style=\"margin-left:0px;\">Tạm kết​</h3><p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Không cần lăn tăn, không cần so sánh quá nhiều, 68GAMEBAI đã và đang là lựa chọn số 1 cho những ai mong muốn vừa giải trí vừa kiếm thưởng nghiêm túc. Với sự đầu tư bài bản, nạp rút nhanh, dàn game đa dạng, cộng đồng gái xinh tương tác cực nhiệt và một trái tim biết sẻ chia – 68GAMEBAI xứng đáng là cổng game toàn diện nhất hiện nay.</span><br><br><strong>LINK ĐĂNG KÝ THAM GIA <img class=\"image_resized\" style=\"aspect-ratio:64/64;height:auto;width:1.467em;\" src=\"https://cdn.jsdelivr.net/joypixels/assets/6.6/png/unicode/64/1f449.png\" alt=\"👉\" width=\"64\" height=\"64\"> </strong><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://au88link.pro/w1\"><strong>68GAME BÀI</strong></a></p>', '2026-05-01 12:35:56.850092', b'0', 0, '68GAME BÀI : CỔNG GAME UY TÍN SỐ TOP 1 THỊ TRƯỜNG', 1, 1, 5, NULL, NULL),
-(135, b'1', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Nay tháng mới lập topic bàn luận chia sẻ lê đào, cầu đẹp…. </span><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.cyou/members/315109/\">@locxamacvn</a><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\"> </span><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.cyou/members/22014/\">@Cammuoitu</a><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\"> </span><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.cyou/members/39307/\">@HaiCongTu</a><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\"> </span><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.cyou/members/131518/\">@All</a><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Anh em chốt cầu xem nào ::</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Tôi tháng trước đen quá : tháng nay mong gỡ lại !!!</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Nay tôi nện song lô : 93-10</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Ghép xiên : 93,10,57,75</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Nói thật cặp 575 nó ảo vl đợt trước nó ra 3 ngày đều 4 nháy. Anh em nào đánh bệt nên đánh lại</span></p>', '2026-05-01 12:36:24.556187', b'0', 0, 'Tháng 5 rực rỡ …', 0, 1, 5, NULL, NULL),
-(136, b'1', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Anh em sang topic mới chào đón niềm vui mới nhé </span><img style=\"height:auto;\" src=\"https://cdn.jsdelivr.net/joypixels/assets/6.6/png/unicode/64/1f923.png\" alt=\"🤣\" width=\"64\" height=\"64\"><img style=\"height:auto;\" src=\"https://cdn.jsdelivr.net/joypixels/assets/6.6/png/unicode/64/1f923.png\" alt=\"🤣\" width=\"64\" height=\"64\"><img style=\"height:auto;\" src=\"https://cdn.jsdelivr.net/joypixels/assets/6.6/png/unicode/64/1f923.png\" alt=\"🤣\" width=\"64\" height=\"64\"><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Chúc anh em 8386 đánh đâu thắng đó !!!!</span></p>', '2026-05-01 12:36:48.907180', b'0', 0, 'Lê Đào Những Ngày Cuối Tháng 4 Lịch Sử 🤣', 0, 1, 5, NULL, NULL),
-(137, b'1', '<h2 style=\"margin-left:0px;\"><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">T thì đam mê bóng banh 10 năm nay, khổ nỗi chỉ dám đánh TÀI đéo dám đánh XỈU. Ngay cả HDC cũng ít, tuỳ trận mới đánh. Có AE nào mê bóng rung bóng tài thì chơi cùng t có cái nói chuyện cho vui nhé, ngồi oánh 1 mình tâm lý quá !</span></h2>', '2026-05-01 12:37:16.456899', b'0', 0, 'TOPIC DÀNH CHO ANH EM MÊ BÓNG TÀI !', 4, 1, 5, NULL, NULL),
-(143, b'1', '<p>Kiểu bơi này dễ nhất</p>', '2026-05-03 09:18:00.995785', b'0', 0, 'Kiểu bơi này dễ nhất', 23, 1, 4, NULL, NULL),
-(144, b'1', '<p>Ẻm đây<br><br><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://ibb.co/Nns31HRf%20https://ibb.co/GfcJQVKN%20https://ibb.co/b5zRBD2w\">https://ibb.co/Nns31HRf https://ibb.co/GfcJQVKN https://ibb.co/b5zRBD2w</a></p><h4 style=\"margin-left:0px;\">Đính kèm</h4><ul style=\"margin-left:0px;\"><li data-list-item-id=\"ed2a3eccfd26c721318bd0898c6ceed38\"><p><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.cyou/attachments/702832/\"><img src=\"https://xamvn.cyou/data/attachments/702/702833-a6a8ac1c03c3d3a534d1ac4c18d7456f.jpg\" alt=\"3153675945442370008_Original.jpeg\" width=\"198\" height=\"198\"></a></p><p>3153675945442370008_Original.jpeg</p><p>270.5 KB · Xem: 18</p></li><li data-list-item-id=\"e5dc2429109233799566119e1ea93df17\"><p><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.cyou/attachments/702833/\"><img src=\"https://xamvn.cyou/data/attachments/702/702834-9cbb160abd96e9aeb5e456df2b5de05e.jpg\" alt=\"3153675945442444471_Original.jpeg\" width=\"198\" height=\"198\"></a></p><p>3153675945442444471_Original.jpeg</p><p>217.3 KB · Xem: 18</p></li><li data-list-item-id=\"e2e3e517448de6ee339b13cde05d1ac15\"><p><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.cyou/attachments/702834/\"><img src=\"https://xamvn.cyou/data/attachments/702/702835-a18e4206ab4f0fb13f43be57fbc7168a.jpg\" alt=\"3153675945434148645_Original.jpeg\" width=\"198\" height=\"198\"></a></p><p>3153675945434148645_Original.jpeg</p><p>233.7 KB · Xem: 19</p></li></ul>', '2026-05-04 22:34:15.212422', b'0', 0, 'Hot instagram snowdirection ai còn nhớ ạ', 1, 1, 4, 8, NULL),
-(145, b'1', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Thái nguyên vựa gái luôn mà thấy ae trầm quá </span><img style=\"height:auto;\" src=\"https://xamvn.cyou/data/assets/smilies/21.gif\" alt=\":))\" width=\"18\" height=\"18\"><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">)</span></p>', '2026-05-04 22:52:23.368891', b'0', 0, 'Gửi vào đây những e Thái Nguyên chúng m từng địt ngon nhất đi', 0, 1, 17, 8, NULL),
-(146, b'1', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Với kinh nghiệm xem AV khá lâu. Hôm nay tui sẽ đưa cho 10 bộ hay nhất từ trước đến nay của JAV.</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Lưu ý: Không bao gồm các trang wed trả phí như Fanza, DMM,... của Nhật</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Nguồn này là tự tôi tổng hợp từ nhiều trang Wed Jav miễn phí trên khắp cỏi mạng, vì nó là đánh giá của nhiều người dùng trên toàn thế giới.</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Tiêu chí đánh giá: dựa trên lượt view, rated sao</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Top 1: ABP-984</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Kịch bản độc lạ của riêng Prestige, Remu thời đỉnh cao nhan sắc + Creampie, hard code,....Phim hay nhất 2020 và cũng được cho là hay nhất mọi thời đại</span><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/595939/\" alt=\"1768155892152.png\" width=\"512\" height=\"288\"></p><p><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Top 2: STARS-804</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Rei của SOD, tập này đỉnh cao diễn xuất, phim hay nhất năm 2023.</span><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/595947/\" alt=\"1768156130299.png\" width=\"512\" height=\"288\"></p><p><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Top 3: IPX-811</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Kaeden Karen lúc trước khi giải nghệ (đã quay trở lại), thể loại này bùng nổ năm 2022 do có nội dung quá bánh cuốn, nhưng người diễn xuất đạt chạm nóc nhất là Karen. CODE hay nhất 2022</span><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/595959/\" alt=\"1768156557642.png\" width=\"535\" height=\"360\"></p><p><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Top 4: SHKD-724</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Rin Sakuragi, phim không nhiều, giải nghệ sớm nhưng có quả CODE để đời, theo tôi CODE này có những cảnh doggy phải nói là đỉnh nhất từ trước tới nay, diễn xuất trong CODE này cũng chạm đỉnh. Hay nhất 2016</span><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/595962/\" alt=\"1768156741205.png\" width=\"800\" height=\"538\"></p><p><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Top 5: CAWD-365</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Body của Ito trong CODE này hiện lên hoàn hảo, bả bình thường body đã on top r, nhưng kỹ thuật quay phim của bộ này thật sự quá hay, tôn lên quá tốt body của bả</span><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/595967/\" alt=\"1768156929587.png\" width=\"800\" height=\"538\"></p><p><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">TOP 6: IPX-580</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Lại là Karen với quả CODE mà các cảnh hành động gần như liên tục, trong CODE này bả diễn ra nét vừa hoang dại vừa thèm muốn. Cũng lại là diễn xuất lên tiếng</span><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/595968/\" alt=\"1768157120329.png\" width=\"800\" height=\"538\"></p><p><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Top 7: SSNI-497</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Arina, vừa mới giải nghệ, nói thật tôi không thấy bộ này hay chổ nào, nó được quay vào lúc nhan sắc của bả rất bình thường luôn. Thôi anh xem và tự thẩm r cmt cho tui biết</span><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/595969/\" alt=\"1768157281739.png\" width=\"800\" height=\"537\"></p><p><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Top 8: START-257</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Kominato Yotsuha, vừa ra mắt mấy tháng trước nhưng lọt luôn vào top, phim này bả đẹp dã man, nhìn cứ kiểu ngây ngơ, dâm dâm với quyến rũ kiểu gì rất khó tả. Cộng với quả diễn viên nam đẹp trai nhất AV + kịch bản hẹn hò lãng mạn</span><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/595970/\" alt=\"1768157540432.png\" width=\"512\" height=\"288\"></p><p><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Top 9: SHKD-744</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Satomi Yuria, Chắc khá ít người biết, CODE này ontop là do cảnh bả mặc body suit ở cuối thật sự quá đỉnh cao + tự nhiên code này đẹp lạ lùng. Phim hay nhất 2017</span><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/595971/\" alt=\"1768157821555.png\" width=\"800\" height=\"538\"></p><p><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Top 10: IPX-679</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Cô gái của chúng ta đây r, cùng kịch bản với top 6, nhưng Karen đỉnh hơn. Phim hay nhất năm 2021</span><br>&nbsp;</p><p><img style=\"height:auto;\" src=\"https://xamvn.cyou/attachments/595973/\" alt=\"1768157998301.png\" width=\"800\" height=\"538\"></p><p><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Đừng hỏi tôi sau không có Yua với Fukada, thật sự tôi thấy 2 má này khá mid, chẳng nổi trội ở mặc nào, nổi tiếng kiểu đại trà, còn nếu những người \"thật sự\" xem AV thì không có gì nổi bật. Và trong top 50 thì không thấy phim nào của 2 má luôn</span></p>', '2026-05-04 22:53:35.940398', b'0', 0, 'Review 10 bộ AV được đánh giá cao nhất từ trước đến nay trên các trang JAV \"miễn phí\".', 1, 1, 17, 8, NULL),
-(147, b'1', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Lên đi mấy tml</span></p>', '2026-05-05 06:43:59.044708', b'0', 0, 'Tú Linh lên sóng rồi, tml nào có video e Phương Mai đăng nốt đi', 0, 6, 17, 9, NULL),
-(148, b'1', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Kinh tế suy thoái, ngoài xã thì hội thì chém giết lừa đảo, thế giới mạng cũng đéo khá hơn là mấy </span><img style=\"height:auto;\" src=\"https://xamvn.cyou/styles/default/xenforo/smilies/nemgach/lay.gif\" alt=\"{lay}\" width=\"30\" height=\"30\"><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Hiện tại mấy thằng bánh lộng hành, trước tao đã thông báo cấm tình trạng bánh thu phí </span><a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://xamvn.link/threads/7714/\"><strong>ở đây</strong></a><br><br><span style=\"color:rgb(41,105,176);\"><strong>Để tránh mấy thằng bánh phá nát xamvn tao sẽ dán </strong></span><span style=\"color:rgb(226,80,65);\"><strong>lừa đảo</strong></span><span style=\"color:rgb(41,105,176);\"><strong> đối với những trường hợp sau</strong></span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- Spam nhiều bài, auto dính nhãn lừa đảo vì tao đéo rảnh cũng đéo có cách nào check đc</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- Lập nhiều nick để nâng bi và up bài</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- Có nhiều review xấu</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Khi đã dính nhãn lừa đảo phải đóng phí mới được xóa</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Còn bánh nào cảm thấy ức chế hay cảm thấy </span><span style=\"color:rgb(226,80,65);\"><i><strong>bị trấn lột quá thì vui lòng không lên bài kẻo dính nhãn lừa đảo</strong></i></span><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">, Thiendia luôn chào đón bọn mày, còn xamvn thì không</span></p>', '2026-05-05 07:55:58.646638', b'0', 0, 'Giết nhầm còn hơn bỏ sót bánh thiu, dán nhãn \"lừa đảo\" với bài viết khả nghi', 0, 1, 20, 13, NULL),
-(149, b'1', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Rác quá</span></p>', '2026-05-05 07:58:50.876393', b'0', 0, 'Đăng link bot telegram lột đồ = ban', 0, 1, 17, 13, NULL);
+INSERT INTO `threads` (`id`, `active`, `content`, `created_at`, `pinned`, `reply_count`, `title`, `view_count`, `author_id`, `category_id`, `label_id`, `attached_images`, `last_post_at`) VALUES
+(189, b'1', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Ờ địt mẹ từ từ bố mày update dần dần.</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Cái tao share cho chúng mày là exp đúc kết về kinh nghiệm chăn và thực chiến gái trên mạng lẫn thực tế. Chỉ là những kinh nghiệm để chúng mày đỡ mắc những lỗi ngu sơ đẳng, chứ đéo có bí kíp kịch bản cặc gì đâu nhé, vì mỗi thằng mỗi hoàn cảnh khác nhau</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Vào việc:</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">1. Xác định luôn: Tỉ lệ thành công luôn chỉ ở tầm ~5% là ổn. Kể cả mày có mọi thứ trời ban, thì cũng chỉ có tỉ lệ cỡ 10%, chứ đéo bao giờ có chuyện gạ con nào là được con đấy, phần lớn thành bại là do gái nó có nứng với mày hay ko? Mà cái này thì chính bản thân đứa con gái nó cũng đéo biết được lúc nào nó nứng lên đâu tao nói thật. Cho nên: TUYỆT ĐỐI KO CỐ ĐẤM ĂN XÔI: Đi vài 3 nước thấy đéo trôi là bỏ luôn kiếm con khác, vì lợi thế của mày là có thể tiếp cận vô hạn số gái, tức DỄ TIẾP CẬN, còn nhược điểm của thời đại bây giờ là DỄ TUỘT -&gt; Như vậy việc của chúng mày là phải ĐÂM NHIỀU LÊN, chỗ nào trôi thì mới đâm vào tiếp chứ đéo phải lock mục tiêu rồi cố đâm bằng được.</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">2. Được hay ko thì phát đầu quyết định hết. Bắt đầu nói chuyện thì 5-10 câu đầu tiên quyết định thắng thua, nghĩ cho kĩ rồi hãy nói. Gặp trực tiếp thì ấn tượng trong 1 phút đầu tiên sẽ là 80% định kiến của gái về mày, đéo bao giờ thay đổi được, cho nên làm gì thì làm luôn buổi đầu, đừng bao giờ tư duy theo kiểu \"từ từ\", phông bạt bao nhiêu tất tay con mẹ mày hết đi.</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Buổi hẹn đầu tiên thì cứ sang xịn nhất có thể, có lần sau thì có tất mẹ rồi cần lồn gì nữa.</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">3. Luôn tìm múi mít: Độ tuổi 16-21 luôn thèm địt thèm yêu. Đừng bao giờ có suy nghĩ tìm mấy con \"trưởng thành\" hay mẹ đơn thân với suy nghĩ \"hàng ế sẽ giảm giá\".</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">4. Mấy con kín đáo, ra dáng ngoan hiền, nói chuyện nhã nhặn lịch sự, sở thích lành mạnh như thích mèo, truyện tranh, nhạc nhẽo phim ảnh vớ vẩn,... giờ giấc chuẩn chỉ, không dính líu vào bất cứ thói xấu dễ thấy nào, không bao giờ thả thính vớ vẩn, và đặc biệt nhất là hay cười -&gt; Đích xác là những con thèm địt nhất, thơm tho nhất, đáng theo đuổi nhất. Đâm mấy con này vừa dễ thành công vừa mang lại cho chúng mày sướng khoái</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Ngược lại mấy con có biểu hiện như sau tránh cho xa:</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- Hay chán, hay \"tâm trạng\" thất thường, hay tỏ ra dark deep, đặc biệt là hay thả thính bâng qơ</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- Không có thú vui, sở thích nào rõ rệt. Nói nôm na là đéo \"nghiện\" cái gì hết. Tin tao đi con người phải \"nghiện\" thì mới chơi được, đéo biết nghiện thì cũng tức là sẵn sàng buông bỏ buông thả, lúc êm đẹp đéo sao, hơi sóng gió tí nó bỏ mày ngay.</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">5. Mình chăn nó, nó cũng đang chăn mình. Chúng mày đéo bao giờ được quên đàn bà nó cũng đang nhìn chúng mày và đánh giá y hệt những gì chúng mày đang làm với nó. Chỉ cần luôn nhớ như vậy, đừng bao giờ ảo tưởng chỉ có mình là kẻ đi săn, tự chúng mày sẽ ngộ ra rất nhiều thứ nhỏ nhặt lợi hại. Tóm lại \"luôn nghĩ 2 chiều, đừng chỉ nhìn ở góc của mình\"</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Ờ rồi thằng nào có exp gì thì anh em trao đổi học hỏi lẫn nhau đi.</span></p>', '2026-05-13 15:50:02.699925', b'0', 1, 'Trao đổi kinh nghiệm về gái', 23, 37, 10, 6, '[]', '2026-05-13 15:53:44.051118');
 
 -- --------------------------------------------------------
 
@@ -264,20 +318,56 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `username` varchar(255) NOT NULL,
   `avatar` varchar(255) DEFAULT NULL,
-  `email` varchar(255) DEFAULT NULL
+  `email` varchar(255) DEFAULT NULL,
+  `reset_code` varchar(255) DEFAULT NULL,
+  `reset_code_expiry` datetime(6) DEFAULT NULL,
+  `display_name` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `password`, `username`, `avatar`, `email`) VALUES
-(1, '$2a$10$9ijOKopSb6/uK3Z.ZGsrcuNOf4F16p8FDO0llFVLobiCOn5q9I2o.', 'admin', '#3f51b5', NULL),
-(2, '$2a$10$jAk/ZlViZS5D3VYASEplYurbzK0lLmhwKe66h/wzwtYPz3hsFs8Ty', 'user01', NULL, NULL),
-(3, '$2a$10$i52hSXKbS4RqeYimw7xAHu4YXFtxLAg5zGKkPHC37PVeG.EtWpZk2', 'tester', NULL, NULL),
-(4, '$2a$10$vZ8cyER2eHAdBzyqf/w5uuxMoWLz7tfqq4pPoztnsjb7hZjRuPWfC', 'user02', NULL, NULL),
-(5, '$2a$10$PWHubAcanB47WaEkH0PnZuPBlj4SJxcuKs0/LvXlI1W9mEDsEsS5a', 'user03', NULL, NULL),
-(6, '$2a$10$sm7fnTs9ZkRa0906Gpe2Sus3QSdK2XH7clthVtounmW1AvGt5XUtq', 'user06', '#4caf50', 'vonhuhieu2003@gmail.com');
+INSERT INTO `users` (`id`, `password`, `username`, `avatar`, `email`, `reset_code`, `reset_code_expiry`, `display_name`) VALUES
+(1, '$2a$10$9ijOKopSb6/uK3Z.ZGsrcuNOf4F16p8FDO0llFVLobiCOn5q9I2o.', 'admin', '#3f51b5', NULL, NULL, NULL, NULL),
+(2, '$2a$10$jAk/ZlViZS5D3VYASEplYurbzK0lLmhwKe66h/wzwtYPz3hsFs8Ty', 'user01', '#ff9800', NULL, NULL, NULL, NULL),
+(3, '$2a$10$i52hSXKbS4RqeYimw7xAHu4YXFtxLAg5zGKkPHC37PVeG.EtWpZk2', 'tester', NULL, NULL, NULL, NULL, NULL),
+(4, '$2a$10$vZ8cyER2eHAdBzyqf/w5uuxMoWLz7tfqq4pPoztnsjb7hZjRuPWfC', 'user02', NULL, NULL, NULL, NULL, NULL),
+(5, '$2a$10$PWHubAcanB47WaEkH0PnZuPBlj4SJxcuKs0/LvXlI1W9mEDsEsS5a', 'user03', '#ff5722', NULL, NULL, NULL, NULL),
+(6, '$2a$10$e4R42eA1hMYXYFf.mWNf4OitBIC3lhG6gucoNAplHb6JHJvb3L48u', 'user04', '#03a9f4', 'vonhuhieu2003@gmail.com', NULL, NULL, NULL),
+(7, '$2a$10$XO3NuxFEJ/YVB7tsWTPcyeEAlp4aktEXqfUaXf9vq9zoukLF1pWEK', 'Pro Trader ❤️', '#795548', 'ProTrader@gmail.com', NULL, NULL, NULL),
+(8, '$2a$10$5B9MOACgtBo9V6veWd8UiugDi9cQb6hslty9Z81Y8LBVwhKMegGmS', 'Fast159', '#e91e63', 'Fast159@gmail.com', NULL, NULL, NULL),
+(9, '$2a$10$nId8mosJxLhj7r3Sr7LSbeQgC3q.v7boo7JliQsnr6I0xaS0TpkMy', 'Wun', '#e91e63', 'Wun@gmail.com', NULL, NULL, NULL),
+(10, '$2a$10$lBfypm18sqFhUFLa1OoM4OjdL0rHkfwDhpG79BfCUgoIXYmxL4yYO', 'archi', '#3f51b5', 'archi@gmail.com', NULL, NULL, NULL),
+(11, '$2a$10$/FwHbZ1r3VifLosbJ8DOuOJ36LOkWTL8S69we1a4CG0fwPNN94wkq', 'Polimen', '#009688', 'Polimen@gmail.com', NULL, NULL, NULL),
+(12, '$2a$10$MDZFGN5vgixFWGhmossdougu.EbZMJS06ID/sLFi5dJFyDW5EPT4q', 'Tun2k', '#03a9f4', 'Tun2k@gmail.com', NULL, NULL, NULL),
+(13, '$2a$10$RWIw.qotsRWxqlLAxgLPB.OOgIsZ9hBQsnlEdZQoF9Az4QPInQjvW', 'Sharingan Vạn Hoa Đồng', '#ffc107', 'test@gmail.com', NULL, NULL, NULL),
+(14, '$2a$10$il6sgCWMEnCFFbYbtzgpD.ExWsxsaFdjAXlePRNyYOZKdF7/jrtuy', 'binzuto', '#8bc34a', 'binzuto@gmail.com', NULL, NULL, NULL),
+(15, '$2a$10$TWRa36ioAfMQkR2wafV1U.hvuTcgsRxUih8HotZbgO9W03GUtYENa', 'ducpm9', '#2196f3', 'ducpm9@gmail.com', NULL, NULL, NULL),
+(16, '$2a$10$rvV73hLsN98ZZvL9CM9rBuFPOWOhTyg0LCnSh0aGhfKVLoxtQDnQy', 'banhkeoth', '#673ab7', 'banhkeoth@gmail.com', NULL, NULL, NULL),
+(17, '$2a$10$U7RXDfzyCocZGpG8yZBwwOtqrfQ8GpXfodvLdZz0weieOHmQW/hgW', 'laokhonglo', '#4caf50', 'laokhonglo@gmail.com', NULL, NULL, NULL),
+(18, '$2a$10$wOk/dsG58NG/SVNCZlZx5eLOvB.ud283HGYGQKuP4llDFgvb4Fbf6', 'klu123', '#4caf50', 'klu123@gmail.com', NULL, NULL, NULL),
+(19, '$2a$10$6x4r/6kUQeunvrje3kygS.aQvchHMbz9hskXkwLuWm91AHaB01scC', 'tnhuw', '#00bcd4', 'tnhuw@gmail.com', NULL, NULL, NULL),
+(20, '$2a$10$4Tu2ZQD8pLaTr2Pb2GJWIeSNJmU63S.2vCZhQ/sOjtzpd5MDmPjxS', 'hettienchoigai', '#f44336', 'hettienchoigai@gmail.com', NULL, NULL, NULL),
+(21, '$2a$10$ZftL7Gcl48hboKC.cE6Am.l.nBm1azVs.9E4Z56Qw1dP6IFLulBxq', 'Henry888888', 'hsl(311, 70%, 45%)', 'Henry888888@gmail.com', NULL, NULL, NULL),
+(22, '$2a$10$HIJPFmaTnPTIRVz4akfUUOgNUpChME4ndmxEtbeoOriKVKUW5gyYa', 'ThichDamLon', 'hsl(48, 70%, 45%)', 'ThichDamLon@gmail.com', NULL, NULL, 'Thích Dâm Lồn'),
+(23, '$2a$10$nVvti/12tyRvGbhrAoYaPOLcmsmAQJ15YXMrXBXXxF31tbhkJBUYa', 'Tuanh020393', 'hsl(200, 70%, 45%)', 'Tuanh020393@gmail.com', NULL, NULL, 'Tuanh020393'),
+(24, '$2a$10$O5kH/e91wJeuN9Dsp9a6x.JoxlpiR3m8DC4Q35F3L5p1UEeFwBZ.S', 'ditieubao88', 'hsl(319, 70%, 45%)', 'ditieubao88@gmail.com', NULL, NULL, 'ditieubao88'),
+(25, '$2a$10$4b7nUIlmGxPcao1NNo53XO35Jvpwa6ec3aYQizRucToBLxMnjmlnu', 'Elian', 'hsl(226, 70%, 45%)', 'Elian@gmail.com', NULL, NULL, 'Elian'),
+(26, '$2a$10$3FU08KvYJg9FD.ORJ7xQJ.dqJ2GrRSRJ4EKno8q4LL13yFe.PnkQu', 'spy_cnn', 'hsl(179, 70%, 45%)', 'spy_cnn@gmail.com', NULL, NULL, 'spy_cnn'),
+(27, '$2a$10$d20GvSVkE62vxhX/9HjxAOMywe0MKWk/kmmBm9Ora8Q8.H3r8ZMyK', 'Vklaeoi', 'hsl(247, 70%, 45%)', 'Vklaeoi@gmail.com', NULL, NULL, 'Vklaeoi'),
+(28, '$2a$10$3mbQjMu5ZeUfnrWokyXgkOS.ePvu7R2f9Dzzw1sdkaveZB0kokEEW', 'Dskinder18', 'hsl(184, 70%, 45%)', 'Dskinder18@gmail.com', NULL, NULL, 'Dskinder18'),
+(29, '$2a$10$E74.hGwd6bHj/P9K/fBh6ut2oLhGCwPbib7gc.9ym5y.ytUKNQxRe', 'Tanker69', 'hsl(280, 70%, 45%)', 'Tanker69@gmail.com', NULL, NULL, 'Tanker69'),
+(30, '$2a$10$i3M/XadwHhb9NduLdP9N2.VQNiiztwKcSc203o4vIMPbkdWlbFDG.', 'ksonnn', 'hsl(156, 70%, 45%)', 'ksonnn@gmail.com', NULL, NULL, 'ksonnn'),
+(31, '$2a$10$0Troodt97ElI1GWe/D0DBuWgsU7ARyD8gbla0tGFlFq1HqWgHFcaS', 'Vinhsinh12', 'hsl(129, 70%, 45%)', 'Vinhsinh12@gmail.com', NULL, NULL, 'Vinhsinh12'),
+(32, '$2a$10$Mi79uXqPivU.fN0Z7obaXOZpM5lLOQZpiixWG3BWNv.mTeo6V1eqW', 'garung193', 'hsl(165, 70%, 45%)', 'garung193@gmail.com', NULL, NULL, 'garung193'),
+(33, '$2a$10$PY9tRPzS.pAysOu8zdNR3OJEf2FzzyqqQJl9PihczaNu9rSdswURy', 'thanchien', 'hsl(63, 70%, 45%)', 'thanchien@gmail.com', NULL, NULL, 'thanchien'),
+(34, '$2a$10$9hSMHhp01hvd6GL.WXCgyOYAlZq8Z2jctA7dmYLZuJ/LpTdAgfh9i', 'haimyxam', 'hsl(284, 70%, 45%)', 'haimyxam@gmail.com', NULL, NULL, 'haimyxam'),
+(35, '$2a$10$6QvA9qHcJdBhqhsVypuZIugtK2Af/j6RD82.H0c1tc12vL0VJNP2q', 'Android17', 'hsl(225, 70%, 45%)', 'Android17@gmail.com', NULL, NULL, 'Android17'),
+(36, '$2a$10$d0ibjCGyIliI6vQ95dlEdOdL23wf6Zxo2taBR94ofvNxdVuNFPjtu', 'Voldermort', 'hsl(33, 70%, 45%)', 'Voldermort@gmail.com', NULL, NULL, 'Voldermort'),
+(37, '$2a$10$oz7oXRIkXj.YmbCXpeuv4eLryo6yrvcnKaVvocgQfmjRcwN6tCEb6', 'hongtran', 'hsl(99, 70%, 45%)', 'hongtran@gmail.com', NULL, NULL, 'Hồng Trần'),
+(38, '$2a$10$FcySdHCTPCvbbcqdb8.gluz0BjYXaYNO23DmObisuPvW/qFaA4DTe', 'slowguy', 'hsl(182, 70%, 45%)', 'slowguy@gmail.com', NULL, NULL, 'slowguy'),
+(39, '$2a$10$Rv5GQaBR7T9Fd5yXJVxg/ePrx1BNq4dPnxYTCzgYUWpIiluEV4BzS', 'Deadpoo', 'hsl(39, 70%, 45%)', 'Deadpoo@gmail.com', NULL, NULL, 'Deadpoo');
 
 -- --------------------------------------------------------
 
@@ -300,7 +390,40 @@ INSERT INTO `user_roles` (`user_id`, `role`) VALUES
 (3, 'ROLE_USER'),
 (4, 'ROLE_USER'),
 (5, 'ROLE_USER'),
-(6, 'ROLE_USER');
+(6, 'ROLE_USER'),
+(7, 'ROLE_USER'),
+(8, 'ROLE_USER'),
+(9, 'ROLE_USER'),
+(10, 'ROLE_USER'),
+(11, 'ROLE_USER'),
+(12, 'ROLE_USER'),
+(13, 'ROLE_USER'),
+(14, 'ROLE_USER'),
+(15, 'ROLE_USER'),
+(16, 'ROLE_USER'),
+(17, 'ROLE_USER'),
+(18, 'ROLE_USER'),
+(19, 'ROLE_USER'),
+(20, 'ROLE_USER'),
+(21, 'ROLE_USER'),
+(22, 'ROLE_USER'),
+(23, 'ROLE_USER'),
+(24, 'ROLE_USER'),
+(25, 'ROLE_USER'),
+(26, 'ROLE_USER'),
+(27, 'ROLE_USER'),
+(28, 'ROLE_USER'),
+(29, 'ROLE_USER'),
+(30, 'ROLE_USER'),
+(31, 'ROLE_USER'),
+(32, 'ROLE_USER'),
+(33, 'ROLE_USER'),
+(34, 'ROLE_USER'),
+(35, 'ROLE_USER'),
+(36, 'ROLE_USER'),
+(37, 'ROLE_USER'),
+(38, 'ROLE_USER'),
+(39, 'ROLE_USER');
 
 --
 -- Indexes for dumped tables
@@ -334,6 +457,16 @@ ALTER TABLE `menus`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `FK4sd9fik0uthbk6d9rsxco4uja` (`actor_id`),
+  ADD KEY `FK599539lym3mnkbqks0u806eac` (`post_id`),
+  ADD KEY `FKqqnsjxlwleyjbxlmm213jaj3f` (`recipient_id`),
+  ADD KEY `FKny4eo4f76xn6u916yyy223q2b` (`thread_id`);
+
+--
 -- Indexes for table `polls`
 --
 ALTER TABLE `polls`
@@ -355,6 +488,31 @@ ALTER TABLE `poll_votes`
   ADD UNIQUE KEY `UKby74t3g6apehqx430lhk1wu06` (`poll_id`,`user_id`,`option_id`),
   ADD KEY `FK974fgfa4183h12b8vns9226qs` (`option_id`),
   ADD KEY `FK3q0e7cabgif9f1t7voom07bg5` (`user_id`);
+
+--
+-- Indexes for table `posts`
+--
+ALTER TABLE `posts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `FK6xvn0811tkyo3nfjk2xvqx6ns` (`author_id`),
+  ADD KEY `FK2h178flnfq5ha27wy8of7p6xs` (`thread_id`);
+
+--
+-- Indexes for table `reactions`
+--
+ALTER TABLE `reactions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_user_thread_reaction` (`user_id`,`thread_id`),
+  ADD UNIQUE KEY `uq_user_post_reaction` (`user_id`,`post_id`),
+  ADD KEY `FKh8b4h9wybhu8tc5w11e8t3krc` (`post_id`),
+  ADD KEY `FKp9d3mnkttyrrly1e9hwcthyxe` (`reaction_icon_id`),
+  ADD KEY `FK4udx0pcqyqe9787n6lg8qhwwn` (`thread_id`);
+
+--
+-- Indexes for table `reaction_icons`
+--
+ALTER TABLE `reaction_icons`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `threads`
@@ -398,13 +556,19 @@ ALTER TABLE `category_groups`
 -- AUTO_INCREMENT for table `labels`
 --
 ALTER TABLE `labels`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `menus`
 --
 ALTER TABLE `menus`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `notifications`
+--
+ALTER TABLE `notifications`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
 
 --
 -- AUTO_INCREMENT for table `polls`
@@ -425,16 +589,34 @@ ALTER TABLE `poll_votes`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
+-- AUTO_INCREMENT for table `posts`
+--
+ALTER TABLE `posts`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=143;
+
+--
+-- AUTO_INCREMENT for table `reactions`
+--
+ALTER TABLE `reactions`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- AUTO_INCREMENT for table `reaction_icons`
+--
+ALTER TABLE `reaction_icons`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT for table `threads`
 --
 ALTER TABLE `threads`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=157;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=193;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- Constraints for dumped tables
@@ -446,6 +628,15 @@ ALTER TABLE `users`
 ALTER TABLE `categories`
   ADD CONSTRAINT `FKd4n83qf1yheqnwarwl6iq7gsf` FOREIGN KEY (`category_group_id`) REFERENCES `category_groups` (`id`),
   ADD CONSTRAINT `FKsaok720gsu4u2wrgbk10b5n8d` FOREIGN KEY (`parent_id`) REFERENCES `categories` (`id`);
+
+--
+-- Constraints for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD CONSTRAINT `FK4sd9fik0uthbk6d9rsxco4uja` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `FK599539lym3mnkbqks0u806eac` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`),
+  ADD CONSTRAINT `FKny4eo4f76xn6u916yyy223q2b` FOREIGN KEY (`thread_id`) REFERENCES `threads` (`id`),
+  ADD CONSTRAINT `FKqqnsjxlwleyjbxlmm213jaj3f` FOREIGN KEY (`recipient_id`) REFERENCES `users` (`id`);
 
 --
 -- Constraints for table `polls`
@@ -466,6 +657,22 @@ ALTER TABLE `poll_votes`
   ADD CONSTRAINT `FK3q0e7cabgif9f1t7voom07bg5` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `FK974fgfa4183h12b8vns9226qs` FOREIGN KEY (`option_id`) REFERENCES `poll_options` (`id`),
   ADD CONSTRAINT `FKmaogo469u92y072mev488em6p` FOREIGN KEY (`poll_id`) REFERENCES `polls` (`id`);
+
+--
+-- Constraints for table `posts`
+--
+ALTER TABLE `posts`
+  ADD CONSTRAINT `FK2h178flnfq5ha27wy8of7p6xs` FOREIGN KEY (`thread_id`) REFERENCES `threads` (`id`),
+  ADD CONSTRAINT `FK6xvn0811tkyo3nfjk2xvqx6ns` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`);
+
+--
+-- Constraints for table `reactions`
+--
+ALTER TABLE `reactions`
+  ADD CONSTRAINT `FK4udx0pcqyqe9787n6lg8qhwwn` FOREIGN KEY (`thread_id`) REFERENCES `threads` (`id`),
+  ADD CONSTRAINT `FKh8b4h9wybhu8tc5w11e8t3krc` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`),
+  ADD CONSTRAINT `FKp9d3mnkttyrrly1e9hwcthyxe` FOREIGN KEY (`reaction_icon_id`) REFERENCES `reaction_icons` (`id`),
+  ADD CONSTRAINT `FKqmewaibcp5bxtlqxc2cawhuln` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
 
 --
 -- Constraints for table `threads`
