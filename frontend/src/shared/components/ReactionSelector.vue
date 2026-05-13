@@ -78,6 +78,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .reaction-img {
@@ -87,16 +88,19 @@ export default {
   transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Hover Scaling Effects */
+/* Hover Scaling Effects - Target internal container to bypass keyframe forwards blocking */
 .reaction-item:hover {
-  transform: scale(1.3) translateY(-8px);
-  z-index: 2;
+  z-index: 10;
+}
+
+.reaction-item:hover .reaction-img-container {
+  transform: scale(1.4) translateY(-8px);
 }
 
 .reaction-item:hover .reaction-tooltip {
   visibility: visible;
   opacity: 1;
-  transform: translate(-50%, -8px);
+  transform: translate(-50%, -18px); /* Raised up further to float clear above scaled icon */
 }
 
 /* Tooltip Styling */
@@ -115,6 +119,7 @@ export default {
   opacity: 0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  z-index: 20; /* Ensure tooltip stays on very top level */
 }
 
 /* Keyframe Animations */
