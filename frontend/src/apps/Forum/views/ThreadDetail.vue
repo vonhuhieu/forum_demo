@@ -83,11 +83,7 @@
               </div>
               <div v-else class="content-body ql-editor" v-html="thread.content" @click="handleContentClick"></div>
               
-              <!-- Reaction Summary for Main Post (XenForo Style) -->
-              <div class="reactions-bar-container" v-if="thread.reactionSummary && thread.reactionSummary.length > 0">
-                <ReactionSummary :summary="thread.reactionSummary" :recentReactors="thread.recentReactors" />
-              </div>
-              
+
               <div class="post-meta-bottom" v-if="editingItemId !== item.id">
                 <div class="left-actions">
                   <a href="#" class="action-link" @click.prevent>Báo cáo</a>
@@ -108,6 +104,15 @@
                     Trả lời
                   </a>
                 </div>
+              </div>
+
+              <!-- Reaction Summary for Main Post (XenForo Style) -->
+              <div class="reactions-bar-container" v-if="thread.reactionSummary && thread.reactionSummary.length > 0">
+                <ReactionSummary 
+                  :summary="thread.reactionSummary" 
+                  :recentReactors="thread.recentReactors" 
+                  @open-popup="openReactionPopup('#1', thread.id, true, thread.reactionSummary)"
+                />
               </div>
             </div>
           </div>
@@ -156,11 +161,7 @@
               </div>
               <div v-else class="content-body ql-editor" v-html="formatPostContent(item.content)" @click="handleContentClick"></div>
               
-              <!-- Reaction Summary for Reply Item (XenForo Style) -->
-              <div class="reactions-bar-container" v-if="item.reactionSummary && item.reactionSummary.length > 0">
-                <ReactionSummary :summary="item.reactionSummary" :recentReactors="item.recentReactors" />
-              </div>
-              
+
               <div class="post-meta-bottom" v-if="editingItemId !== item.id">
                 <div class="left-actions">
                   <a href="#" class="action-link" @click.prevent>Báo cáo</a>
@@ -181,6 +182,15 @@
                     Trả lời
                   </a>
                 </div>
+              </div>
+
+              <!-- Reaction Summary for Reply Item (XenForo Style) -->
+              <div class="reactions-bar-container" v-if="item.reactionSummary && item.reactionSummary.length > 0">
+                <ReactionSummary 
+                  :summary="item.reactionSummary" 
+                  :recentReactors="item.recentReactors" 
+                  @open-popup="openReactionPopup('#' + item.seqNumber, item.id, false, item.reactionSummary)"
+                />
               </div>
             </div>
           </div>
@@ -231,6 +241,15 @@
       </div>
 
       <Breadcrumb :items="breadcrumbItems" />
+      
+      <ReactionListPopup 
+        :show="showReactionPopup" 
+        @update:show="showReactionPopup = $event" 
+        :orderNumber="reactionPopupData.orderNumber" 
+        :targetId="reactionPopupData.targetId" 
+        :isMainPost="reactionPopupData.isMainPost" 
+        :summary="reactionPopupData.summary" 
+      />
     </main>
   </div>
   
@@ -263,6 +282,7 @@ import { alertSuccess, alertError } from '@/shared/utils/swal'
 import { formatForumDate } from '@/shared/utils/date'
 import ReactionButton from '@/shared/components/ReactionButton.vue'
 import ReactionSummary from '@/shared/components/ReactionSummary.vue'
+import ReactionListPopup from '@/shared/components/ReactionListPopup.vue'
 
 export default {
   name: 'ThreadDetail',
@@ -274,7 +294,8 @@ export default {
     ImageUploaderPanel,
     ForumPagination,
     ReactionButton,
-    ReactionSummary
+    ReactionSummary,
+    ReactionListPopup
   },
   data() {
     const userStr = localStorage.getItem('user')
@@ -311,7 +332,14 @@ export default {
       },
       editAttachedImages: [],
       submittingEdit: false,
-      reactionIconsList: []
+      reactionIconsList: [],
+      showReactionPopup: false,
+      reactionPopupData: {
+        orderNumber: '#1',
+        targetId: null,
+        isMainPost: true,
+        summary: []
+      }
     }
   },
   computed: {
@@ -419,6 +447,15 @@ export default {
     }
   },
   methods: {
+    openReactionPopup(orderNumber, targetId, isMainPost, summary) {
+      this.reactionPopupData = {
+        orderNumber,
+        targetId,
+        isMainPost,
+        summary
+      }
+      this.showReactionPopup = true
+    },
     async fetchReactionIcons() {
       try {
         const res = await api.get('/reaction-icons');
@@ -1310,6 +1347,5 @@ export default {
   padding: 0 15px 10px 15px;
   margin-top: -5px;
   display: flex;
-  align-items: center;
 }
 </style>

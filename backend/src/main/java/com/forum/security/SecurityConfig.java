@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/labels", "/api/labels/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/posts", "/api/posts/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reaction-icons", "/api/reaction-icons/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reactions", "/api/reactions/**").permitAll()
                 // Cấu hình bảo vệ cho tác vụ ADMIN
                 .requestMatchers("/api/menus/**").hasRole("ADMIN")
                 .requestMatchers("/api/categories/**").hasRole("ADMIN")

@@ -1,40 +1,32 @@
 <template>
-  <div v-if="hasReactions" class="reactions-summary-pill">
-    <div class="stacked-icons-container">
-      <ReactionIcon 
-        v-for="(item, idx) in topReactionIcons" 
-        :key="item.reactionIcon.id" 
-        :code="item.reactionIcon.icon"
-        :color="item.reactionIcon.color"
-        class="stacked-summary-icon"
-        :style="{ zIndex: 10 - idx }"
-        :title="item.reactionIcon.tooltip"
-        size="16px"
-      />
-    </div>
-    
-    <div class="reactors-text-display">
+  <div v-if="hasReactions" class="reactionsBar js-reactionsList is-active">
+    <ul class="reactionSummary">
+      <li v-for="item in topReactionIcons" :key="item.reactionIcon.id">
+        <span class="reaction reaction--small" :class="`reaction--${item.reactionIcon.id}`" :data-reaction-id="item.reactionIcon.id">
+          <i aria-hidden="true"></i>
+          <ReactionIcon 
+            :code="item.reactionIcon.icon"
+            :color="item.reactionIcon.color"
+            class="reaction-sprite js-reaction"
+            :title="item.reactionIcon.tooltip"
+            size="16px"
+          />
+        </span>
+      </li>
+    </ul>
+
+    <span class="u-srOnly" style="display: none;">Reactions:</span>
+    <a class="reactionsBar-link" href="#" @click.prevent="$emit('open-popup')">
       <template v-if="processedReactors.length > 0">
         <template v-for="(reactor, idx) in processedReactors" :key="reactor.id">
-          <span class="reactor-name" :class="{ 'is-me': reactor.isMe }">{{ reactor.displayName }}</span>
-          
-          <template v-if="idx < processedReactors.length - 1">
-            <template v-if="totalCount > 3">, </template>
-            <template v-else>
-              <template v-if="idx === processedReactors.length - 2"> và </template>
-              <template v-else>, </template>
-            </template>
-          </template>
+          <bdi :class="{ 'is-me': reactor.isMe }">{{ reactor.displayName }}</bdi><template v-if="idx < processedReactors.length - 1"><template v-if="totalCount > 3">, </template><template v-else><template v-if="idx === processedReactors.length - 2"> và </template><template v-else>, </template></template></template>
         </template>
-
-        <template v-if="totalCount > 3">
-          và <span class="other-reactors-count">{{ totalCount - 3 }} người khác</span>
-        </template>
+        <template v-if="totalCount > 3"> và {{ totalCount - 3 }} người khác</template>
       </template>
       <template v-else>
-        <span class="reactor-count-only">{{ totalCount }}</span>
+        {{ totalCount }} người
       </template>
-    </div>
+    </a>
   </div>
 </template>
 
@@ -118,78 +110,60 @@ export default {
 </script>
 
 <style scoped>
-.reactions-summary-pill {
-  display: inline-flex;
-  align-items: center;
-  background: #f8f9fa;
-  border: 1px solid #e4e6eb;
-  border-radius: 18px;
-  padding: 4px 12px;
-  gap: 8px;
-  cursor: default;
-  transition: all 0.2s ease;
+.reactionsBar {
+  background: #f5f5f5;
+  border: 1px solid #dfdfdf;
+  border-left: 2px solid #47a7eb;
+  padding: 6px 10px;
+  font-size: 13px;
+  margin: 10px 0; /* Khoảng cách lề trái phải bằng nhau */
+  display: flex;
+  align-items: center; /* Căn giữa icon và text theo chiều dọc */
+  width: 100% !important;
 }
 
-.reactions-summary-pill:hover {
-  background: #f0f2f5;
-  border-color: #d8dadf;
-}
-
-.stacked-icons-container {
+.reactionSummary {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: flex;
   align-items: center;
 }
 
-.stacked-summary-icon {
-  border-radius: 50%;
-  border: 1.5px solid #f8f9fa;
-  background: white;
-  box-sizing: content-box;
-  transition: border-color 0.2s ease;
+.reactionSummary li {
+  display: inline-flex;
+  align-items: center;
+  margin-right: -4px; /* Thu hẹp khoảng cách để xếp chồng lên nhau tự nhiên hơn */
+  position: relative;
+  z-index: 1;
 }
 
-.reactions-summary-pill:hover .stacked-summary-icon {
-  border-color: #f0f2f5;
+/* Thêm z-index để các icon xếp chồng đúng thứ tự */
+.reactionSummary li:nth-child(1) { z-index: 3; }
+.reactionSummary li:nth-child(2) { z-index: 2; }
+.reactionSummary li:nth-child(3) { z-index: 1; }
+
+.reaction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Đã loại bỏ border và background màu trắng gây lỗi UI */
 }
 
-.stacked-summary-icon:not(:first-child) {
-  margin-left: -6px;
-}
-
-.reactors-text-display {
-  font-size: 13px;
-  color: #65676B;
-  font-weight: 400;
-  line-height: 1.4;
-  user-select: none;
-}
-
-.reactor-name {
-  font-weight: 600;
-  color: #1877f2;
+.reactionsBar-link {
+  color: #1a507a;
+  text-decoration: none;
+  margin-left: 8px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
-.reactor-name:hover {
+.reactionsBar-link:hover {
   text-decoration: underline;
 }
 
-.reactor-name.is-me {
-  color: #1877f2;
-}
-
-.other-reactors-count {
-  font-weight: 600;
-  color: #1877f2;
-  cursor: pointer;
-}
-
-.other-reactors-count:hover {
-  text-decoration: underline;
-}
-
-.reactor-count-only {
-  font-weight: 600;
-  color: #65676b;
+.reactionsBar-link bdi {
+  color: inherit;
 }
 </style>

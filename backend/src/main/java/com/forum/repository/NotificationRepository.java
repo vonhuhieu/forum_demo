@@ -10,5 +10,8 @@ import java.util.List;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
     List<Notification> findByRecipientUsernameOrderByCreatedAtDesc(String username);
     long countByRecipientUsernameAndIsReadFalse(String username);
-    void deleteByThreadId(Long threadId);
+    
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM Notification n WHERE n.thread.id = :threadId")
+    void deleteByThreadId(@org.springframework.data.repository.query.Param("threadId") Long threadId);
 }

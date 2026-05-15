@@ -29,4 +29,16 @@ public interface ReactionRepository extends JpaRepository<Reaction, Long> {
     List<Reaction> findTop3ByThreadIdOrderByUpdatedAtDesc(Long threadId);
 
     List<Reaction> findTop3ByPostIdOrderByUpdatedAtDesc(Long postId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("DELETE FROM Reaction r WHERE r.thread.id = :threadId OR r.post.id IN (SELECT p.id FROM Post p WHERE p.thread.id = :threadId)")
+    void deleteByThreadIdOrPostThreadId(@Param("threadId") Long threadId);
+
+    org.springframework.data.domain.Page<Reaction> findByThreadId(Long threadId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Reaction> findByThreadIdAndReactionIconId(Long threadId, Long iconId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Reaction> findByPostId(Long postId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Reaction> findByPostIdAndReactionIconId(Long postId, Long iconId, org.springframework.data.domain.Pageable pageable);
 }

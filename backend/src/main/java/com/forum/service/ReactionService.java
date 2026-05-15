@@ -165,4 +165,36 @@ public class ReactionService {
                 .map(this::mapUserToDTO)
                 .collect(java.util.stream.Collectors.toList());
     }
+
+    public void deleteAllReactionsForThread(Long threadId) {
+        reactionRepository.deleteByThreadIdOrPostThreadId(threadId);
+    }
+
+    private com.forum.dto.ReactionParticipantDTO mapToParticipantDTO(Reaction reaction) {
+        return new com.forum.dto.ReactionParticipantDTO(
+                mapUserToDTO(reaction.getUser()),
+                reactionIconService.convertToDTO(reaction.getReactionIcon()),
+                reaction.getUpdatedAt() != null ? reaction.getUpdatedAt() : reaction.getCreatedAt()
+        );
+    }
+
+    public org.springframework.data.domain.Page<com.forum.dto.ReactionParticipantDTO> getThreadReactionParticipants(Long threadId, Long iconId, org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<Reaction> reactions;
+        if (iconId != null) {
+            reactions = reactionRepository.findByThreadIdAndReactionIconId(threadId, iconId, pageable);
+        } else {
+            reactions = reactionRepository.findByThreadId(threadId, pageable);
+        }
+        return reactions.map(this::mapToParticipantDTO);
+    }
+
+    public org.springframework.data.domain.Page<com.forum.dto.ReactionParticipantDTO> getPostReactionParticipants(Long postId, Long iconId, org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<Reaction> reactions;
+        if (iconId != null) {
+            reactions = reactionRepository.findByPostIdAndReactionIconId(postId, iconId, pageable);
+        } else {
+            reactions = reactionRepository.findByPostId(postId, pageable);
+        }
+        return reactions.map(this::mapToParticipantDTO);
+    }
 }

@@ -198,12 +198,26 @@ public class ThreadService {
 
     public ResponseDTO<Void> deleteThread(Long id) {
         threadRepository.findById(id).ifPresent(thread -> {
-            // Delete associated notifications first
+            // 1. Delete notifications related to this thread and its posts
             notificationRepository.deleteByThreadId(id);
             
+            // 2. Handle poll votes if exists
             if (thread.getPoll() != null) {
                 pollVoteRepository.deleteByPollId(thread.getPoll().getId());
             }
+            
+            // 3. Delete all reactions for the thread and its posts
+            reactionService.deleteAllReactionsForThread(id);
+            
+            // 4. Delete posts manually to be safe before thread
+            postRepository.deleteByThreadId(id);
+            
+            // 5. Clear the collections in the managed entity to avoid Hibernate sync issues
+            if (thread.getPosts() != null) {
+                thread.getPosts().clear();
+            }
+            
+            // 6. Finally delete the thread
             threadRepository.delete(thread);
         });
         return ResponseDTO.success(null);

@@ -13,4 +13,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findByThreadIdOrderByCreatedAtAsc(Long threadId);
     Page<Post> findByThreadId(Long threadId, Pageable pageable);
     java.util.Optional<Post> findFirstByThreadIdOrderByCreatedAtDesc(Long threadId);
+    
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM Post p WHERE p.thread.id = :threadId")
+    void deleteByThreadId(@org.springframework.data.repository.query.Param("threadId") Long threadId);
 }

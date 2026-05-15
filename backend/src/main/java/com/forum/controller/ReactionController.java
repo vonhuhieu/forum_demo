@@ -36,4 +36,24 @@ public class ReactionController {
         reactionService.removeReactionFromPost(id);
         return ResponseEntity.ok(ResponseDTO.success(null));
     }
+
+    @GetMapping("/threads/{id}/participants")
+    public ResponseEntity<ResponseDTO<org.springframework.data.domain.Page<com.forum.dto.ReactionParticipantDTO>>> getThreadReactionParticipants(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long iconId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("updatedAt").descending());
+        return ResponseEntity.ok(ResponseDTO.success(reactionService.getThreadReactionParticipants(id, iconId, pageable)));
+    }
+
+    @GetMapping("/posts/{id}/participants")
+    public ResponseEntity<ResponseDTO<org.springframework.data.domain.Page<com.forum.dto.ReactionParticipantDTO>>> getPostReactionParticipants(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long iconId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("updatedAt").descending());
+        return ResponseEntity.ok(ResponseDTO.success(reactionService.getPostReactionParticipants(id, iconId, pageable)));
+    }
 }
