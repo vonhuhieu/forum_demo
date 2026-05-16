@@ -218,10 +218,10 @@ export default {
 
 .jump-dropdown {
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-top: 4px;
+  margin-bottom: 8px;
   background: white;
   border: 1px solid #b7cde1;
   border-radius: 3px;
@@ -233,22 +233,22 @@ export default {
 .jump-dropdown::before {
   content: '';
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
   border-width: 6px;
   border-style: solid;
-  border-color: transparent transparent #b7cde1 transparent;
+  border-color: #b7cde1 transparent transparent transparent;
 }
 .jump-dropdown::after {
   content: '';
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
   border-width: 5px;
   border-style: solid;
-  border-color: transparent transparent white transparent;
+  border-color: white transparent transparent transparent;
 }
 
 .jump-header {
