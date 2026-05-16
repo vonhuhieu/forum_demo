@@ -16,6 +16,8 @@ public interface NotificationMapper {
     @Mapping(source = "actor.avatar", target = "actorAvatar")
     @Mapping(source = "thread.id", target = "threadId")
     @Mapping(source = "thread.title", target = "threadTitle")
+    @Mapping(source = "thread.label.name", target = "threadLabelName")
+    @Mapping(source = "thread.label.colorCode", target = "threadLabelColor")
     @Mapping(source = "post.id", target = "postId")
     NotificationDTO toDTO(Notification notification);
 

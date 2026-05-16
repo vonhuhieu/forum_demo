@@ -14,7 +14,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @Transactional
@@ -70,12 +75,55 @@ public class PostService {
         thread.setLastPostAt(saved.getCreatedAt());
         Thread updatedThread = threadRepository.save(thread);
 
-        // Gửi thông báo tới chủ bài viết realtime + lưu DB
+        // Gửi thông báo
         try {
-            User authorEntity = post.getAuthor(); // Lấy User object đã resolve ở trên
-            notificationService.sendNewCommentNotification(authorEntity, updatedThread, saved);
+            User actor = post.getAuthor();
+            String content = post.getContent();
+            AtomicBoolean threadOwnerNotifiedViaQuote = new AtomicBoolean(false);
+
+            // Pattern to detect quotes with data-source
+            Pattern pattern = Pattern.compile("data-source=\"([^\"]+)\"");
+            Matcher matcher = pattern.matcher(content != null ? content : "");
+            Set<String> quotedIds = new HashSet<>();
+            while (matcher.find()) {
+                quotedIds.add(matcher.group(1));
+            }
+
+            for (String sourceId : quotedIds) {
+                if ("main_thread_entry".equals(sourceId)) {
+                    // Quoting the thread itself
+                    User threadAuthor = updatedThread.getAuthor();
+                    if (threadAuthor != null && actor != null && !threadAuthor.getId().equals(actor.getId())) {
+                        notificationService.sendQuoteNotification(actor, threadAuthor, updatedThread, saved);
+                        threadOwnerNotifiedViaQuote.set(true);
+                    }
+                } else {
+                    // Quoting a specific post
+                    try {
+                        Long postId = Long.parseLong(sourceId);
+                        postRepository.findById(postId).ifPresent(quotedPost -> {
+                            User quotedAuthor = quotedPost.getAuthor();
+                            if (quotedAuthor != null && actor != null && !quotedAuthor.getId().equals(actor.getId())) {
+                                notificationService.sendQuoteNotification(actor, quotedAuthor, updatedThread, saved);
+                                
+                                // Priority rule: if quoted user is thread owner, mark as notified
+                                if (updatedThread.getAuthor() != null && quotedAuthor.getId().equals(updatedThread.getAuthor().getId())) {
+                                    threadOwnerNotifiedViaQuote.set(true);
+                                }
+                            }
+                        });
+                    } catch (NumberFormatException e) {
+                        // ignore invalid IDs
+                    }
+                }
+            }
+
+            // Notify thread owner if not already notified via quote
+            if (!threadOwnerNotifiedViaQuote.get()) {
+                notificationService.sendNewCommentNotification(actor, updatedThread, saved);
+            }
         } catch (Exception e) {
-            // Don't block transaction if notification push errors out
+            // log error or ignore
         }
 
         PostDTO resultDto = postMapper.toDTO(saved);

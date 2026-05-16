@@ -50,9 +50,32 @@ public class NotificationService {
         Notification saved = notificationRepository.save(notif);
         NotificationDTO dto = notificationMapper.toDTO(saved);
 
-        // PUSH realtime to dynamic topic specific for this user ID
+        pushNotification(recipient.getId(), dto);
+    }
+
+    public void sendQuoteNotification(User actor, User recipient, Thread thread, Post post) {
+        // Don't notify user about their own actions
+        if (recipient == null || actor == null || recipient.getId().equals(actor.getId())) {
+            return;
+        }
+
+        Notification notif = new Notification();
+        notif.setRecipient(recipient);
+        notif.setActor(actor);
+        notif.setType(NotificationType.QUOTE);
+        notif.setThread(thread);
+        notif.setPost(post);
+        notif.setRead(false);
+
+        Notification saved = notificationRepository.save(notif);
+        NotificationDTO dto = notificationMapper.toDTO(saved);
+
+        pushNotification(recipient.getId(), dto);
+    }
+
+    private void pushNotification(Long userId, NotificationDTO dto) {
         try {
-            String dest = "/topic/notifications/" + recipient.getId();
+            String dest = "/topic/notifications/" + userId;
             messagingTemplate.convertAndSend(dest, dto);
             log.info("Successfully pushed realtime notification to topic: {}", dest);
         } catch (Exception e) {

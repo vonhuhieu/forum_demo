@@ -52,7 +52,16 @@
                        </div>
                        <div class="notif-body">
                           <div class="notif-text">
-                             <strong>{{ notif.actorDisplayName || notif.actorUsername }}</strong> đã trả lời bài viết <span class="highlight-thread">"{{ notif.threadTitle }}"</span>
+                             <strong>{{ notif.actorDisplayName || notif.actorUsername }}</strong>
+                             <template v-if="notif.type === 'QUOTE'">
+                                đã trích bài viết của bạn trong chủ đề
+                             </template>
+                             <template v-else>
+                                đã trả lời vào chủ đề
+                             </template>
+                             <span v-if="notif.threadLabelName" class="notif-label-tag" :style="{ backgroundColor: notif.threadLabelColor }">{{ notif.threadLabelName }}</span>
+                             <span class="highlight-thread" @click.stop="handleNotifClick(notif)">{{ notif.threadTitle }}</span>.
+                             <span v-if="notif.type !== 'QUOTE'" class="notif-extra">Có thể có bài viết thêm trong chủ đề</span>
                           </div>
                           <div class="notif-time">{{ formatTime(notif.createdAt) }}</div>
                        </div>
@@ -426,8 +435,31 @@ export default {
 }
 
 .highlight-thread {
-  color: #2c3e50;
-  font-style: italic;
+  color: #2577b1;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.highlight-thread:hover {
+  text-decoration: underline;
+}
+
+.notif-label-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 0.75rem;
+  border-radius: 3px;
+  color: #fff;
+  margin: 0 4px;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+.notif-extra {
+  display: block;
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 2px;
 }
 
 .notif-time {

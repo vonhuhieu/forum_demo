@@ -671,7 +671,7 @@ export default {
       const attachments = tempDiv.querySelector('.attachment-block')
       if (attachments) attachments.remove()
 
-      const trimmedContent = tempDiv.innerHTML.trim().substring(0, 1000) // safety trim
+      const trimmedContent = tempDiv.innerHTML.trim() // safety trim (increased to avoid truncation)
       
       // Use data-source attribute. Preserved cleanly by modified CKEditor plugin without live links inside composer.
       const sourceAttr = sourceId ? ` data-source="${sourceId}"` : '';

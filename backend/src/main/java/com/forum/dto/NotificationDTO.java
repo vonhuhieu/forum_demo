@@ -18,6 +18,8 @@ public class NotificationDTO {
     
     private Long threadId;
     private String threadTitle;
+    private String threadLabelName;
+    private String threadLabelColor;
     
     private Long postId; // Optional for direct jumping
     
