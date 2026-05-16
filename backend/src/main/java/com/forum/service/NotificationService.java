@@ -16,6 +16,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -33,7 +34,8 @@ public class NotificationService {
     /**
      * Logic to generate notification record and fire realtime message to targeted user socket.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Async
+    @Transactional
     public void sendNewCommentNotification(User actor, Thread thread, Post post) {
         User recipient = thread.getAuthor();
         
@@ -56,7 +58,8 @@ public class NotificationService {
         pushNotification(recipient.getId(), dto);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Async
+    @Transactional
     public void sendQuoteNotification(User actor, User recipient, Thread thread, Post post) {
         // Don't notify user about their own actions
         if (recipient == null || actor == null || recipient.getId().equals(actor.getId())) {
@@ -77,7 +80,8 @@ public class NotificationService {
         pushNotification(recipient.getId(), dto);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Async
+    @Transactional
     public void sendReactionNotification(User actor, User recipient, Thread thread, Post post, ReactionIcon icon) {
         // Don't notify user about their own actions
         if (recipient == null || actor == null || recipient.getId().equals(actor.getId())) {

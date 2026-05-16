@@ -213,7 +213,7 @@ export default {
          this.isShaking = true;
          setTimeout(() => {
             this.isShaking = false;
-         }, 1000);
+         }, 3000);
        });
     },
     
@@ -325,7 +325,7 @@ export default {
 
 /* Bell Shake Animation */
 .shake-animation {
-  animation: bell-shake 0.8s cubic-bezier(.36,.07,.19,.97) both;
+  animation: bell-shake 3s cubic-bezier(.36,.07,.19,.97) both;
   transform-origin: center top;
 }
 
