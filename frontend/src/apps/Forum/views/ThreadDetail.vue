@@ -524,8 +524,14 @@ export default {
          targetPage = 1;
       } else {
          // 2. Check if Target is in standard posts array
-         if (!this.posts || this.posts.length === 0) return;
-         const idx = this.posts.findIndex(p => String(p.id) === String(pId));
+         let idx = this.posts ? this.posts.findIndex(p => String(p.id) === String(pId)) : -1;
+         
+         // Nếu không tìm thấy (có thể là bình luận mới từ websocket), gọi API lấy lại danh sách
+         if (idx === -1) {
+           await this.fetchPosts();
+           idx = this.posts ? this.posts.findIndex(p => String(p.id) === String(pId)) : -1;
+         }
+         
          if (idx === -1) return;
          
          const seqNum = idx + 2;
