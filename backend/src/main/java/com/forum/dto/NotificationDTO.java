@@ -1,6 +1,5 @@
 package com.forum.dto;
 
-import com.forum.entity.NotificationType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -24,6 +23,10 @@ public class NotificationDTO {
     private Long postId; // Optional for direct jumping
     
     private String content;
+    
+    private String reactionIcon;
+    private String reactionName;
+    private String reactionColor;
     
     @JsonProperty("isRead")
     private boolean isRead;

@@ -25,6 +25,7 @@ public class ReactionService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final ReactionIconService reactionIconService;
+    private final NotificationService notificationService;
 
     private Optional<User> getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -59,6 +60,13 @@ public class ReactionService {
             newReaction.setReactionIcon(icon);
             reactionRepository.save(newReaction);
         }
+
+        // Gửi thông báo cho chủ bài viết
+        try {
+            notificationService.sendReactionNotification(currentUser, thread.getAuthor(), thread, null, icon);
+        } catch (Exception e) {
+            // Don't block reaction if notification fails
+        }
     }
 
     public void reactToPost(Long postId, Long iconId) {
@@ -85,6 +93,13 @@ public class ReactionService {
             newReaction.setPost(post);
             newReaction.setReactionIcon(icon);
             reactionRepository.save(newReaction);
+        }
+
+        // Gửi thông báo cho chủ bình luận
+        try {
+            notificationService.sendReactionNotification(currentUser, post.getAuthor(), post.getThread(), post, icon);
+        } catch (Exception e) {
+            // Don't block
         }
     }
 

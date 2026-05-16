@@ -27,7 +27,7 @@
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                   </svg>
-                  <span class="notif-badge" v-if="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+                  <span class="notif-badge" :class="{ 'pulse-animation': isShaking }" v-if="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
                </button>
 
                <!-- Notification Dropdown -->
@@ -53,7 +53,12 @@
                        <div class="notif-body">
                           <div class="notif-text">
                              <strong>{{ notif.actorDisplayName || notif.actorUsername }}</strong>
-                             <template v-if="notif.type === 'QUOTE'">
+                             <template v-if="notif.type === 'REACTION'">
+                                đã tương tác <img :src="getReactionIconUrl(notif.reactionIcon)" class="notif-reaction-icon" :title="notif.reactionName" /> 
+                                <strong :style="{ color: notif.reactionColor || '#2c3e50' }">{{ notif.reactionName }}</strong>
+                                với bài viết của bạn trong chủ đề
+                             </template>
+                             <template v-else-if="notif.type === 'QUOTE'">
                                 đã trích bài viết của bạn trong chủ đề
                              </template>
                              <template v-else>
@@ -61,7 +66,7 @@
                              </template>
                              <span v-if="notif.threadLabelName" class="notif-label-tag" :style="{ backgroundColor: notif.threadLabelColor }">{{ notif.threadLabelName }}</span>
                              <span class="highlight-thread" @click.stop="handleNotifClick(notif)">{{ notif.threadTitle }}</span>.
-                             <span v-if="notif.type !== 'QUOTE'" class="notif-extra">Có thể có bài viết thêm trong chủ đề</span>
+                             <span v-if="notif.type !== 'QUOTE' && notif.type !== 'REACTION'" class="notif-extra">Có thể có bài viết thêm trong chủ đề</span>
                           </div>
                           <div class="notif-time">{{ formatTime(notif.createdAt) }}</div>
                        </div>
@@ -186,16 +191,30 @@ export default {
         this.notifications.unshift(newNotif)
         this.unreadCount++
         
-        // Rung chuông hiệu ứng
+        // Hiệu ứng âm thanh và rung chuông
+        this.playNotifSound()
         this.triggerShake()
       })
     },
     
+    playNotifSound() {
+      // Bell sound URL (Mixkit generic notification)
+      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2550/2550-preview.mp3');
+      audio.volume = 0.5;
+      audio.play().catch(e => {
+        // Many browsers block autoplay without interaction
+        console.log('Autoplay sound blocked or audio error:', e);
+      });
+    },
+    
     triggerShake() {
-       this.isShaking = true
-       setTimeout(() => {
-          this.isShaking = false
-       }, 1000)
+       this.isShaking = false;
+       this.$nextTick(() => {
+         this.isShaking = true;
+         setTimeout(() => {
+            this.isShaking = false;
+         }, 1000);
+       });
     },
     
     async fetchNotifSummary() {
@@ -222,6 +241,14 @@ export default {
       }
     },
     
+    getReactionIconUrl(code) {
+      if (!code) return ''
+      try {
+        return require(`@/assets/reactions/${code}.svg`)
+      } catch (e) {
+        return ''
+      }
+    },
     formatTime(dateStr) {
       return formatForumDate(dateStr)
     },
@@ -260,6 +287,9 @@ export default {
       
       if (notif.postId) {
          routeTarget.query = { postId: notif.postId }
+      } else {
+         // Default to main post for thread-level actions (like reactions to thread)
+         routeTarget.query = { postId: 'main_thread_entry' }
       }
       
       this.$router.push(routeTarget)
@@ -286,6 +316,7 @@ export default {
   justify-content: center;
   border-radius: 50%;
   transition: background 0.2s;
+  outline: none;
 }
 
 .btn-icon-bell:hover {
@@ -294,18 +325,21 @@ export default {
 
 /* Bell Shake Animation */
 .shake-animation {
-  animation: bell-shake 0.8s ease-in-out;
+  animation: bell-shake 0.8s cubic-bezier(.36,.07,.19,.97) both;
   transform-origin: center top;
 }
 
 @keyframes bell-shake {
   0% { transform: rotate(0); }
-  15% { transform: rotate(15deg); }
-  30% { transform: rotate(-15deg); }
-  45% { transform: rotate(10deg); }
-  60% { transform: rotate(-10deg); }
-  75% { transform: rotate(5deg); }
-  85% { transform: rotate(-5deg); }
+  10% { transform: rotate(15deg); }
+  20% { transform: rotate(-15deg); }
+  30% { transform: rotate(12deg); }
+  40% { transform: rotate(-12deg); }
+  50% { transform: rotate(8deg); }
+  60% { transform: rotate(-8deg); }
+  70% { transform: rotate(4deg); }
+  80% { transform: rotate(-4deg); }
+  90% { transform: rotate(2deg); }
   100% { transform: rotate(0); }
 }
 
@@ -325,6 +359,17 @@ export default {
   justify-content: center;
   padding: 0 4px;
   border: 2px solid #1a507a;
+  z-index: 2;
+}
+
+.pulse-animation {
+  animation: badge-pulse 1s infinite;
+}
+
+@keyframes badge-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
 }
 
 /* Dropdown Shell */
@@ -453,6 +498,13 @@ export default {
   margin: 0 4px;
   vertical-align: middle;
   line-height: 1.4;
+}
+
+.notif-reaction-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin: 0 2px;
 }
 
 .notif-extra {

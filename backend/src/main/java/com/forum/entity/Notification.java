@@ -28,6 +28,7 @@ public class Notification {
     private User actor; // The person performing action (e.g., user who commented)
 
     @Enumerated(EnumType.STRING)
+    @Column(length = 30)
     private NotificationType type;
 
     @ManyToOne
@@ -40,6 +41,10 @@ public class Notification {
 
     @Column(columnDefinition = "TEXT")
     private String content; // Optional brief snippet or text
+
+    private String reactionIcon;
+    private String reactionName;
+    private String reactionColor;
 
     private boolean isRead = false;
 
