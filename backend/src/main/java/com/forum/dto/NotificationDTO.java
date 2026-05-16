@@ -1,6 +1,7 @@
 package com.forum.dto;
 
 import com.forum.entity.NotificationType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,8 @@ public class NotificationDTO {
     private Long postId; // Optional for direct jumping
     
     private String content;
+    
+    @JsonProperty("isRead")
     private boolean isRead;
     private LocalDateTime createdAt;
 }
