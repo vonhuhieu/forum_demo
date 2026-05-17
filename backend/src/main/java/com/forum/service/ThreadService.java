@@ -3,16 +3,19 @@ package com.forum.service;
 import com.forum.dto.ResponseDTO;
 import com.forum.dto.ThreadDTO;
 import com.forum.entity.Thread;
+import com.forum.entity.ThreadSubscription;
 import com.forum.entity.User;
 import com.forum.mapper.ThreadMapper;
 import com.forum.repository.NotificationRepository;
 import com.forum.repository.ThreadRepository;
 import com.forum.repository.UserRepository;
+import com.forum.repository.ThreadSubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -27,6 +30,7 @@ public class ThreadService {
     private final NotificationRepository notificationRepository;
     private final ReactionService reactionService;
     private final NotificationService notificationService;
+    private final ThreadSubscriptionRepository threadSubscriptionRepository;
 
     public ResponseDTO<List<ThreadDTO>> getAllThreads(Long categoryId, Integer limit) {
         List<Thread> threads;
@@ -215,6 +219,9 @@ public class ThreadService {
 
     public ResponseDTO<Void> deleteThread(Long id) {
         threadRepository.findById(id).ifPresent(thread -> {
+            // 0. Delete thread subscriptions related to this thread
+            threadSubscriptionRepository.deleteByThreadId(id);
+
             // 1. Delete notifications related to this thread and its posts
             notificationRepository.deleteByThreadId(id);
             
@@ -245,5 +252,59 @@ public class ThreadService {
             thread.setPinned(!thread.isPinned());
             return ResponseDTO.success(threadMapper.toDTO(threadRepository.save(thread)));
         }).orElseThrow(() -> new RuntimeException("Thread not found"));
+    }
+
+    public ResponseDTO<Boolean> getFollowStatus(Long id) {
+        Thread thread = threadRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Thread not found"));
+
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getPrincipal() == null || "anonymousUser".equals(auth.getPrincipal())) {
+            return ResponseDTO.success(false);
+        }
+
+        String username = (String) auth.getPrincipal();
+        User currentUser = userRepository.findByUsername(username).orElse(null);
+        if (currentUser == null) {
+            return ResponseDTO.success(false);
+        }
+
+        Optional<ThreadSubscription> subOpt = threadSubscriptionRepository.findByThreadIdAndUserId(id, currentUser.getId());
+        if (subOpt.isPresent()) {
+            return ResponseDTO.success(subOpt.get().isFollowing());
+        } else {
+            // Default follow status: True for thread owner, False for others
+            boolean isOwner = thread.getAuthor() != null && thread.getAuthor().getId().equals(currentUser.getId());
+            return ResponseDTO.success(isOwner);
+        }
+    }
+
+    public ResponseDTO<Void> setFollowStatus(Long id, boolean following) {
+        Thread thread = threadRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Thread not found"));
+
+        String username = (String) org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getPrincipal();
+        if ("anonymousUser".equals(username)) {
+            throw new RuntimeException("User must be logged in to follow thread");
+        }
+
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Optional<ThreadSubscription> subOpt = threadSubscriptionRepository.findByThreadIdAndUserId(id, currentUser.getId());
+        if (subOpt.isPresent()) {
+            ThreadSubscription sub = subOpt.get();
+            sub.setFollowing(following);
+            threadSubscriptionRepository.save(sub);
+        } else {
+            ThreadSubscription sub = new ThreadSubscription();
+            sub.setThread(thread);
+            sub.setUser(currentUser);
+            sub.setFollowing(following);
+            threadSubscriptionRepository.save(sub);
+        }
+
+        return ResponseDTO.success(null);
     }
 }

@@ -28,13 +28,21 @@
         <PollDisplay :pollData="thread.poll" @vote-updated="handleVoteUpdated" />
       </div>
 
-      <!-- Top Pagination Bar -->
-      <div class="pagination-wrapper" v-if="totalPages > 1" style="margin-bottom: 1rem;">
-        <ForumPagination 
-          :current-page="currentPage" 
-          :total-pages="totalPages" 
-          @page-changed="changePage"
-        />
+      <!-- Thread Actions (Pagination & Follow Button) -->
+      <div class="thread-action-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+        <div class="pagination-wrapper-left">
+          <ForumPagination 
+            v-if="totalPages > 1"
+            :current-page="currentPage" 
+            :total-pages="totalPages" 
+            @page-changed="changePage"
+          />
+        </div>
+        <div class="follow-btn-wrapper-right" v-if="isLoggedIn">
+          <button class="btn-follow-thread" @click="handleFollowToggle">
+            {{ isFollowing ? 'Bỏ theo dõi' : 'Theo dõi' }}
+          </button>
+        </div>
       </div>
 
       <!-- Unified Content Loop (Main Post & Replies) -->
@@ -86,7 +94,7 @@
 
               <div class="post-meta-bottom" v-if="editingItemId !== item.id">
                 <div class="left-actions">
-                  <a href="#" class="action-link" @click.prevent>Báo cáo</a>
+                  <a href="#" class="action-link" @click.prevent v-if="isLoggedIn">Báo cáo</a>
                   <a href="#" class="action-link" v-if="canEdit(item)" @click.prevent="startEditing(item)">Sửa</a>
                 </div>
                 <div class="right-actions">
@@ -99,7 +107,7 @@
                     :userReaction="thread.currentUserReaction"
                     @reaction-changed="fetchThread"
                   />
-                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh', thread.content, 'main_thread_entry')">
+                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh', thread.content, 'main_thread_entry')" v-if="isLoggedIn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                     Trả lời
                   </a>
@@ -164,7 +172,7 @@
 
               <div class="post-meta-bottom" v-if="editingItemId !== item.id">
                 <div class="left-actions">
-                  <a href="#" class="action-link" @click.prevent>Báo cáo</a>
+                  <a href="#" class="action-link" @click.prevent v-if="isLoggedIn">Báo cáo</a>
                   <a href="#" class="action-link" v-if="canEdit(item)" @click.prevent="startEditing(item)">Sửa</a>
                 </div>
                 <div class="right-actions">
@@ -177,7 +185,7 @@
                     :userReaction="item.currentUserReaction"
                     @reaction-changed="reloadPostsOnly"
                   />
-                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(item.author ? (item.author.displayName || item.author.username) : 'Ẩn danh', item.content, item.id)">
+                  <a href="#" class="action-link reply-link" @click.prevent="quotePost(item.author ? (item.author.displayName || item.author.username) : 'Ẩn danh', item.content, item.id)" v-if="isLoggedIn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                     Trả lời
                   </a>
@@ -278,7 +286,7 @@ import PollDisplay from '@/shared/components/PollDisplay.vue'
 import CustomEditor from '@/shared/components/CustomEditor.vue'
 import ImageUploaderPanel from '@/shared/components/ImageUploaderPanel.vue'
 import ForumPagination from '@/shared/components/ForumPagination.vue'
-import { alertSuccess, alertError } from '@/shared/utils/swal'
+import { alertSuccess, alertError, alertConfirm, toastSuccess, toastError } from '@/shared/utils/swal'
 import { formatForumDate } from '@/shared/utils/date'
 import ReactionButton from '@/shared/components/ReactionButton.vue'
 import ReactionSummary from '@/shared/components/ReactionSummary.vue'
@@ -320,6 +328,7 @@ export default {
       replyAttachedImages: [],
       submittingPost: false,
       isLoggedIn: !!localStorage.getItem('token'),
+      isFollowing: false,
       currentUsername: parsedUser ? (parsedUser.displayName || parsedUser.username) : 'Me',
       currentUserAvatar: parsedUser ? parsedUser.avatar : '#3498db',
       currentPage: Number(this.$route.query.page) || 1,
@@ -425,14 +434,20 @@ export default {
     await this.fetchReactionIcons()
     await this.fetchThread()
     await this.fetchPosts()
+    this.fetchFollowStatus()
     
     // Tự động nhảy tới bình luận nếu URL có chỉ định postId
     this.jumpToTargetPost()
 
     this.initQuoteCollapsing()
+
+    window.addEventListener('notification-clicked', this.onNotificationClicked);
   },
   updated() {
     this.initQuoteCollapsing()
+  },
+  beforeUnmount() {
+    window.removeEventListener('notification-clicked', this.onNotificationClicked);
   },
   watch: {
     // Lắng nghe khi tham số query thay đổi (trong trường hợp click thông báo khi đang ở sẵn trong trang này)
@@ -447,6 +462,17 @@ export default {
       handler(newVal) {
         if (newVal) {
           this.currentPage = Number(newVal) || 1
+        }
+      }
+    },
+    '$route.params.id': {
+      async handler(newVal, oldVal) {
+        if (newVal && newVal !== oldVal) {
+          await this.fetchReactionIcons();
+          await this.fetchThread();
+          await this.fetchPosts();
+          await this.fetchFollowStatus();
+          this.jumpToTargetPost();
         }
       }
     },
@@ -467,6 +493,15 @@ export default {
     }
   },
   methods: {
+    async onNotificationClicked(event) {
+      const { threadId } = event.detail;
+      if (this.thread && String(this.thread.id) === String(threadId)) {
+        await this.fetchThread();
+        await this.fetchPosts();
+        await this.fetchFollowStatus();
+        this.jumpToTargetPost();
+      }
+    },
     openReactionPopup(orderNumber, targetId, isMainPost, summary) {
       this.reactionPopupData = {
         orderNumber,
@@ -490,6 +525,34 @@ export default {
     },
     async reloadPostsOnly() {
       await this.fetchPosts();
+    },
+    async fetchFollowStatus() {
+      if (!this.isLoggedIn) return;
+      try {
+        const res = await api.get(`/threads/${this.$route.params.id}/follow-status`);
+        this.isFollowing = res.data === true;
+      } catch (e) {
+        console.error('Lỗi khi tải trạng thái theo dõi:', e);
+      }
+    },
+    async handleFollowToggle() {
+      if (!this.isLoggedIn) return;
+      const originalState = this.isFollowing;
+      const actionText = originalState ? 'bỏ theo dõi' : 'theo dõi';
+      const confirmRes = await alertConfirm(
+        'Xác nhận',
+        `Bạn có muốn ${actionText} bài đăng này không?`
+      );
+      if (confirmRes.isConfirmed) {
+        try {
+          await api.post(`/threads/${this.$route.params.id}/follow?following=${!originalState}`);
+          this.isFollowing = !originalState;
+          alertSuccess(`Đã ${originalState ? 'hủy theo dõi' : 'theo dõi'} bài viết thành công!`);
+        } catch (e) {
+          console.error('Lỗi khi cập nhật trạng thái theo dõi:', e);
+          alertError('Có lỗi xảy ra, vui lòng thử lại sau.');
+        }
+      }
     },
     async fetchThread() {
       try {
@@ -653,9 +716,17 @@ export default {
           attachedImages: JSON.stringify(attachedImages)
         }
 
-        await api.post('/posts', payload)
+        const response = await api.post('/posts', payload)
         
-        alertSuccess('Gửi trả lời thành công')
+        await alertSuccess('Gửi trả lời thành công')
+        
+        if (response.data && response.data.autoFollowed) {
+          this.isFollowing = true;
+          const displayUser = this.currentUser ? this.currentUser.username : 'Ẩn danh';
+          const displayAuthor = this.thread.author ? (this.thread.author.displayName || this.thread.author.username) : 'Tác giả';
+          await alertSuccess('Từ bây giờ trở đi tài khoản ' + displayUser + ' đã theo dõi bài đăng ' + window.location.href + ' này của tác giả ' + displayAuthor);
+        }
+
         this.replyForm.content = ''
         this.replyAttachedImages = []
         
@@ -1459,5 +1530,23 @@ export default {
   padding: 0 15px 10px 15px;
   margin-top: -5px;
   display: flex;
+}
+
+/* Styling for Thread Follow Button */
+.btn-follow-thread {
+  background-color: white;
+  border: 1px solid #2577b1;
+  color: #2577b1;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  outline: none;
+}
+
+.btn-follow-thread:hover {
+  background-color: #edf6fd;
 }
 </style>

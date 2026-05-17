@@ -68,4 +68,22 @@ public class ThreadController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/{id}/follow-status")
+    public ResponseEntity<ResponseDTO<Boolean>> getFollowStatus(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(threadService.getFollowStatus(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/{id}/follow")
+    public ResponseEntity<ResponseDTO<Void>> setFollowStatus(@PathVariable Long id, @RequestParam boolean following) {
+        try {
+            return ResponseEntity.ok(threadService.setFollowStatus(id, following));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
 }

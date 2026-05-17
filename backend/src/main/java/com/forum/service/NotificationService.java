@@ -39,8 +39,12 @@ public class NotificationService {
     @Async
     @Transactional
     public void sendNewCommentNotification(User actor, Thread thread, Post post) {
-        User recipient = thread.getAuthor();
-        
+        sendNewCommentNotification(actor, thread, post, thread.getAuthor());
+    }
+
+    @Async
+    @Transactional
+    public void sendNewCommentNotification(User actor, Thread thread, Post post, User recipient) {
         // Don't notify user about their own actions
         if (recipient == null || actor == null || recipient.getId().equals(actor.getId())) {
             return;

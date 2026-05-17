@@ -12,6 +12,7 @@ public class PostDTO {
     private Long threadId; // for mapping
     private LocalDateTime createdAt;
     private String attachedImages;
+    private Boolean autoFollowed;
     
     // Reactions fields
     private List<ReactionSummaryDTO> reactionSummary;

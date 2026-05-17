@@ -284,7 +284,15 @@ export default {
         }
       }
       
-      // 2. Route logic: navigate to exact post
+      // 2. Dispatch global custom event for ThreadDetail to react (e.g. if we are already on this thread)
+      window.dispatchEvent(new CustomEvent('notification-clicked', {
+        detail: {
+          threadId: notif.threadId,
+          postId: notif.postId
+        }
+      }))
+
+      // 3. Route logic: navigate to exact post
       const routeTarget = {
          name: 'ThreadDetail',
          params: { id: notif.threadId }
