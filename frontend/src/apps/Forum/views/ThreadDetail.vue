@@ -428,6 +428,11 @@ export default {
     
     // Tự động nhảy tới bình luận nếu URL có chỉ định postId
     this.jumpToTargetPost()
+
+    this.initQuoteCollapsing()
+  },
+  updated() {
+    this.initQuoteCollapsing()
   },
   watch: {
     // Lắng nghe khi tham số query thay đổi (trong trường hợp click thông báo khi đang ở sẵn trong trang này)
@@ -443,6 +448,21 @@ export default {
         if (newVal) {
           this.currentPage = Number(newVal) || 1
         }
+      }
+    },
+    currentPage() {
+      this.initQuoteCollapsing()
+    },
+    posts: {
+      deep: true,
+      handler() {
+        this.initQuoteCollapsing()
+      }
+    },
+    thread: {
+      deep: true,
+      handler() {
+        this.initQuoteCollapsing()
       }
     }
   },
@@ -896,7 +916,45 @@ export default {
     handleEditImageUploaded(image) {
       this.editAttachedImages.push(image);
     },
-
+    initQuoteCollapsing() {
+      setTimeout(() => {
+        const blockquotes = document.querySelectorAll('.content-body blockquote');
+        blockquotes.forEach(bq => {
+          if (bq.dataset.quoteInitialized) return;
+          
+          const height = bq.scrollHeight;
+          if (height > 160) {
+            bq.classList.add('collapsible');
+            bq.classList.add('quote-collapsed');
+            bq.dataset.quoteInitialized = 'true';
+            
+            // Tránh chèn trùng nút bấm nếu đã tồn tại
+            if (bq.nextSibling && bq.nextSibling.className === 'quote-expand-bar') {
+              return;
+            }
+            
+            const btnBar = document.createElement('div');
+            btnBar.className = 'quote-expand-bar';
+            btnBar.textContent = 'Nhấn để mở rộng...';
+            
+            bq.parentNode.insertBefore(btnBar, bq.nextSibling);
+            
+            btnBar.addEventListener('click', () => {
+              if (bq.classList.contains('quote-collapsed')) {
+                bq.classList.remove('quote-collapsed');
+                btnBar.textContent = 'Nhấn để thu hẹp';
+              } else {
+                bq.classList.add('quote-collapsed');
+                btnBar.textContent = 'Nhấn để mở rộng...';
+                bq.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              }
+            });
+          } else if (height > 0) {
+            bq.dataset.quoteInitialized = 'true';
+          }
+        });
+      }, 150);
+    }
   }
 }
 </script>
@@ -1089,6 +1147,54 @@ export default {
   color: #657786;
   border-radius: 4px;
   position: relative;
+}
+
+:deep(.ql-editor blockquote.collapsible), :deep(.ck-content blockquote.collapsible) {
+  margin-bottom: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+:deep(.ql-editor blockquote.quote-collapsed), :deep(.ck-content blockquote.quote-collapsed) {
+  max-height: 200px;
+}
+
+/* Gradient fade at bottom when collapsed */
+:deep(.ql-editor blockquote.quote-collapsed::after), :deep(.ck-content blockquote.quote-collapsed::after) {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 45px;
+  background: linear-gradient(to bottom, rgba(252, 251, 247, 0), #fcfbf7);
+  pointer-events: none;
+}
+
+/* Expand/collapse bar */
+:deep(.quote-expand-bar) {
+  background: #fcfbf7;
+  border-left: 3px solid #e67e22;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+  text-align: center;
+  padding: 8px 0;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #e67e22;
+  margin-top: -1px;
+  margin-bottom: 10px;
+  border-top: 1px dashed rgba(230, 126, 34, 0.2);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+:deep(.quote-expand-bar:hover) {
+  background-color: #faf6eb;
+  color: #d35400;
 }
 
 :deep(.ql-editor blockquote p:first-child strong), :deep(.ck-content blockquote p:first-child strong) {
