@@ -48,21 +48,15 @@ export default {
   },
   props: {
     targetId: {
-      type: Number,
-      required: true
+      default: null
     },
     type: {
-      type: String,
-      required: true, // 'thread' or 'post'
-      validator: (value) => ['thread', 'post'].includes(value)
+      default: ''
     },
     allIcons: {
-      type: Array,
-      required: true,
       default: () => []
     },
     userReaction: {
-      type: Object,
       default: null
     }
   },

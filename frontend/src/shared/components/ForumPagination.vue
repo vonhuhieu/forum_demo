@@ -62,11 +62,9 @@ export default {
   name: 'ForumPagination',
   props: {
     currentPage: {
-      type: Number,
       required: true
     },
     totalPages: {
-      type: Number,
       required: true
     }
   },

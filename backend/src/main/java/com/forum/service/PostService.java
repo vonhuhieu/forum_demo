@@ -79,7 +79,21 @@ public class PostService {
         try {
             User actor = post.getAuthor();
             String content = post.getContent();
-            AtomicBoolean threadOwnerNotifiedViaQuote = new AtomicBoolean(false);
+            
+            // 1. Detect tagged users
+            Set<Long> mentionedUserIds = notificationService.getMentionedUserIds(actor, content);
+            
+            // Send MENTION notifications to all tagged users
+            for (Long recipientId : mentionedUserIds) {
+                userRepository.findById(recipientId).ifPresent(recipient -> {
+                    notificationService.sendMentionNotification(actor, recipient, updatedThread, saved);
+                });
+            }
+
+            AtomicBoolean threadOwnerNotified = new AtomicBoolean(false);
+            if (updatedThread.getAuthor() != null && mentionedUserIds.contains(updatedThread.getAuthor().getId())) {
+                threadOwnerNotified.set(true);
+            }
 
             // Pattern to detect quotes with data-source
             Pattern pattern = Pattern.compile("data-source=\"([^\"]+)\"");
@@ -94,8 +108,11 @@ public class PostService {
                     // Quoting the thread itself
                     User threadAuthor = updatedThread.getAuthor();
                     if (threadAuthor != null && actor != null && !threadAuthor.getId().equals(actor.getId())) {
-                        notificationService.sendQuoteNotification(actor, threadAuthor, updatedThread, saved);
-                        threadOwnerNotifiedViaQuote.set(true);
+                        // Suppress quote notification if the threadAuthor is already mentioned
+                        if (!mentionedUserIds.contains(threadAuthor.getId())) {
+                            notificationService.sendQuoteNotification(actor, threadAuthor, updatedThread, saved);
+                        }
+                        threadOwnerNotified.set(true);
                     }
                 } else {
                     // Quoting a specific post
@@ -104,11 +121,14 @@ public class PostService {
                         postRepository.findById(postId).ifPresent(quotedPost -> {
                             User quotedAuthor = quotedPost.getAuthor();
                             if (quotedAuthor != null && actor != null && !quotedAuthor.getId().equals(actor.getId())) {
-                                notificationService.sendQuoteNotification(actor, quotedAuthor, updatedThread, saved);
+                                // Suppress quote notification if the quotedAuthor is already mentioned
+                                if (!mentionedUserIds.contains(quotedAuthor.getId())) {
+                                    notificationService.sendQuoteNotification(actor, quotedAuthor, updatedThread, saved);
+                                }
                                 
                                 // Priority rule: if quoted user is thread owner, mark as notified
                                 if (updatedThread.getAuthor() != null && quotedAuthor.getId().equals(updatedThread.getAuthor().getId())) {
-                                    threadOwnerNotifiedViaQuote.set(true);
+                                    threadOwnerNotified.set(true);
                                 }
                             }
                         });
@@ -118,8 +138,8 @@ public class PostService {
                 }
             }
 
-            // Notify thread owner if not already notified via quote
-            if (!threadOwnerNotifiedViaQuote.get()) {
+            // Notify thread owner if not already notified via quote or tag
+            if (!threadOwnerNotified.get()) {
                 notificationService.sendNewCommentNotification(actor, updatedThread, saved);
             }
         } catch (Exception e) {

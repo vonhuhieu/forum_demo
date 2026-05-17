@@ -40,12 +40,9 @@ export default {
   },
   props: {
     summary: {
-      type: Array,
-      required: true,
       default: () => []
     },
     recentReactors: {
-      type: Array,
       default: () => []
     }
   },

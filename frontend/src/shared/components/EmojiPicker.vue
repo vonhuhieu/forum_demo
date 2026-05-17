@@ -11,8 +11,8 @@ import data from '@emoji-mart/data'
 export default {
   name: 'EmojiPicker',
   props: {
-    visible: { type: Boolean, default: false },
-    targetElement: { type: Object, default: null }
+    visible: { default: false },
+    targetElement: { default: null }
   },
   data() {
     return {

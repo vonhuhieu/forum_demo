@@ -16,12 +16,44 @@
       @close="showEmojiPicker = false"
       @select="handleEmojiSelect"
     />
+
+    <!-- Tagging Autocomplete Popup -->
+    <div 
+      v-if="isTagging && filteredUsers.length > 0" 
+      class="tagging-popup" 
+      :style="popupStyle"
+      @mousedown.prevent
+    >
+      <div class="tagging-list">
+        <div 
+          v-for="(user, idx) in filteredUsers" 
+          :key="user.id" 
+          class="tagging-item"
+          :class="{ 'active': idx === activeIndex }"
+          @click="selectUser(user)"
+        >
+          <div class="tagging-avatar" :style="{ backgroundColor: getAvatarColor(user) }">
+            {{ (user.displayName || user.username || '?').charAt(0).toUpperCase() }}
+          </div>
+          <div class="tagging-name">{{ user.displayName || user.username }}</div>
+        </div>
+      </div>
+      <div class="tagging-pagination" v-if="totalPages > 1">
+        <ForumPagination 
+          :current-page="currentPage" 
+          :total-pages="totalPages" 
+          @page-changed="onPageChange"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { Ckeditor } from '@ckeditor/ckeditor5-vue'
 import translations from 'ckeditor5/translations/vi.js'
+import api from '@/shared/services/api.service'
+import ForumPagination from '@/shared/components/ForumPagination.vue'
 import {
   ClassicEditor,
   Plugin,
@@ -74,19 +106,17 @@ export default {
   name: 'CustomEditor',
   components: {
     ckeditor: Ckeditor,
-    EmojiPicker
+    EmojiPicker,
+    ForumPagination
   },
   props: {
     modelValue: {
-      type: String,
       default: ''
     },
     disabled: {
-      type: Boolean,
       default: false
     },
     minHeight: {
-      type: String,
       default: '400px'
     }
   },
@@ -97,6 +127,20 @@ export default {
       showEmojiPicker: false,
       emojiPickerTarget: null,
       editor: ClassicEditor,
+      isTagging: false,
+      searchQuery: '',
+      filteredUsers: [],
+      currentPage: 1,
+      totalPages: 1,
+      activeIndex: 0,
+      popupStyle: {
+        position: 'absolute',
+        left: '0px',
+        top: '0px',
+        zIndex: 10000
+      },
+      hasClosedManually: false,
+      manualCloseQuery: '',
       editorConfig: {
         licenseKey: 'GPL',
         mediaEmbed: {
@@ -217,6 +261,20 @@ export default {
       }
     }
   },
+  watch: {
+    searchQuery(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.currentPage = 1;
+        this.activeIndex = 0;
+      }
+    }
+  },
+  mounted() {
+    document.addEventListener('click', this.handleClickOutside)
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside)
+  },
   methods: {
     onEditorReady(editor) {
       this.editorInstance = editor;
@@ -231,7 +289,223 @@ export default {
         this.showEmojiPicker = !this.showEmojiPicker;
       });
 
+      // Lắng nghe thay đổi dữ liệu để bắt cú pháp tag @
+      editor.model.document.on('change:data', () => {
+        this.checkMentionTrigger();
+      });
+
+      // Bắt sự kiện keydown mức độ ưu tiên cao nhất để kiểm soát di chuyển dòng và Enter/Escape
+      editor.editing.view.document.on('keydown', (evt, data) => {
+        if (this.isTagging && this.filteredUsers.length > 0) {
+          const keyCode = data.keyCode;
+          
+          if (keyCode === 40) { // Arrow Down
+            evt.stop();
+            data.preventDefault();
+            this.activeIndex = (this.activeIndex + 1) % this.filteredUsers.length;
+          } else if (keyCode === 38) { // Arrow Up
+            evt.stop();
+            data.preventDefault();
+            this.activeIndex = (this.activeIndex - 1 + this.filteredUsers.length) % this.filteredUsers.length;
+          } else if (keyCode === 13) { // Enter
+            evt.stop();
+            data.preventDefault();
+            this.selectUser(this.filteredUsers[this.activeIndex]);
+          } else if (keyCode === 27) { // Escape
+            evt.stop();
+            data.preventDefault();
+            this.isTagging = false;
+            this.hasClosedManually = true;
+            this.manualCloseQuery = this.searchQuery;
+          }
+        }
+      }, { priority: 'highest' });
+
       this.$emit('ready', editor);
+    },
+    handleClickOutside(e) {
+      if (this.$el && !this.$el.contains(e.target)) {
+        this.isTagging = false;
+      }
+    },
+    checkMentionTrigger() {
+      if (!this.editorInstance) return;
+      
+      const selection = this.editorInstance.model.document.selection;
+      const position = selection.getFirstPosition();
+      if (!position) {
+        this.isTagging = false;
+        return;
+      }
+      
+      const parent = position.parent;
+      const range = this.editorInstance.model.createRange(
+        this.editorInstance.model.createPositionAt(parent, 0),
+        position
+      );
+      
+      let text = '';
+      for (const item of range.getItems()) {
+        if (item.is('textProxy') || item.is('text')) {
+          text += item.data;
+        }
+      }
+      
+      // Match @ followed by non-space characters
+      const match = text.match(/(?:^|\s)@(\S.*?)$/);
+      
+      if (match) {
+        const query = match[1];
+        
+        if (this.hasClosedManually && this.manualCloseQuery === query) {
+          return;
+        } else {
+          this.hasClosedManually = false;
+          this.manualCloseQuery = '';
+        }
+        
+        this.isTagging = true;
+        this.searchQuery = query;
+        this.updatePopupPosition();
+        this.fetchUsers();
+      } else {
+        this.isTagging = false;
+        this.searchQuery = '';
+        this.hasClosedManually = false;
+      }
+    },
+    async fetchUsers() {
+      try {
+        const response = await api.get('/users/search', {
+          params: {
+            keyword: this.searchQuery,
+            page: this.currentPage - 1, // backend is 0-indexed
+            size: 10
+          }
+        });
+        
+        if (response.data) {
+          const pageData = response.data;
+          this.filteredUsers = pageData.content || [];
+          this.totalPages = pageData.totalPages || 1;
+          
+          if (this.activeIndex >= this.filteredUsers.length) {
+            this.activeIndex = Math.max(0, this.filteredUsers.length - 1);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching users for mention autocomplete:', error);
+      }
+    },
+    updatePopupPosition() {
+      this.$nextTick(() => {
+        const domSelection = window.getSelection();
+        if (domSelection && domSelection.rangeCount > 0) {
+          const range = domSelection.getRangeAt(0);
+          const rect = range.getBoundingClientRect();
+          
+          const wrapper = this.$el;
+          if (!wrapper) return;
+          const wrapperRect = wrapper.getBoundingClientRect();
+          
+          let relLeft = rect.left - wrapperRect.left;
+          let relTop = rect.bottom - wrapperRect.top;
+          
+          if (relLeft + 320 > wrapperRect.width) {
+            relLeft = Math.max(0, wrapperRect.width - 330);
+          }
+          
+          this.popupStyle = {
+            position: 'absolute',
+            left: `${relLeft}px`,
+            top: `${relTop + 5}px`,
+            zIndex: 10000
+          };
+        }
+      });
+    },
+    onPageChange(page) {
+      this.currentPage = page;
+      this.fetchUsers();
+      this.activeIndex = 0;
+      if (this.editorInstance) {
+        this.editorInstance.editing.view.focus();
+      }
+    },
+    getAvatarColor(user) {
+      if (user.avatar && user.avatar.startsWith('#')) {
+        return user.avatar;
+      }
+      const name = user.displayName || user.username || '?';
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const h = Math.abs(hash % 360);
+      return `hsl(${h}, 60%, 50%)`;
+    },
+    selectUser(user) {
+      if (!this.editorInstance) return;
+      
+      const selection = this.editorInstance.model.document.selection;
+      const position = selection.getFirstPosition();
+      if (!position) return;
+      
+      const parent = position.parent;
+      const range = this.editorInstance.model.createRange(
+        this.editorInstance.model.createPositionAt(parent, 0),
+        position
+      );
+      
+      let text = '';
+      for (const item of range.getItems()) {
+        if (item.is('textProxy') || item.is('text')) {
+          text += item.data;
+        }
+      }
+      
+      const match = text.match(/(?:^|\s)@(\S.*?)$/);
+      if (!match) return;
+      
+      const mentionText = match[0];
+      const startOffset = text.length - mentionText.length;
+      
+      const startPosition = this.editorInstance.model.createPositionAt(parent, startOffset);
+      const replaceRange = this.editorInstance.model.createRange(startPosition, position);
+      
+      this.editorInstance.model.change(writer => {
+        writer.remove(replaceRange);
+        
+        const displayTag = '@' + (user.displayName || user.username);
+        const startPos = writer.createPositionAt(parent, startOffset);
+        let currentPos = startPos;
+        
+        if (mentionText.startsWith(' ')) {
+          writer.insertText(' ', currentPos);
+          currentPos = writer.createPositionAt(parent, startOffset + 1);
+        }
+        
+        const attributes = {
+          fontColor: '#2577b1',
+          bold: true
+        };
+        
+        writer.insertText(displayTag, attributes, currentPos);
+        
+        const spacePos = writer.createPositionAt(parent, currentPos.offset + displayTag.length);
+        writer.insertText(' ', {}, spacePos);
+        
+        const finalPos = writer.createPositionAt(parent, spacePos.offset + 1);
+        writer.setSelection(finalPos);
+      });
+      
+      this.isTagging = false;
+      this.searchQuery = '';
+      this.filteredUsers = [];
+      this.currentPage = 1;
+      this.activeIndex = 0;
+      
+      this.editorInstance.editing.view.focus();
     },
     handleEmojiSelect(item) {
       if (!this.editorInstance) return;
@@ -313,6 +587,64 @@ export default {
 .custom-editor-wrapper {
   background: white;
   min-height: var(--editor-min-height, 400px);
+  position: relative;
+}
+
+.tagging-popup {
+  position: absolute;
+  background: white;
+  border: 1px solid #dfdfdf;
+  border-radius: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  width: 320px;
+  z-index: 10000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tagging-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.tagging-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tagging-item:hover, .tagging-item.active {
+  background: #f0f7fb;
+}
+
+.tagging-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.tagging-name {
+  color: #2c3e50;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tagging-pagination {
+  padding: 8px 12px;
+  border-top: 1px solid #eee;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: center;
 }
 
 :deep(.ck-editor__editable) {

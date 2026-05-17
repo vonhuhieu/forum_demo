@@ -10,6 +10,7 @@ import com.forum.entity.Thread;
 import com.forum.entity.User;
 import com.forum.mapper.NotificationMapper;
 import com.forum.repository.NotificationRepository;
+import com.forum.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -30,6 +31,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final UserRepository userRepository;
 
     /**
      * Logic to generate notification record and fire realtime message to targeted user socket.
@@ -143,5 +145,74 @@ public class NotificationService {
             notificationRepository.save(n);
         });
         return ResponseDTO.success(null);
+    }
+
+    @Async
+    @Transactional
+    public void sendMentionNotification(User actor, User recipient, Thread thread, Post post) {
+        // Don't notify user about their own actions
+        if (recipient == null || actor == null || recipient.getId().equals(actor.getId())) {
+            return;
+        }
+
+        Notification notif = new Notification();
+        notif.setRecipient(recipient);
+        notif.setActor(actor);
+        notif.setType(NotificationType.MENTION);
+        notif.setThread(thread);
+        notif.setPost(post);
+        notif.setRead(false);
+
+        Notification saved = notificationRepository.save(notif);
+        NotificationDTO dto = notificationMapper.toDTO(saved);
+
+        pushNotification(recipient.getId(), dto);
+    }
+
+    public java.util.Set<Long> getMentionedUserIds(User actor, String content) {
+        java.util.Set<Long> mentionedIds = new java.util.HashSet<>();
+        if (content == null || content.isEmpty() || actor == null) {
+            return mentionedIds;
+        }
+
+        // Remove HTML tags to get clean plain text
+        String plainText = content.replaceAll("<[^>]*>", "");
+
+        // Normalise plain text to replace diacritics and convert to lowercase for comparison
+        String normalizedText = removeDiacritics(plainText);
+
+        // Fetch all active users from database to compare
+        List<User> allUsers = userRepository.findAll();
+        for (User user : allUsers) {
+            // Exclude actor
+            if (user.getId().equals(actor.getId())) {
+                continue;
+            }
+
+            // Formulate mention targets (display name or username)
+            String displayNameTag = "@" + (user.getDisplayName() != null ? user.getDisplayName() : user.getUsername());
+            String usernameTag = "@" + user.getUsername();
+
+            // Remove diacritics from tags
+            String normDisplayTag = removeDiacritics(displayNameTag);
+            String normUsernameTag = removeDiacritics(usernameTag);
+
+            // Check if normalizedText contains the tag
+            if (normalizedText.contains(normDisplayTag) || normalizedText.contains(normUsernameTag)) {
+                mentionedIds.add(user.getId());
+            }
+        }
+        return mentionedIds;
+    }
+
+    private String removeDiacritics(String str) {
+        if (str == null) {
+            return "";
+        }
+        String nfdNormalizedString = java.text.Normalizer.normalize(str, java.text.Normalizer.Form.NFD);
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        String result = pattern.matcher(nfdNormalizedString).replaceAll("");
+        result = result.replace('đ', 'd').replace('Đ', 'D');
+        return result.toLowerCase();
     }
 }

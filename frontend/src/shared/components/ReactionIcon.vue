@@ -65,19 +65,15 @@ export default {
   name: 'ReactionIcon',
   props: {
     code: {
-      type: String,
-      required: true
+      default: ''
     },
     color: {
-      type: String,
       default: '#ccd0d5'
     },
     size: {
-      type: String,
       default: '24px'
     },
     grayscale: {
-      type: Boolean,
       default: false
     }
   },

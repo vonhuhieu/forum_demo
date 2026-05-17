@@ -3,6 +3,7 @@ package com.forum.service;
 import com.forum.dto.ResponseDTO;
 import com.forum.dto.ThreadDTO;
 import com.forum.entity.Thread;
+import com.forum.entity.User;
 import com.forum.mapper.ThreadMapper;
 import com.forum.repository.NotificationRepository;
 import com.forum.repository.ThreadRepository;
@@ -25,6 +26,7 @@ public class ThreadService {
     private final com.forum.repository.PostRepository postRepository;
     private final NotificationRepository notificationRepository;
     private final ReactionService reactionService;
+    private final NotificationService notificationService;
 
     public ResponseDTO<List<ThreadDTO>> getAllThreads(Long categoryId, Integer limit) {
         List<Thread> threads;
@@ -115,6 +117,21 @@ public class ThreadService {
         }
         
         Thread saved = threadRepository.save(thread);
+        
+        // Gửi thông báo tag/mention cho bài đăng gốc
+        try {
+            User actor = saved.getAuthor();
+            String content = saved.getContent();
+            java.util.Set<Long> mentionedUserIds = notificationService.getMentionedUserIds(actor, content);
+            for (Long recipientId : mentionedUserIds) {
+                userRepository.findById(recipientId).ifPresent(recipient -> {
+                    notificationService.sendMentionNotification(actor, recipient, saved, null);
+                });
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+
         return ResponseDTO.success(threadMapper.toDTO(saved));
     }
 

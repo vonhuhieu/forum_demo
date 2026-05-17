@@ -101,8 +101,7 @@ export default {
       default: '#1'
     },
     targetId: {
-      type: [String, Number],
-      required: true
+      default: null
     },
     isMainPost: {
       type: Boolean,

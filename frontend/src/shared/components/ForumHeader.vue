@@ -61,12 +61,17 @@
                              <template v-else-if="notif.type === 'QUOTE'">
                                 đã trích bài viết của bạn trong chủ đề
                              </template>
+                             <template v-else-if="notif.type === 'MENTION'">
+                                đã tag bạn trong chủ đề
+                             </template>
                              <template v-else>
                                 đã trả lời vào chủ đề
                              </template>
-                             <span v-if="notif.threadLabelName" class="notif-label-tag" :style="{ backgroundColor: notif.threadLabelColor }">{{ notif.threadLabelName }}</span>
-                             <span class="highlight-thread" @click.stop="handleNotifClick(notif)">{{ notif.threadTitle }}</span>.
-                             <span v-if="notif.type !== 'QUOTE' && notif.type !== 'REACTION'" class="notif-extra">Có thể có bài viết thêm trong chủ đề</span>
+                             <span class="notif-link-block" @click.stop="handleNotifClick(notif)">
+                                <span v-if="notif.threadLabelName" class="notif-label-tag" :style="{ backgroundColor: notif.type === 'MENTION' ? '#2577b1' : (notif.threadLabelColor || '#95a5a6') }">{{ notif.threadLabelName }}</span>
+                                <span class="highlight-thread">{{ notif.threadTitle }}</span>
+                             </span>.
+                             <span v-if="notif.type !== 'QUOTE' && notif.type !== 'REACTION' && notif.type !== 'MENTION'" class="notif-extra">Có thể có bài viết thêm trong chủ đề</span>
                           </div>
                           <div class="notif-time">{{ formatTime(notif.createdAt) }}</div>
                        </div>
@@ -487,6 +492,15 @@ export default {
 
 .highlight-thread:hover {
   text-decoration: underline;
+}
+
+.notif-link-block {
+  display: inline;
+  cursor: pointer;
+}
+
+.notif-link-block:hover .highlight-thread {
+  text-decoration: underline !important;
 }
 
 .notif-label-tag {
