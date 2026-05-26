@@ -49,24 +49,29 @@ body {
 .header-nav {
   background-color: var(--primary-light);
   border-bottom: 1px solid var(--primary-dark);
+  height: 50px;
 }
 
 .nav-container {
   display: flex;
   justify-content: space-between;
   align-items: stretch;
+  height: 100%;
 }
 
 .nav-links {
   display: flex;
+  align-items: stretch;
 }
 
 .nav-links a {
-  padding: 0.75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
   color: #c9d6e0;
   text-decoration: none;
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 16px;
   transition: all 0.2s;
   border-bottom: 3px solid transparent;
 }
@@ -80,28 +85,49 @@ body {
   background-color: #f5f5f5;
   color: var(--primary);
   border-bottom: none;
-  border-top-left-radius: 4px;
-  border-top-right-radius: 4px;
-  margin-top: 5px;
-  padding-top: calc(0.75rem - 5px);
 }
 
 .nav-right {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  align-items: stretch;
+  gap: 0;
 }
 
-.nav-right a {
+.nav-group-user, .mailbox-container, .notification-bell-container, .btn-search {
+  background-color: rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  transition: background-color 0.2s;
+  position: relative;
+}
+
+.nav-group-user:hover, .mailbox-container:hover, .notification-bell-container:hover, .btn-search:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.nav-group-user.active, .mailbox-container.active, .notification-bell-container.active {
+  background-color: rgba(0, 0, 0, 0.25);
+}
+
+.nav-group-user {
+  gap: 12px;
+  cursor: pointer;
+}
+
+.nav-group-user a, a.nav-group-user {
   color: #c9d6e0;
   text-decoration: none;
   font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.nav-group-user a:hover, a.nav-group-user:hover {
+  color: white;
 }
 
 .btn-search {
-  color: #c9d6e0;
-  display: flex;
-  align-items: center;
+  color: #ffffff;
   gap: 0.5rem;
   cursor: pointer;
 }

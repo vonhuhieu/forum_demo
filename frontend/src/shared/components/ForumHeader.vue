@@ -18,89 +18,117 @@
           </router-link>
         </nav>
         <div class="nav-right">
-          <template v-if="isLoggedIn">
-            
-            <!-- Notification Bell Container -->
-            <div class="notification-bell-container" ref="notifContainer">
-               <button class="btn-icon-bell" :class="{ 'shake-animation': isShaking }" @click="toggleNotifDropdown" aria-label="Notifications">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                  </svg>
-                  <span class="notif-badge" :class="{ 'pulse-animation': isShaking }" v-if="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
-               </button>
-
-               <!-- Notification Dropdown -->
-               <div class="notif-dropdown" v-show="showNotifDropdown">
-                  <div class="notif-header">
-                     <span class="notif-title">Thông báo</span>
-                     <button class="btn-read-all" v-if="unreadCount > 0" @click.stop="markAllRead">Đánh dấu đã đọc</button>
-                  </div>
-                  
-                  <div class="notif-list" v-if="notifications.length > 0">
-                     <div 
-                       v-for="notif in notifications" 
-                       :key="notif.id" 
-                       class="notif-item" 
-                       :class="{ 'unread': !notif.isRead }"
-                       @click="handleNotifClick(notif)"
-                     >
-                       <div class="notif-avatar-wrapper">
-                          <div class="notif-avatar" :style="{ backgroundColor: notif.actorAvatar || '#3498db' }">
-                             {{ (notif.actorDisplayName || notif.actorUsername || '?').charAt(0).toUpperCase() }}
-                          </div>
-                       </div>
-                       <div class="notif-body">
-                          <div class="notif-text">
-                             <strong>{{ notif.actorDisplayName || notif.actorUsername }}</strong>
-                             <template v-if="notif.type === 'REACTION'">
-                                đã tương tác <img :src="getReactionIconUrl(notif.reactionIcon)" class="notif-reaction-icon" :title="notif.reactionName" /> 
-                                <strong :style="{ color: notif.reactionColor || '#2c3e50' }">{{ notif.reactionName }}</strong>
-                                với bài viết của bạn trong chủ đề
-                             </template>
-                             <template v-else-if="notif.type === 'QUOTE'">
-                                đã trích bài viết của bạn trong chủ đề
-                             </template>
-                             <template v-else-if="notif.type === 'MENTION'">
-                                đã tag bạn trong chủ đề
-                             </template>
-                             <template v-else>
-                                đã trả lời vào chủ đề
-                             </template>
-                             <span class="notif-link-block" @click.stop="handleNotifClick(notif)">
-                                <span v-if="notif.threadLabelName" class="notif-label-tag" :style="{ backgroundColor: notif.type === 'MENTION' ? '#2577b1' : (notif.threadLabelColor || '#95a5a6') }">{{ notif.threadLabelName }}</span>
-                                <span class="highlight-thread">{{ notif.threadTitle }}</span>
-                             </span>.
-                             <span v-if="notif.type !== 'QUOTE' && notif.type !== 'REACTION' && notif.type !== 'MENTION'" class="notif-extra">Có thể có bài viết thêm trong chủ đề</span>
-                          </div>
-                          <div class="notif-time">{{ formatTime(notif.createdAt) }}</div>
-                       </div>
-                       <div class="notif-status-dot" v-if="!notif.isRead"></div>
-                     </div>
-                  </div>
-                  
-                  <div class="notif-empty" v-else>
-                     Không có thông báo nào.
-                  </div>
-                  
-                  <div class="notif-footer">
-                     <a href="#" @click.prevent>Xem tất cả thông báo</a>
-                  </div>
-               </div>
-            </div>
-
+          <div class="nav-group-user" :class="{ 'active': showUserDropdown }" v-if="isLoggedIn" ref="userContainer" @click="toggleUserDropdown" style="cursor: pointer;">
             <div class="user-info-header">
               <span class="user-avatar-small" :style="{ backgroundColor: currentUser.avatar || '#fff', color: currentUser.avatar ? '#fff' : '#1a507a' }">
                 {{ (currentUser.displayName || currentUser.username).charAt(0).toUpperCase() }}
               </span>
               <span class="user-greeting">Chào, {{ currentUser.displayName || currentUser.username }}</span>
+              
+              <!-- User Dropdown Menu -->
+              <div class="user-dropdown" v-show="showUserDropdown">
+                <button @click.stop="handleLogout" class="user-dropdown-item">Thoát</button>
+              </div>
             </div>
-            <button @click="handleLogout" class="btn-logout-small">Thoát</button>
-          </template>
+          </div>
           <template v-else>
-            <router-link :to="{ name: 'Login' }">Đăng nhập</router-link>
-            <router-link :to="{ name: 'Register' }">Đăng ký</router-link>
+            <router-link :to="{ name: 'Login' }" class="nav-group-user">Đăng nhập</router-link>
+            <router-link :to="{ name: 'Register' }" class="nav-group-user">Đăng ký</router-link>
           </template>
+
+          <!-- Mailbox Container -->
+          <div class="mailbox-container" :class="{ 'active': showMailDropdown }" ref="mailContainer" v-if="isLoggedIn">
+             <button class="btn-icon-mail" @click.stop="toggleMailDropdown" aria-label="Inbox">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+             </button>
+
+             <!-- Mailbox Dropdown -->
+             <div class="mail-dropdown" v-show="showMailDropdown">
+                <div class="notif-header">
+                   <span class="notif-title">Hộp thư</span>
+                </div>
+                <div class="notif-empty">
+                   Không có cuộc hội thoại nào mới.
+                </div>
+                <div class="notif-footer">
+                   <a href="#" @click.prevent>Xem tất cả...</a>
+                </div>
+             </div>
+          </div>
+
+          <!-- Notification Bell Container -->
+          <div class="notification-bell-container" :class="{ 'active': showNotifDropdown }" ref="notifContainer" v-if="isLoggedIn">
+             <button class="btn-icon-bell" :class="{ 'shake-animation': isShaking }" @click.stop="toggleNotifDropdown" aria-label="Notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span class="notif-badge" :class="{ 'pulse-animation': isShaking }" v-if="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+             </button>
+
+             <!-- Notification Dropdown -->
+             <div class="notif-dropdown" v-show="showNotifDropdown">
+                <div class="notif-header">
+                   <span class="notif-title">Thông báo</span>
+                   <button class="btn-read-all" v-if="unreadCount > 0" @click.stop="markAllRead">Đánh dấu đã đọc</button>
+                </div>
+                
+                <div class="notif-list" v-if="notifications.length > 0">
+                   <div 
+                     v-for="notif in notifications" 
+                     :key="notif.id" 
+                     class="notif-item" 
+                     :class="{ 'unread': !notif.isRead }"
+                     @click="handleNotifClick(notif)"
+                   >
+                     <div class="notif-avatar-wrapper">
+                        <div class="notif-avatar" :style="{ backgroundColor: notif.actorAvatar || '#3498db' }">
+                           {{ (notif.actorDisplayName || notif.actorUsername || '?').charAt(0).toUpperCase() }}
+                        </div>
+                     </div>
+                     <div class="notif-body">
+                        <div class="notif-text">
+                           <strong>{{ notif.actorDisplayName || notif.actorUsername }}</strong>
+                           <template v-if="notif.type === 'REACTION'">
+                              đã tương tác <img :src="getReactionIconUrl(notif.reactionIcon)" class="notif-reaction-icon" :title="notif.reactionName" /> 
+                              <strong :style="{ color: notif.reactionColor || '#2c3e50' }">{{ notif.reactionName }}</strong>
+                              với bài viết của bạn trong chủ đề
+                           </template>
+                           <template v-else-if="notif.type === 'QUOTE'">
+                              đã trích bài viết của bạn trong chủ đề
+                           </template>
+                           <template v-else-if="notif.type === 'MENTION'">
+                              đã tag bạn trong chủ đề
+                           </template>
+                           <template v-else>
+                              đã trả lời vào chủ đề
+                           </template>
+                           <span class="notif-link-block" @click.stop="handleNotifClick(notif)">
+                              <span v-if="notif.threadLabelName" class="notif-label-tag" :style="{ backgroundColor: notif.type === 'MENTION' ? '#2577b1' : (notif.threadLabelColor || '#95a5a6') }">{{ notif.threadLabelName }}</span>
+                              <span class="highlight-thread">{{ notif.threadTitle }}</span>
+                           </span>.
+                           <span v-if="notif.type !== 'QUOTE' && notif.type !== 'REACTION' && notif.type !== 'MENTION'" class="notif-extra">Có thể có bài viết thêm trong chủ đề</span>
+                        </div>
+                        <div class="notif-time">{{ formatTime(notif.createdAt) }}</div>
+                     </div>
+                     <div class="notif-status-dot" v-if="!notif.isRead"></div>
+                   </div>
+                </div>
+                
+                <div class="notif-empty" v-else>
+                   Không có thông báo nào.
+                </div>
+                
+                <div class="notif-footer">
+                    <a href="#" @click.prevent>Xem tất cả</a>
+                    <button class="btn-mark-all-read" @click.stop="markAllRead">Đánh dấu đã xem</button>
+                 </div>
+             </div>
+          </div>
+
           <div class="btn-search">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <span>Tìm kiếm</span>
@@ -124,6 +152,8 @@ export default {
       isLoggedIn: false,
       currentUser: null,
       showNotifDropdown: false,
+      showUserDropdown: false,
+      showMailDropdown: false,
       notifications: [],
       unreadCount: 0,
       isShaking: false
@@ -237,12 +267,32 @@ export default {
     
     toggleNotifDropdown() {
       this.showNotifDropdown = !this.showNotifDropdown
+      this.showUserDropdown = false
+      this.showMailDropdown = false
+    },
+    toggleUserDropdown() {
+      this.showUserDropdown = !this.showUserDropdown
+      this.showNotifDropdown = false
+      this.showMailDropdown = false
+    },
+    toggleMailDropdown() {
+      this.showMailDropdown = !this.showMailDropdown
+      this.showNotifDropdown = false
+      this.showUserDropdown = false
     },
     
     handleClickOutside(e) {
       const container = this.$refs.notifContainer
       if (container && !container.contains(e.target)) {
         this.showNotifDropdown = false
+      }
+      const userContainer = this.$refs.userContainer
+      if (userContainer && !userContainer.contains(e.target)) {
+        this.showUserDropdown = false
+      }
+      const mailContainer = this.$refs.mailContainer
+      if (mailContainer && !mailContainer.contains(e.target)) {
+        this.showMailDropdown = false
       }
     },
     
@@ -314,26 +364,24 @@ export default {
 <style scoped>
 .notification-bell-container {
   position: relative;
-  margin-right: 15px;
 }
 
-.btn-icon-bell {
+.btn-icon-bell, .btn-icon-mail {
   background: transparent;
   border: none;
   color: #fff;
   cursor: pointer;
-  padding: 5px;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: background 0.2s;
   outline: none;
+  height: 100%;
+  width: 100%;
 }
 
-.btn-icon-bell:hover {
-  background: rgba(255,255,255,0.1);
+.btn-icon-bell:hover, .btn-icon-mail:hover {
+  background: transparent;
 }
 
 /* Bell Shake Animation */
@@ -386,9 +434,9 @@ export default {
 }
 
 /* Dropdown Shell */
-.notif-dropdown {
+.notif-dropdown, .mail-dropdown {
   position: absolute;
-  top: 40px;
+  top: 50px;
   right: -100px;
   width: 360px;
   background: #fff;
@@ -401,7 +449,7 @@ export default {
 }
 
 /* Standard Arrow pointer at top */
-.notif-dropdown::before {
+.notif-dropdown::before, .mail-dropdown::before {
   content: '';
   position: absolute;
   top: -6px;
@@ -559,10 +607,13 @@ export default {
 }
 
 .notif-footer {
-  padding: 10px;
+  padding: 10px 15px;
   background: #f8f9fa;
   border-top: 1px solid #eee;
-  text-align: center;
+  display: flex;
+  justify-content: flex-start;
+  gap: 15px;
+  align-items: center;
   font-size: 0.85rem;
 }
 
@@ -575,11 +626,71 @@ export default {
 .notif-footer a:hover {
   text-decoration: underline;
 }
+
+.btn-mark-all-read {
+  background: none;
+  border: none;
+  color: #3498db;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  outline: none;
+}
+
+.btn-mark-all-read:hover {
+  text-decoration: underline;
+}
 .user-info-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-right: 15px;
+  position: relative;
+  height: 100%;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 150px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  z-index: 1000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 5px 0;
+}
+
+.user-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 15px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #fff;
+}
+
+.user-dropdown-item {
+  background: none;
+  border: none;
+  color: #2c3e50;
+  padding: 10px 15px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  font-size: 0.90rem;
+  transition: background 0.15s, color 0.15s;
+  font-family: inherit;
+}
+
+.user-dropdown-item:hover {
+  background: #f5f8fa;
+  color: #e74c3c;
 }
 
 .user-avatar-small {
@@ -596,21 +707,5 @@ export default {
 .user-greeting {
   color: white;
   font-size: 0.9rem;
-}
-
-.btn-logout-small {
-  background: none;
-  border: 1px solid white;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition: all 0.2s;
-}
-
-.btn-logout-small:hover {
-  background: white;
-  color: #1a507a;
 }
 </style>
