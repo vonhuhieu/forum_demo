@@ -38,11 +38,12 @@
 
           <!-- Mailbox Container -->
           <div class="mailbox-container" :class="{ 'active': showMailDropdown }" ref="mailContainer" v-if="isLoggedIn">
-             <button class="btn-icon-mail" @click.stop="toggleMailDropdown" aria-label="Inbox">
+             <button class="btn-icon-mail" :class="{ 'shake-animation': isMailShaking }" @click.stop="toggleMailDropdown" aria-label="Inbox">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                   <polyline points="22,6 12,13 2,6"></polyline>
                 </svg>
+                <span class="notif-badge" :class="{ 'pulse-animation': isMailShaking }" v-if="unreadMailCount > 0">{{ unreadMailCount > 99 ? '99+' : unreadMailCount }}</span>
              </button>
 
              <!-- Mailbox Dropdown -->
@@ -50,11 +51,42 @@
                 <div class="notif-header">
                    <span class="notif-title">Hộp thư</span>
                 </div>
-                <div class="notif-empty">
+                
+                <div class="notif-list" v-if="conversations.length > 0">
+                   <div 
+                     v-for="convo in conversations" 
+                     :key="convo.id" 
+                     class="notif-item" 
+                     :class="{ 'unread': !convo.read }"
+                   >
+                     <div class="notif-avatar-wrapper">
+                        <div class="notif-avatar" style="background-color: #3498db;">
+                           {{ (convo.participants && convo.participants.length > 0 ? convo.participants[0] : 'C').charAt(0).toUpperCase() }}
+                        </div>
+                     </div>
+                     <div class="notif-body">
+                        <div class="notif-text">
+                           <!-- Line 1: Title -->
+                           <span class="convo-title-link">{{ convo.title }}</span>
+                           
+                           <!-- Line 2: Participants -->
+                           <span class="convo-participants">Với: {{ convo.participants.join(', ') }}</span>
+                        </div>
+                        <!-- Line 3: Hardcoded Time -->
+                        <div class="notif-time">4 phút trước</div>
+                     </div>
+                     <div class="notif-status-dot" v-if="!convo.read"></div>
+                   </div>
+                </div>
+                
+                <div class="notif-empty" v-else>
                    Không có cuộc hội thoại nào mới.
                 </div>
+                
                 <div class="notif-footer">
-                   <a href="#" @click.prevent>Xem tất cả...</a>
+                   <a href="#" @click.prevent>Xem tất cả</a>
+                   <span style="color: #ccc;">·</span>
+                   <a href="#" @click.prevent="goToAddConvo">Bắt đầu đối thoại mới</a>
                 </div>
              </div>
           </div>
@@ -143,6 +175,7 @@
 import api from '@/shared/services/api.service'
 import webSocketService from '@/shared/services/websocket.service'
 import { formatForumDate } from '@/shared/utils/date'
+import { alertSuccess } from '@/shared/utils/swal'
 
 export default {
   name: 'ForumHeader',
@@ -156,7 +189,10 @@ export default {
       showMailDropdown: false,
       notifications: [],
       unreadCount: 0,
-      isShaking: false
+      isShaking: false,
+      conversations: [],
+      unreadMailCount: 0,
+      isMailShaking: false
     }
   },
   async mounted() {
@@ -164,6 +200,7 @@ export default {
     
     if (this.isLoggedIn && this.currentUser) {
       this.fetchNotifSummary()
+      this.fetchMailSummary()
       this.setupSocket()
     }
     
@@ -183,6 +220,9 @@ export default {
     document.removeEventListener('click', this.handleClickOutside)
     if (this.notifUnsubscribe) {
       this.notifUnsubscribe()
+    }
+    if (this.convoUnsubscribe) {
+      this.convoUnsubscribe()
     }
   },
   methods: {
@@ -219,6 +259,9 @@ export default {
       if (this.notifUnsubscribe) {
         this.notifUnsubscribe()
       }
+      if (this.convoUnsubscribe) {
+        this.convoUnsubscribe()
+      }
 
       // Register callback for live push notifications - USING NUMERICAL USER ID FOR TOPIC
       this.notifUnsubscribe = webSocketService.subscribeToNotifications(this.currentUser.id, (newNotif) => {
@@ -229,6 +272,19 @@ export default {
         // Hiệu ứng âm thanh và rung chuông
         this.playNotifSound()
         this.triggerShake()
+      })
+
+      // Register callback for live conversations - USING NUMERICAL USER ID FOR TOPIC
+      this.convoUnsubscribe = webSocketService.subscribe(`/topic/conversations/${this.currentUser.id}`, (newConvo) => {
+        // Add to top of list
+        this.conversations.unshift(newConvo)
+        
+        // If not read (for recipient), trigger visual/audio notifications
+        if (!newConvo.read) {
+          this.unreadMailCount++
+          this.playNotifSound()
+          this.triggerMailShake()
+        }
       })
     },
     
@@ -279,6 +335,44 @@ export default {
       this.showMailDropdown = !this.showMailDropdown
       this.showNotifDropdown = false
       this.showUserDropdown = false
+      
+      if (this.showMailDropdown && this.unreadMailCount > 0) {
+        this.unreadMailCount = 0
+        this.conversations.forEach(c => c.read = true)
+        try {
+          api.put('/conversations/read-all')
+        } catch (e) {
+          console.error(e)
+        }
+      }
+    },
+    triggerMailShake() {
+       this.isMailShaking = false;
+       this.$nextTick(() => {
+         this.isMailShaking = true;
+         setTimeout(() => {
+            this.isMailShaking = false;
+         }, 3000);
+       });
+    },
+    async fetchMailSummary() {
+      try {
+        const [listRes, countRes] = await Promise.all([
+          api.get('/conversations'),
+          api.get('/conversations/unread-count')
+        ])
+        this.conversations = listRes.data || []
+        this.unreadMailCount = countRes.data || 0
+      } catch (error) {
+        console.error('Lỗi khi tải hộp thư:', error)
+      }
+    },
+    goToAddConvo() {
+      this.showMailDropdown = false
+      if (this.$route.name !== 'Home') {
+        this.$router.push({ name: 'Home' })
+      }
+      alertSuccess('Vui lòng di chuột vào avatar của người dùng khác ở phần "Mới ra lò" để bắt đầu đối thoại.')
     },
     
     handleClickOutside(e) {
@@ -707,5 +801,25 @@ export default {
 .user-greeting {
   color: white;
   font-size: 0.9rem;
+}
+
+.convo-title-link {
+  display: block;
+  color: #2577b1;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.convo-title-link:hover {
+  text-decoration: underline;
+}
+
+.convo-participants {
+  display: block;
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 2px;
 }
 </style>

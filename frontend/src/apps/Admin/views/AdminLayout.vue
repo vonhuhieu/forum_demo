@@ -32,9 +32,9 @@
 
         <div class="nav-group">
           <div class="nav-label">NGƯỜI DÙNG</div>
-          <div class="nav-item disabled">
+          <router-link :to="{ name: 'AdminUsers' }" :class="['nav-item', { 'active': $route.name === 'AdminUsers' }]">
             <span class="icon">👥</span> Thành viên
-          </div>
+          </router-link>
         </div>
       </nav>
 
@@ -86,7 +86,8 @@ export default {
         'AdminThreads': 'Quản lý Bài viết',
         'AdminThreadCreate': 'Thêm bài viết mới',
         'AdminThreadEdit': 'Cập nhật bài viết',
-        'AdminThreadView': 'Chi tiết bài viết'
+        'AdminThreadView': 'Chi tiết bài viết',
+        'AdminUsers': 'Quản lý Thành viên'
       }
       
       const items = [{ title: 'Quản trị', to: { path: '/admin/menu' } }]

@@ -74,7 +74,7 @@ export default {
         localStorage.setItem('token', response.data.token)
         localStorage.setItem('user', JSON.stringify(response.data))
         const roles = response.data.roles || []
-        if (roles.includes('ROLE_ADMIN')) {
+        if (roles.includes('ROLE_ADMIN') || roles.includes('ROLE_SUPER_ADMIN')) {
           this.$router.push({ name: 'AdminMenu' })
         } else {
           this.$router.push({ name: 'Home' })

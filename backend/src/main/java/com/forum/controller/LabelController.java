@@ -23,19 +23,19 @@ public class LabelController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO<LabelDTO>> createLabel(@RequestBody LabelDTO dto) {
         return ResponseEntity.ok(labelService.createLabel(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO<LabelDTO>> updateLabel(@PathVariable Long id, @RequestBody LabelDTO dto) {
         return ResponseEntity.ok(labelService.updateLabel(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO<Void>> deleteLabel(@PathVariable Long id) {
         return ResponseEntity.ok(labelService.deleteLabel(id));
     }

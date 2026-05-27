@@ -47,6 +47,10 @@ public class User {
     @Column(name = "reset_code_expiry")
     private LocalDateTime resetCodeExpiry;
 
+    @org.hibernate.annotations.CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
     public User(String username, String password, Set<String> roles) {
         this.username = username;
         this.password = password;

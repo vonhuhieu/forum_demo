@@ -1,6 +1,7 @@
 package com.forum.dto;
 
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Data
 public class UserDTO {
@@ -9,4 +10,6 @@ public class UserDTO {
     private String displayName;
     private String email;
     private String avatar;
+    private LocalDateTime createdAt;
+    private java.util.Set<String> roles;
 }

@@ -42,14 +42,15 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/posts", "/api/posts/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reaction-icons", "/api/reaction-icons/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reactions", "/api/reactions/**").permitAll()
-                // Cấu hình bảo vệ cho tác vụ ADMIN
-                .requestMatchers("/api/menus/**").hasRole("ADMIN")
-                .requestMatchers("/api/categories/**").hasRole("ADMIN")
-                .requestMatchers("/api/category-groups/**").hasRole("ADMIN")
-                .requestMatchers("/api/labels/**").hasRole("ADMIN")
-                .requestMatchers("/api/reaction-icons/**").hasRole("ADMIN")
-                // Còn lại yêu cầu đăng nhập
-                .anyRequest().authenticated()
+                // Cấu hình bảo vệ cho tác vụ ADMIN / SUPER_ADMIN
+                .requestMatchers("/api/menus/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers("/api/categories/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers("/api/category-groups/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers("/api/labels/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers("/api/reaction-icons/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                .requestMatchers("/api/users/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                // Còn lại yêu cầu đăng nhập và thuộc các nhóm quyền chính thức
+                .anyRequest().hasAnyRole("USER", "ADMIN", "SUPER_ADMIN")
             )
             .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         return http.build();

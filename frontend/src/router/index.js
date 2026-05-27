@@ -15,6 +15,8 @@ import ThreadDetail from '@/apps/Forum/views/ThreadDetail.vue'
 import CategoryView from '@/apps/Forum/views/CategoryView.vue'
 import LatestThreadsView from '@/apps/Forum/views/LatestThreadsView.vue'
 import ForgotPassword from '@/apps/Auth/views/ForgotPassword.vue'
+import AddConversation from '@/apps/Forum/views/AddConversation.vue'
+import UserManagement from '@/apps/Admin/views/UserManagement.vue'
 
 const routes = [
   {
@@ -60,6 +62,12 @@ const routes = [
     path: '/create-thread',
     name: 'CreateThread',
     component: CreateThread,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/conversations/add',
+    name: 'AddConversation',
+    component: AddConversation,
     meta: { requiresAuth: true }
   },
   {
@@ -116,6 +124,11 @@ const routes = [
         path: 'threads/view/:id',
         name: 'AdminThreadView',
         component: AdminCreateThread
+      },
+      {
+        path: 'users',
+        name: 'AdminUsers',
+        component: UserManagement
       }
     ]
   }
@@ -149,9 +162,9 @@ router.beforeEach((to, from, next) => {
       return next('/login')
     }
     
-    // Kiểm tra quyền Admin
-    if (isAdminRequired && !userRoles.includes('ROLE_ADMIN')) {
-      return next({ name: 'Home' }) // Không có quyền Admin đẩy về Trang chủ
+    // Kiểm tra quyền Admin hoặc Super Admin
+    if (isAdminRequired && !userRoles.includes('ROLE_ADMIN') && !userRoles.includes('ROLE_SUPER_ADMIN')) {
+      return next({ name: 'Home' }) // Không có quyền Admin hoặc Super Admin đẩy về Trang chủ
     }
     
     return next()

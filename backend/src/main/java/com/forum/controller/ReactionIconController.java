@@ -23,19 +23,19 @@ public class ReactionIconController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO<ReactionIconDTO>> createIcon(@RequestBody ReactionIconDTO dto) {
         return ResponseEntity.ok(reactionIconService.createIcon(dto));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO<ReactionIconDTO>> updateIcon(@PathVariable Long id, @RequestBody ReactionIconDTO dto) {
         return ResponseEntity.ok(reactionIconService.updateIcon(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ResponseDTO<Void>> deleteIcon(@PathVariable Long id) {
         return ResponseEntity.ok(reactionIconService.deleteIcon(id));
     }

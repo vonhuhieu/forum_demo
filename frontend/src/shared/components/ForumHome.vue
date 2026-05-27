@@ -8,9 +8,12 @@
       
       <div class="thread-list">
         <div v-for="thread in latestThreads" :key="thread.id" class="thread-row">
-          <div class="thread-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
-            {{ thread.author ? (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() : 'A' }}
-          </div>
+          <user-profile-popup :user="thread.author" v-if="thread.author">
+            <div class="thread-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
+              {{ (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() }}
+            </div>
+          </user-profile-popup>
+          <div v-else class="thread-avatar" style="background-color: #ccc; color: #fff;">A</div>
           <div class="thread-main">
             <div class="thread-title-wrapper">
               <span v-if="thread.pinned" class="badge-pinned">GHIM</span>
@@ -61,9 +64,12 @@
               </router-link>
               <span class="last-post-author">{{ (thread.lastPostAuthor || thread.author)?.displayName || (thread.lastPostAuthor || thread.author)?.username || 'Ẩn danh' }}</span>
             </div>
-            <div class="last-post-avatar" :style="{ backgroundColor: (thread.lastPostAuthor || thread.author)?.avatar || '#ccc', color: '#fff' }">
-              {{ ((thread.lastPostAuthor || thread.author)?.displayName || (thread.lastPostAuthor || thread.author)?.username || 'A').charAt(0).toUpperCase() }}
-            </div>
+            <user-profile-popup :user="thread.lastPostAuthor || thread.author" v-if="thread.lastPostAuthor || thread.author">
+              <div class="last-post-avatar" :style="{ backgroundColor: (thread.lastPostAuthor || thread.author)?.avatar || '#ccc', color: '#fff' }">
+                {{ ((thread.lastPostAuthor || thread.author)?.displayName || (thread.lastPostAuthor || thread.author)?.username || 'A').charAt(0).toUpperCase() }}
+              </div>
+            </user-profile-popup>
+            <div v-else class="last-post-avatar" style="background-color: #ccc; color: #fff;">A</div>
           </div>
         </div>
       </div>
@@ -147,9 +153,13 @@
 <script>
 import api from '@/shared/services/api.service'
 import { formatForumDate } from '@/shared/utils/date'
+import UserProfilePopup from '@/shared/components/UserProfilePopup.vue'
 
 export default {
   name: 'ForumHome',
+  components: {
+    UserProfilePopup
+  },
   data() {
     return {
       categoryGroups: [],

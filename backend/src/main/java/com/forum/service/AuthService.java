@@ -82,7 +82,7 @@ public class AuthService {
             user.setDisplayName(displayName.trim());
         }
 
-        user.setRoles(Set.of(Constants.ROLE_USER));
+        user.setRoles(Set.of(Constants.ROLE_NON_OFFICIAL_USER));
         user.setAvatar(getRandomColor());
         userRepository.save(user);
     }
