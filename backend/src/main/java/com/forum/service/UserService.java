@@ -1,0 +1,294 @@
+package com.forum.service;
+
+import com.forum.dto.UserDTO;
+import com.forum.entity.User;
+import com.forum.repository.UserRepository;
+import com.forum.utils.Constants;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
+import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final EntityManager entityManager;
+
+    public Page<UserDTO> searchUsers(String keyword, String currentUsername, int page, int size) {
+        String trimmedKeyword = keyword != null ? keyword.trim() : "";
+        String cleanKeyword = removeDiacritics(trimmedKeyword);
+
+        List<User> allUsers = userRepository.findAll();
+        List<UserDTO> matchedUsers = new ArrayList<>();
+
+        for (User user : allUsers) {
+            if (currentUsername != null && currentUsername.equalsIgnoreCase(user.getUsername())) {
+                continue;
+            }
+
+            String displayName = user.getDisplayName() != null ? user.getDisplayName() : "";
+            String username = user.getUsername() != null ? user.getUsername() : "";
+
+            String normDisplayName = removeDiacritics(displayName);
+            String normUsername = removeDiacritics(username);
+
+            if (cleanKeyword.isEmpty() || normDisplayName.contains(cleanKeyword) || normUsername.contains(cleanKeyword)) {
+                matchedUsers.add(convertToDTO(user));
+            }
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+        int start = Math.min((int) pageable.getOffset(), matchedUsers.size());
+        int end = Math.min((start + pageable.getPageSize()), matchedUsers.size());
+        List<UserDTO> paginatedList = matchedUsers.subList(start, end);
+        return new PageImpl<>(paginatedList, pageable, matchedUsers.size());
+    }
+
+    public Optional<UserDTO> getUserByName(String name) {
+        Optional<User> userOpt = userRepository.findByUsername(name);
+        if (userOpt.isEmpty()) {
+            userOpt = userRepository.findAll().stream()
+                    .filter(u -> u.getDisplayName() != null && u.getDisplayName().equalsIgnoreCase(name))
+                    .findFirst();
+        }
+        return userOpt.map(this::convertToDTO);
+    }
+
+    public List<UserDTO> getAdminUsers(String currentUsername) {
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        boolean isSuperAdmin = currentUser.getRoles().contains(Constants.ROLE_SUPER_ADMIN);
+        boolean isAdmin = currentUser.getRoles().contains(Constants.ROLE_ADMIN);
+
+        List<User> allUsers = userRepository.findAll();
+        List<UserDTO> result = new ArrayList<>();
+
+        for (User user : allUsers) {
+            if (user.getId().equals(currentUser.getId())) {
+                continue;
+            }
+
+            boolean match = false;
+            if (isSuperAdmin) {
+                match = true;
+            } else if (isAdmin) {
+                boolean hasAdmin = user.getRoles().contains(Constants.ROLE_ADMIN);
+                boolean hasSuperAdmin = user.getRoles().contains(Constants.ROLE_SUPER_ADMIN);
+                if (!hasAdmin && !hasSuperAdmin) {
+                    match = true;
+                }
+            }
+
+            if (match) {
+                result.add(convertToDTO(user));
+            }
+        }
+
+        return result;
+    }
+
+    @Transactional
+    public UserDTO adminCreateUser(Map<String, Object> payload, String currentUsername) {
+        String username = (String) payload.get("username");
+        String displayName = (String) payload.get("displayName");
+        String email = (String) payload.get("email");
+        String password = (String) payload.get("password");
+        List<String> roles = (List<String>) payload.get("roles");
+
+        if (username == null || username.trim().isEmpty()) {
+            throw new IllegalArgumentException("Username is required");
+        }
+        if (password == null || password.trim().isEmpty()) {
+            throw new IllegalArgumentException("Password is required");
+        }
+
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+
+        User user = new User();
+        user.setUsername(username.trim());
+        user.setPassword(passwordEncoder.encode(password));
+        user.setDisplayName(displayName != null ? displayName.trim() : null);
+        user.setEmail(email != null ? email.trim() : null);
+
+        if (roles != null && !roles.isEmpty()) {
+            Set<String> rolesSet = roles.stream()
+                    .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                    .collect(Collectors.toSet());
+
+            User currentUser = userRepository.findByUsername(currentUsername).orElseThrow();
+            if (!currentUser.getRoles().contains(Constants.ROLE_SUPER_ADMIN)) {
+                rolesSet.remove(Constants.ROLE_ADMIN);
+                rolesSet.remove(Constants.ROLE_SUPER_ADMIN);
+                if (rolesSet.isEmpty()) {
+                    rolesSet.add(Constants.ROLE_USER);
+                }
+            }
+            user.setRoles(rolesSet);
+        } else {
+            user.setRoles(Set.of(Constants.ROLE_USER));
+        }
+
+        user.setAvatar(getRandomColor());
+
+        User saved = userRepository.save(user);
+        return convertToDTO(saved);
+    }
+
+    @Transactional
+    public UserDTO adminUpdateUser(Long id, Map<String, Object> payload, String currentUsername) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        User currentUser = userRepository.findByUsername(currentUsername).orElseThrow();
+        boolean isSuperAdmin = currentUser.getRoles().contains(Constants.ROLE_SUPER_ADMIN);
+
+        if (!isSuperAdmin) {
+            boolean targetIsAdmin = user.getRoles().contains(Constants.ROLE_ADMIN);
+            boolean targetIsSuperAdmin = user.getRoles().contains(Constants.ROLE_SUPER_ADMIN);
+            if (targetIsAdmin || targetIsSuperAdmin) {
+                throw new IllegalStateException("Access denied: cannot modify other administrators");
+            }
+        }
+
+        String displayName = (String) payload.get("displayName");
+        String email = (String) payload.get("email");
+        String password = (String) payload.get("password");
+        List<String> roles = (List<String>) payload.get("roles");
+
+        if (displayName != null) {
+            user.setDisplayName(displayName.trim().isEmpty() ? null : displayName.trim());
+        }
+        if (email != null) {
+            user.setEmail(email.trim().isEmpty() ? null : email.trim());
+        }
+        if (password != null && !password.trim().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(password));
+        }
+
+        if (roles != null) {
+            Set<String> rolesSet = roles.stream()
+                    .map(r -> r.startsWith("ROLE_") ? r : "ROLE_" + r)
+                    .collect(Collectors.toSet());
+
+            if (!isSuperAdmin) {
+                rolesSet.remove(Constants.ROLE_ADMIN);
+                rolesSet.remove(Constants.ROLE_SUPER_ADMIN);
+                if (rolesSet.isEmpty()) {
+                    rolesSet.add(Constants.ROLE_USER);
+                }
+            }
+            user.setRoles(rolesSet);
+        }
+
+        User saved = userRepository.save(user);
+        return convertToDTO(saved);
+    }
+
+    @Transactional
+    public void adminDeleteUser(Long id, String currentUsername) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        User currentUser = userRepository.findByUsername(currentUsername).orElseThrow();
+        boolean isSuperAdmin = currentUser.getRoles().contains(Constants.ROLE_SUPER_ADMIN);
+
+        if (!isSuperAdmin) {
+            boolean targetIsAdmin = user.getRoles().contains(Constants.ROLE_ADMIN);
+            boolean targetIsSuperAdmin = user.getRoles().contains(Constants.ROLE_SUPER_ADMIN);
+            if (targetIsAdmin || targetIsSuperAdmin) {
+                throw new IllegalStateException("Access denied: cannot delete other administrators");
+            }
+        }
+
+        if (user.getId().equals(currentUser.getId())) {
+            throw new IllegalArgumentException("Cannot delete yourself");
+        }
+
+        // Clean up associations to prevent foreign key constraint violations
+        entityManager.createQuery("DELETE FROM ThreadSubscription ts WHERE ts.user.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("DELETE FROM Notification n WHERE n.recipient.id = :userId OR n.actor.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("DELETE FROM Reaction r WHERE r.user.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("DELETE FROM PollVote pv WHERE pv.user.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("DELETE FROM ConversationParticipant cp WHERE cp.user.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("UPDATE ConversationMessage cm SET cm.sender = null WHERE cm.sender.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("UPDATE Conversation c SET c.creator = null WHERE c.creator.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("UPDATE Thread t SET t.author = null WHERE t.author.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        entityManager.createQuery("UPDATE Post p SET p.author = null WHERE p.author.id = :userId")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        userRepository.delete(user);
+    }
+
+    private UserDTO convertToDTO(User user) {
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setDisplayName(user.getDisplayName());
+        dto.setEmail(user.getEmail());
+        dto.setAvatar(user.getAvatar());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setRoles(user.getRoles());
+        return dto;
+    }
+
+    private String getRandomColor() {
+        int hue = new java.util.Random().nextInt(360);
+        return String.format("hsl(%d, 70%%, 45%%)", hue);
+    }
+
+    private static String removeDiacritics(String str) {
+        if (str == null) {
+            return "";
+        }
+        String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        String result = pattern.matcher(nfdNormalizedString).replaceAll("");
+        result = result.replace('đ', 'd').replace('Đ', 'D');
+        return result.toLowerCase();
+    }
+}
