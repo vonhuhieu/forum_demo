@@ -369,10 +369,7 @@ export default {
     },
     goToAddConvo() {
       this.showMailDropdown = false
-      if (this.$route.name !== 'Home') {
-        this.$router.push({ name: 'Home' })
-      }
-      alertSuccess('Vui lòng di chuột vào avatar của người dùng khác ở phần "Mới ra lò" để bắt đầu đối thoại.')
+      this.$router.push({ name: 'AddConversation' })
     },
     
     handleClickOutside(e) {

@@ -14,20 +14,43 @@
         
         <div class="post-form" style="padding: 2rem;">
           <!-- Người nhận -->
-          <div class="form-group" style="margin-bottom: 1.5rem;">
+          <div class="form-group" style="margin-bottom: 1.5rem; position: relative;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: bold; color: #1a507a;">Người nhận:</label>
-            <div class="recipient-input-container">
-              <div class="recipient-tag">
-                {{ recipientName }}
+            <div class="recipient-input-container" @click="focusInput">
+              <div v-for="user in selectedRecipients" :key="user.username" class="recipient-tag">
+                <span v-if="!isReadOnly" class="remove-tag" @click.stop="removeRecipient(user)">&times;</span>
+                <span>{{ user.displayName || user.username }}</span>
               </div>
               <input 
+                v-if="!isReadOnly"
+                ref="searchInput"
                 type="text" 
-                class="recipient-dummy-input" 
-                disabled 
-                placeholder=""
+                class="recipient-search-input" 
+                v-model="searchQuery" 
+                :placeholder="selectedRecipients.length === 0 ? 'Nhập tên đăng nhập hoặc tên hiển thị để tìm...' : ''"
+                @focus="showDropdown = true"
+                @input="handleSearchInput"
+                @keydown.delete="handleBackspace"
               />
             </div>
-            <small style="color: #888; font-size: 0.85rem; margin-top: 4px; display: block;">Dẫn cách tên bằng dấu phẩy(,).</small>
+            
+            <!-- Dropdown autocomplete search results -->
+            <div v-if="!isReadOnly && showDropdown && searchResults.length > 0" class="autocomplete-dropdown">
+              <div 
+                v-for="user in searchResults" 
+                :key="user.id" 
+                class="autocomplete-item" 
+                @click="selectRecipient(user)"
+              >
+                <span class="user-avatar-circle" :style="{ backgroundColor: getAvatarColor(user) }">
+                  {{ (user.displayName || user.username || '?').charAt(0).toUpperCase() }}
+                </span>
+                <span class="user-name-text">
+                  {{ user.displayName || user.username }} ({{ user.username }})
+                </span>
+              </div>
+            </div>
+            <small style="color: #888; font-size: 0.85rem; margin-top: 4px; display: block;">Tìm kiếm thành viên chính xác để bắt đầu đối thoại.</small>
           </div>
 
           <!-- Tiêu đề -->
@@ -75,8 +98,15 @@ export default {
     CustomEditor
   },
   data() {
+    const toParam = this.$route.query.to || ''
     return {
-      recipientName: this.$route.query.to || '',
+      recipientName: toParam,
+      selectedRecipients: toParam ? [{ username: toParam, displayName: toParam }] : [],
+      isReadOnly: !!toParam,
+      searchQuery: '',
+      searchResults: [],
+      showDropdown: false,
+      searchTimeout: null,
       submitting: false,
       form: {
         title: '',
@@ -84,14 +114,92 @@ export default {
       }
     }
   },
-  async mounted() {
-    if (!this.recipientName) {
-      alertError('Không chỉ định người nhận cuộc đối thoại')
-      this.$router.push({ name: 'Home' })
-    }
+  mounted() {
+    document.addEventListener('click', this.handleClickOutside)
+  },
+  beforeUnmount() {
+    document.removeEventListener('click', this.handleClickOutside)
   },
   methods: {
+    handleSearchInput() {
+      if (!this.searchQuery || !this.searchQuery.trim()) {
+        this.searchResults = []
+        return
+      }
+      clearTimeout(this.searchTimeout)
+      this.searchTimeout = setTimeout(() => {
+        this.fetchUsers()
+      }, 300)
+    },
+    async fetchUsers() {
+      try {
+        const response = await api.get('/users/search', {
+          params: {
+            keyword: this.searchQuery,
+            page: 0,
+            size: 10
+          }
+        })
+        if (response.data) {
+          this.searchResults = response.data.content || []
+        }
+      } catch (error) {
+        console.error('Lỗi khi tìm kiếm người nhận:', error)
+      }
+    },
+    selectRecipient(user) {
+      if (!this.selectedRecipients.some(r => r.username === user.username)) {
+        this.selectedRecipients.push({
+          username: user.username,
+          displayName: user.displayName || user.username
+        })
+      }
+      this.searchQuery = ''
+      this.searchResults = []
+      this.showDropdown = false
+      this.$nextTick(() => {
+        this.focusInput()
+      })
+    },
+    removeRecipient(user) {
+      this.selectedRecipients = this.selectedRecipients.filter(r => r.username !== user.username)
+    },
+    handleBackspace() {
+      if (!this.searchQuery && this.selectedRecipients.length > 0) {
+        this.selectedRecipients.pop()
+      }
+    },
+    focusInput() {
+      if (this.$refs.searchInput) {
+        this.$refs.searchInput.focus()
+      }
+    },
+    handleClickOutside(e) {
+      const container = this.$el.querySelector('.form-group')
+      if (container && !container.contains(e.target)) {
+        this.showDropdown = false
+      }
+    },
+    getAvatarColor(user) {
+      if (user.avatar && user.avatar.startsWith('#')) {
+        return user.avatar
+      }
+      if (user.avatar && user.avatar.startsWith('hsl')) {
+        return user.avatar
+      }
+      const name = user.displayName || user.username || '?'
+      let hash = 0
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash)
+      }
+      const h = Math.abs(hash % 360)
+      return `hsl(${h}, 60%, 50%)`
+    },
     async handleSubmit() {
+      if (this.selectedRecipients.length === 0) {
+        alertError('Vui lòng chọn ít nhất một người nhận cuộc đối thoại')
+        return
+      }
       if (!this.form.title || !this.form.title.trim()) {
         alertError('Vui lòng nhập tiêu đề cuộc đối thoại')
         return
@@ -103,18 +211,19 @@ export default {
 
       this.submitting = true
       try {
+        const recipientDisplayNames = this.selectedRecipients.map(r => r.username)
         const payload = {
-          recipientDisplayName: this.recipientName,
+          recipientDisplayNames: recipientDisplayNames,
           title: this.form.title,
           content: this.form.content
         }
 
         const res = await api.post('/conversations', payload)
-        if (res.data && res.data.status === 1) {
+        if (res.data) {
           alertSuccess('Bắt đầu cuộc đối thoại thành công')
           this.$router.push({ name: 'Home' })
         } else {
-          alertError(res.data?.message || 'Có lỗi xảy ra khi bắt đầu đối thoại')
+          alertError('Có lỗi xảy ra khi bắt đầu đối thoại')
         }
       } catch (error) {
         console.error(error)
@@ -134,35 +243,104 @@ export default {
 
 .recipient-input-container {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 6px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  padding: 8px 12px;
-  background-color: #fafafa;
+  padding: 6px 12px;
+  background-color: #fff;
   min-height: 48px;
+  cursor: text;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.recipient-input-container:focus-within {
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
 .recipient-tag {
-  background-color: #f1f3f5;
-  border: 1px solid #ced4da;
-  border-radius: 3px;
-  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 2px 8px;
   color: #495057;
   font-size: 0.9rem;
   font-weight: 500;
-  margin-right: 8px;
   user-select: none;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.recipient-dummy-input {
+.remove-tag {
+  cursor: pointer;
+  color: #adb5bd;
+  font-weight: bold;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.remove-tag:hover {
+  color: #dc3545;
+}
+
+.recipient-search-input {
   border: none;
   background: transparent;
   flex: 1;
+  min-width: 150px;
   outline: none;
   font-size: 0.95rem;
-  color: #888;
-  cursor: not-allowed;
+  color: #333;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 1000;
+  max-height: 250px;
+  overflow-y: auto;
+  margin-top: 5px;
+}
+
+.autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.autocomplete-item:hover {
+  background-color: #f5f7fa;
+}
+
+.user-avatar-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: white;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.user-name-text {
+  font-size: 0.95rem;
+  color: #333;
 }
 
 .title-input {

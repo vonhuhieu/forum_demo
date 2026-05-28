@@ -22,7 +22,7 @@ public class ConversationController {
         try {
             return ResponseEntity.ok(conversationService.createConversation(createDTO));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ResponseDTO.fail(null));
+            return ResponseEntity.badRequest().body(ResponseDTO.fail(null, e.getMessage()));
         }
     }
 

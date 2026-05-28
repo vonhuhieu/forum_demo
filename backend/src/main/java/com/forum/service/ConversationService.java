@@ -40,24 +40,49 @@ public class ConversationService {
         User sender = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Người dùng hiện tại không hợp lệ"));
 
-        // Tìm người nhận
-        String recipientName = createDTO.getRecipientDisplayName();
-        if (recipientName == null || recipientName.trim().isEmpty()) {
+        // Tìm người nhận (hỗ trợ cả danh sách và chuỗi phân tách bằng dấu phẩy)
+        List<String> rawNames = new ArrayList<>();
+        if (createDTO.getRecipientDisplayNames() != null && !createDTO.getRecipientDisplayNames().isEmpty()) {
+            rawNames.addAll(createDTO.getRecipientDisplayNames());
+        } else if (createDTO.getRecipientDisplayName() != null && !createDTO.getRecipientDisplayName().trim().isEmpty()) {
+            String[] parts = createDTO.getRecipientDisplayName().split(",");
+            for (String part : parts) {
+                if (!part.trim().isEmpty()) {
+                    rawNames.add(part.trim());
+                }
+            }
+        }
+
+        if (rawNames.isEmpty()) {
             throw new IllegalArgumentException("Người nhận không được để trống");
         }
-        
-        Optional<User> recipientOpt = userRepository.findByUsername(recipientName.trim());
-        if (recipientOpt.isEmpty()) {
-            recipientOpt = userRepository.findAll().stream()
-                    .filter(u -> u.getDisplayName() != null && u.getDisplayName().equalsIgnoreCase(recipientName.trim()))
-                    .findFirst();
+
+        List<User> recipients = new ArrayList<>();
+        for (String rawName : rawNames) {
+            String nameToFind = rawName.trim();
+            if (nameToFind.isEmpty()) continue;
+
+            Optional<User> recipientOpt = userRepository.findByUsername(nameToFind);
+            if (recipientOpt.isEmpty()) {
+                recipientOpt = userRepository.findAll().stream()
+                        .filter(u -> u.getDisplayName() != null && u.getDisplayName().equalsIgnoreCase(nameToFind))
+                        .findFirst();
+            }
+
+            User recipient = recipientOpt
+                    .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người nhận: " + nameToFind));
+
+            if (sender.getId().equals(recipient.getId())) {
+                throw new IllegalArgumentException("Bạn không thể đối thoại với chính mình");
+            }
+
+            if (!recipients.contains(recipient)) {
+                recipients.add(recipient);
+            }
         }
 
-        User recipient = recipientOpt
-                .orElseThrow(() -> new IllegalArgumentException("Không tìm thấy người nhận: " + recipientName));
-
-        if (sender.getId().equals(recipient.getId())) {
-            throw new IllegalArgumentException("Bạn không thể đối thoại với chính mình");
+        if (recipients.isEmpty()) {
+            throw new IllegalArgumentException("Người nhận không được để trống");
         }
 
         if (createDTO.getTitle() == null || createDTO.getTitle().trim().isEmpty()) {
@@ -74,18 +99,23 @@ public class ConversationService {
         conversation = conversationRepository.save(conversation);
 
         // Tạo Participants
+        List<ConversationParticipant> participantsToSave = new ArrayList<>();
+
         ConversationParticipant senderPart = new ConversationParticipant();
         senderPart.setConversation(conversation);
         senderPart.setUser(sender);
         senderPart.setRead(true); // Người gửi đã đọc luôn
+        participantsToSave.add(senderPart);
 
-        ConversationParticipant recipientPart = new ConversationParticipant();
-        recipientPart.setConversation(conversation);
-        recipientPart.setUser(recipient);
-        recipientPart.setRead(false); // Người nhận chưa đọc
+        for (User recipient : recipients) {
+            ConversationParticipant recipientPart = new ConversationParticipant();
+            recipientPart.setConversation(conversation);
+            recipientPart.setUser(recipient);
+            recipientPart.setRead(false); // Người nhận chưa đọc
+            participantsToSave.add(recipientPart);
+        }
 
-        conversationParticipantRepository.save(senderPart);
-        conversationParticipantRepository.save(recipientPart);
+        conversationParticipantRepository.saveAll(participantsToSave);
 
         // Tạo Message
         ConversationMessage message = new ConversationMessage();
@@ -97,7 +127,9 @@ public class ConversationService {
         // Chuẩn bị danh sách người tham gia hiển thị
         List<String> participantNames = new ArrayList<>();
         participantNames.add(sender.getDisplayName() != null ? sender.getDisplayName() : sender.getUsername());
-        participantNames.add(recipient.getDisplayName() != null ? recipient.getDisplayName() : recipient.getUsername());
+        for (User recipient : recipients) {
+            participantNames.add(recipient.getDisplayName() != null ? recipient.getDisplayName() : recipient.getUsername());
+        }
 
         // PUSH WebSocket: Tạo DTO tương ứng với trạng thái đọc của mỗi bên
         ConversationDTO senderDTO = new ConversationDTO();
@@ -107,16 +139,20 @@ public class ConversationService {
         senderDTO.setUpdatedAt(conversation.getUpdatedAt());
         senderDTO.setRead(true);
 
-        ConversationDTO recipientDTO = new ConversationDTO();
-        recipientDTO.setId(conversation.getId());
-        recipientDTO.setTitle(conversation.getTitle());
-        recipientDTO.setParticipants(participantNames);
-        recipientDTO.setUpdatedAt(conversation.getUpdatedAt());
-        recipientDTO.setRead(false);
-
-        // PUSH
+        // PUSH to sender
         pushToUser(sender.getId(), senderDTO);
-        pushToUser(recipient.getId(), recipientDTO);
+
+        // PUSH to all recipients
+        for (User recipient : recipients) {
+            ConversationDTO recipientDTO = new ConversationDTO();
+            recipientDTO.setId(conversation.getId());
+            recipientDTO.setTitle(conversation.getTitle());
+            recipientDTO.setParticipants(participantNames);
+            recipientDTO.setUpdatedAt(conversation.getUpdatedAt());
+            recipientDTO.setRead(false);
+
+            pushToUser(recipient.getId(), recipientDTO);
+        }
 
         return ResponseDTO.success(senderDTO);
     }

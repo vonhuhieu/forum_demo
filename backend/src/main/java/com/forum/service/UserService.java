@@ -127,8 +127,8 @@ public class UserService {
         User user = new User();
         user.setUsername(username.trim());
         user.setPassword(passwordEncoder.encode(password));
-        user.setDisplayName(displayName != null ? displayName.trim() : null);
-        user.setEmail(email != null ? email.trim() : null);
+        user.setDisplayName(displayName != null && !displayName.trim().isEmpty() ? displayName.trim() : null);
+        user.setEmail(email != null && !email.trim().isEmpty() ? email.trim() : null);
 
         if (roles != null && !roles.isEmpty()) {
             Set<String> rolesSet = roles.stream()
@@ -245,7 +245,7 @@ public class UserService {
                 .setParameter("userId", id)
                 .executeUpdate();
 
-        entityManager.createQuery("UPDATE ConversationMessage cm SET cm.sender = null WHERE cm.sender.id = :userId")
+        entityManager.createQuery("DELETE FROM ConversationMessage cm WHERE cm.sender.id = :userId")
                 .setParameter("userId", id)
                 .executeUpdate();
 

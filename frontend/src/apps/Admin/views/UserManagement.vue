@@ -50,7 +50,7 @@
     >
       <div class="admin-form">
         <div class="form-group">
-          <label>Tên đăng nhập (Username)</label>
+          <label>Tên đăng nhập (Username) <span class="text-danger">*</span></label>
           <input 
             type="text" 
             class="form-control" 
@@ -66,7 +66,7 @@
             type="text" 
             class="form-control" 
             v-model="formData.displayName" 
-            placeholder="Tên hiển thị trên diễn đàn"
+            placeholder="Tên hiển thị trên diễn đàn (Không bắt buộc)"
           />
         </div>
 
@@ -76,12 +76,12 @@
             type="email" 
             class="form-control" 
             v-model="formData.email" 
-            placeholder="Địa chỉ email"
+            placeholder="Địa chỉ email (Không bắt buộc)"
           />
         </div>
 
         <div class="form-group">
-          <label>Mật khẩu</label>
+          <label>Mật khẩu <span v-if="!isEdit" class="text-danger">*</span></label>
           <input 
             type="password" 
             class="form-control" 
@@ -91,7 +91,7 @@
         </div>
 
         <div class="form-group">
-          <label>Vai trò</label>
+          <label>Vai trò <span class="text-danger">*</span></label>
           <select class="form-control select-control" v-model="formData.role">
             <option v-for="role in availableRoles" :key="role.value" :value="role.value">
               {{ role.text }}
@@ -397,10 +397,17 @@ export default {
 
 .admin-form {
   padding: 1.5rem;
+  max-height: calc(80vh - 120px);
+  overflow-y: auto;
 }
 
 .form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.text-danger {
+  color: #e74c3c;
+  margin-left: 2px;
 }
 
 .form-group label {
