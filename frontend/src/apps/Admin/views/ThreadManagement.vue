@@ -54,7 +54,7 @@
 </template>
 
 <script>
-import api from '@/shared/services/api.service'
+import threadService from '@/apps/Forum/services/thread.service'
 import AdminService from '@/apps/Admin/services/admin.service'
 import DataTable from '@/shared/components/DataTable.vue'
 import { alertConfirm, toastSuccess, toastError } from '@/shared/utils/swal'
@@ -201,7 +201,7 @@ export default {
       this.loading = true
       const params = {}
       if (this.filter.categoryId) params.categoryId = this.filter.categoryId
-      const response = await api.get('/threads', { params })
+      const response = await threadService.getAll(params)
       this.threads = response.data
       this.loading = false
       this.currentPage = 1 // Reset to first page on fetch
@@ -228,7 +228,7 @@ export default {
       const result = await alertConfirm('Xóa bài viết', `Bạn có chắc chắn muốn xóa bài viết "${item.title}"?`)
       if (result.isConfirmed) {
         try {
-          await api.delete(`/threads/${item.id}`)
+          await threadService.delete(item.id)
           toastSuccess('Đã xóa bài viết')
           this.fetchThreads()
         } catch (error) {

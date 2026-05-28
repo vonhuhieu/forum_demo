@@ -146,7 +146,7 @@
 </template>
 
 <script>
-import api from '@/shared/services/api.service'
+import pollService from '@/apps/Forum/services/poll.service'
 import { formatForumDate } from '@/shared/utils/date'
 import { alertSuccess, alertError } from '@/shared/utils/swal'
 import TableModal from './TableModal.vue'
@@ -293,7 +293,7 @@ export default {
           optionIds = [...this.selectedOptions]
         }
 
-        const response = await api.post(`/polls/${this.poll.id}/vote`, { optionIds })
+        const response = await pollService.vote(this.poll.id, optionIds)
         if (response.status === 200) {
           this.poll = response.data
           this.viewResultsOnly = false
@@ -333,7 +333,7 @@ export default {
         if (this.voterKeyword) params.keyword = this.voterKeyword
         if (this.voterSelectedOptionId) params.optionId = this.voterSelectedOptionId
 
-        const response = await api.get(`/polls/${this.poll.id}/votes`, { params })
+        const response = await pollService.getVotes(this.poll.id, params)
         if (response.data) {
           this.voters = response.data.content || []
           this.voterTotal = response.data.totalElements || 0

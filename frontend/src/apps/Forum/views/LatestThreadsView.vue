@@ -144,7 +144,8 @@
 </template>
 
 <script>
-import api from '@/shared/services/api.service'
+import threadService from '@/apps/Forum/services/thread.service'
+import categoryService from '@/apps/Forum/services/category.service'
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import ForumPagination from '@/shared/components/ForumPagination.vue'
@@ -199,7 +200,7 @@ export default {
     },
     async openPostModal() {
       try {
-        const response = await api.get('/category-groups')
+        const response = await categoryService.getGroups()
         this.categoryGroupsModal = response.data
         this.showModal = true
       } catch (error) {
@@ -217,7 +218,7 @@ export default {
     async fetchData() {
       this.loading = true
       try {
-        const res = await api.get('/threads') // Fetch all threads ordered by date
+        const res = await threadService.getAll() // Fetch all threads ordered by date
         this.threads = res.data || []
       } catch (error) {
         console.error('Lỗi khi tải dữ liệu bài viết mới nhất:', error)

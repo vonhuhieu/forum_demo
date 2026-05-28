@@ -34,7 +34,7 @@
 </template>
 
 <script>
-import api from '@/shared/services/api.service'
+import userService from '@/apps/Forum/services/user.service'
 
 export default {
   name: 'UserProfilePopup',
@@ -98,7 +98,7 @@ export default {
           this.userData = this.user
           return
         }
-        const res = await api.get(`/users/by-name`, { params: { name: usernameParam } })
+        const res = await userService.getByName(usernameParam)
         if (res.data) {
           this.userData = res.data
         } else {

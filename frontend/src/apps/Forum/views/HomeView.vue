@@ -147,7 +147,9 @@
 <script>
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import ForumHome from '@/shared/components/ForumHome.vue'
-import api from '@/shared/services/api.service'
+import threadService from '@/apps/Forum/services/thread.service'
+import categoryService from '@/apps/Forum/services/category.service'
+import statisticsService from '@/apps/Forum/services/statistics.service'
 import { formatForumDate } from '@/shared/utils/date'
 
 export default {
@@ -197,7 +199,7 @@ export default {
     },
     async openPostModal() {
       try {
-        const response = await api.get('/category-groups')
+        const response = await categoryService.getGroups()
         this.categoryGroupsModal = response.data
         this.showModal = true
       } catch (error) {
@@ -210,7 +212,7 @@ export default {
     },
     async fetchStatistics() {
       try {
-        const response = await api.get('/statistics')
+        const response = await statisticsService.get()
         if (response.data) {
           this.stats = response.data
         }
@@ -225,7 +227,7 @@ export default {
     async fetchLatestThreads() {
       this.loadingLatest = true
       try {
-        const response = await api.get('/threads')
+        const response = await threadService.getAll()
         if (response.data) {
           this.latestThreads = response.data.slice(0, 15)
         }

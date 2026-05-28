@@ -44,6 +44,15 @@ public class ConversationController {
         return ResponseEntity.ok(conversationService.readAll());
     }
 
+    @PutMapping("/{id}/read")
+    public ResponseEntity<ResponseDTO<Void>> markAsRead(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(conversationService.markAsRead(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ResponseDTO.fail(null, e.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ResponseDTO<ConversationDetailDTO>> getConversationDetail(@PathVariable Long id) {
         try {

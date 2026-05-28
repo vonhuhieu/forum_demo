@@ -37,7 +37,7 @@
 <script>
 import ReactionSelector from './ReactionSelector.vue'
 import ReactionIcon from './ReactionIcon.vue'
-import api from '@/shared/services/api.service'
+import reactionService from '@/apps/Forum/services/reaction.service'
 import { toastError } from '@/shared/utils/swal'
 
 export default {
@@ -166,11 +166,7 @@ export default {
     },
     async submitReaction(iconId) {
       try {
-        const endpoint = this.type === 'thread' 
-          ? `/reactions/threads/${this.targetId}`
-          : `/reactions/posts/${this.targetId}`
-        
-        await api.post(endpoint + `?iconId=${iconId}`)
+        await reactionService.addReaction(this.type, this.targetId, iconId)
         this.$emit('reaction-changed')
       } catch (error) {
         console.error('Lỗi khi gửi reaction:', error)
@@ -180,11 +176,7 @@ export default {
     },
     async removeReaction() {
       try {
-        const endpoint = this.type === 'thread' 
-          ? `/reactions/threads/${this.targetId}`
-          : `/reactions/posts/${this.targetId}`
-        
-        await api.delete(endpoint)
+        await reactionService.removeReaction(this.type, this.targetId)
         this.$emit('reaction-changed')
       } catch (error) {
         console.error('Lỗi khi xóa reaction:', error)

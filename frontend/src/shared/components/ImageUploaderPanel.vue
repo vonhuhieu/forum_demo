@@ -68,7 +68,7 @@
 </template>
 
 <script>
-import api from '@/shared/services/api.service'
+import uploadService from '@/apps/Forum/services/upload.service'
 
 export default {
   name: 'ImageUploaderPanel',
@@ -179,7 +179,7 @@ export default {
       files.forEach(file => formData.append('files', file))
  
       try {
-        const res = await api.post('/upload/multiple', formData, {
+        const res = await uploadService.uploadMultiple(formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         })
         

@@ -153,7 +153,8 @@
 <script>
 import AdminService from '@/apps/Admin/services/admin.service'
 import { alertSuccess, alertError } from '@/shared/utils/swal'
-import api from '@/shared/services/api.service'
+import labelService from '@/apps/Forum/services/label.service'
+import threadService from '@/apps/Forum/services/thread.service'
 import CustomEditor from '@/shared/components/CustomEditor.vue'
 import ImageUploaderPanel from '@/shared/components/ImageUploaderPanel.vue'
 import PollForm from '@/shared/components/PollForm.vue'
@@ -220,7 +221,7 @@ export default {
     },
     async fetchLabels() {
       try {
-        const response = await api.get('/labels')
+        const response = await labelService.getAll()
         this.labels = response.data
       } catch (error) {
         console.error('Error fetching labels:', error)
@@ -283,7 +284,7 @@ export default {
     },
     async fetchThread() {
       try {
-        const response = await api.get(`/threads/${this.threadId}`)
+        const response = await threadService.getById(this.threadId)
         const thread = response.data
         let content = thread.content || ''
         if (!this.isViewMode) {
@@ -402,10 +403,10 @@ export default {
         }
         
         if (this.isEditMode) {
-          await api.put(`/threads/${this.threadId}`, payload)
+          await threadService.update(this.threadId, payload)
           await alertSuccess('Cập nhật bài viết thành công')
         } else {
-          await api.post('/threads', payload)
+          await threadService.create(payload)
           await alertSuccess('Đăng bài viết thành công')
         }
         

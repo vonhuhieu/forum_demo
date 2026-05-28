@@ -155,7 +155,8 @@
 </template>
 
 <script>
-import api from '@/shared/services/api.service'
+import threadService from '@/apps/Forum/services/thread.service'
+import categoryService from '@/apps/Forum/services/category.service'
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import ForumPagination from '@/shared/components/ForumPagination.vue'
@@ -253,8 +254,8 @@ export default {
       try {
         // Fetch tất cả chuyên mục để tìm tên chuyên mục hiện tại
         const [catRes, groupRes] = await Promise.all([
-          api.get('/categories'),
-          api.get('/category-groups')
+          categoryService.getAll(),
+          categoryService.getGroups()
         ])
         
         const categories = catRes.data
@@ -266,7 +267,7 @@ export default {
         }
 
         // Fetch danh sách bài viết
-        const threadRes = await api.get('/threads', { params: { categoryId } })
+        const threadRes = await threadService.getAll({ categoryId })
         this.threads = threadRes.data
 
         // Fetch last thread for subcategories
@@ -283,7 +284,7 @@ export default {
     },
     async fetchLastThread(catId) {
       try {
-        const res = await api.get('/threads', { params: { categoryId: catId, limit: 1 } })
+        const res = await threadService.getAll({ categoryId: catId, limit: 1 })
         if (res.data && res.data.length > 0) {
           this.lastThreadByCat = { ...this.lastThreadByCat, [catId]: res.data[0] }
         }

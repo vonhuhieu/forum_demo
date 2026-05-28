@@ -52,7 +52,7 @@
 <script>
 import { Ckeditor } from '@ckeditor/ckeditor5-vue'
 import translations from 'ckeditor5/translations/vi.js'
-import api from '@/shared/services/api.service'
+import userService from '@/apps/Forum/services/user.service'
 import ForumPagination from '@/shared/components/ForumPagination.vue'
 import {
   ClassicEditor,
@@ -376,12 +376,10 @@ export default {
     },
     async fetchUsers() {
       try {
-        const response = await api.get('/users/search', {
-          params: {
-            keyword: this.searchQuery,
-            page: this.currentPage - 1, // backend is 0-indexed
-            size: 10
-          }
+        const response = await userService.search({
+          keyword: this.searchQuery,
+          page: this.currentPage - 1, // backend is 0-indexed
+          size: 10
         });
         
         if (response.data) {

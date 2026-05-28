@@ -81,7 +81,7 @@
 import BaseModal from './BaseModal.vue'
 import ReactionIcon from './ReactionIcon.vue'
 import ForumPagination from './ForumPagination.vue'
-import api from '@/shared/services/api.service'
+import reactionService from '@/apps/Forum/services/reaction.service'
 import { formatForumDate } from '@/shared/utils/date'
 
 export default {
@@ -160,17 +160,15 @@ export default {
       this.loading = true
       try {
         const type = this.isMainPost ? 'threads' : 'posts'
-        // id='main_thread_entry' is not numeric, we need the actual thread ID if it's main post
-        // Wait, targetId passed will be the actual DB ID
-        let url = `/${type}/${this.targetId}/participants?page=${this.currentPage - 1}&size=${this.itemsPerPage}`
-        if (this.activeTab !== null) {
-          url += `&iconId=${this.activeTab}`
+        const params = {
+          page: this.currentPage - 1,
+          size: this.itemsPerPage
         }
-        // Assuming there is no /api prefix needed because api.service.js handles it
-        // BUT wait, is it /reactions/... ? Yes!
-        url = `/reactions${url}`
+        if (this.activeTab !== null) {
+          params.iconId = this.activeTab
+        }
         
-        const res = await api.get(url)
+        const res = await reactionService.getParticipants(type, this.targetId, params)
         if (res.data) {
           this.participants = res.data.content || []
           this.totalPages = res.data.totalPages || 1

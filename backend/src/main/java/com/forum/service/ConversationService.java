@@ -234,6 +234,24 @@ public class ConversationService {
         return ResponseDTO.success(null);
     }
 
+    public ResponseDTO<Void> markAsRead(Long id) {
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Conversation convo = conversationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Hội thoại không tồn tại"));
+
+        ConversationParticipant participant = convo.getParticipants().stream()
+                .filter(p -> p.getUser().getUsername().equals(currentUsername))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Bạn không tham gia cuộc hội thoại này"));
+
+        if (!participant.isRead()) {
+            participant.setRead(true);
+            conversationParticipantRepository.save(participant);
+        }
+
+        return ResponseDTO.success(null);
+    }
+
     public ResponseDTO<ConversationDetailDTO> getConversationDetail(Long id) {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Conversation convo = conversationRepository.findById(id)
@@ -247,7 +265,8 @@ public class ConversationService {
         }
 
         ConversationParticipant currentPart = currentPartOpt.get();
-        if (!currentPart.isRead()) {
+        // Chỉ tự động đánh dấu đã đọc nếu người đang xem KHÔNG phải là người tạo cuộc hội thoại
+        if (!currentPart.isRead() && !convo.getCreator().getUsername().equals(currentUsername)) {
             currentPart.setRead(true);
             conversationParticipantRepository.save(currentPart);
         }

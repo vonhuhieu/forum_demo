@@ -124,7 +124,7 @@
 import DataTable from '@/shared/components/DataTable.vue'
 import BaseModal from '@/shared/components/BaseModal.vue'
 import ReactionIcon from '@/shared/components/ReactionIcon.vue'
-import api from '@/shared/services/api.service'
+import AdminService from '@/apps/Admin/services/admin.service'
 import { alertConfirm, toastSuccess, toastError } from '@/shared/utils/swal'
 
 export default {
@@ -256,7 +256,7 @@ export default {
     async fetchIcons() {
       this.loading = true
       try {
-        const response = await api.get('/reaction-icons')
+        const response = await AdminService.getReactionIcons()
         this.iconsList = response.data
       } catch (error) {
         console.error('Lỗi khi tải danh sách cảm xúc:', error)
@@ -293,10 +293,10 @@ export default {
       this.saving = true
       try {
         if (this.isEdit) {
-          await api.put(`/reaction-icons/${this.formData.id}`, this.formData)
+          await AdminService.updateReactionIcon(this.formData.id, this.formData)
           toastSuccess('Cập nhật reaction thành công')
         } else {
-          await api.post('/reaction-icons', this.formData)
+          await AdminService.createReactionIcon(this.formData)
           toastSuccess('Thêm reaction mới thành công')
         }
         this.showModal = false
@@ -312,7 +312,7 @@ export default {
       const result = await alertConfirm('Xóa cảm xúc', `Bạn có muốn xóa cảm xúc "${icon.tooltip}"?`)
       if (result.isConfirmed) {
         try {
-          await api.delete(`/reaction-icons/${icon.id}`)
+          await AdminService.deleteReactionIcon(icon.id)
           toastSuccess('Đã xóa thành công')
           this.fetchIcons()
         } catch (error) {

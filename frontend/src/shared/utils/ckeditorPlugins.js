@@ -1,4 +1,4 @@
-import api from '@/shared/services/api.service'
+import uploadService from '@/apps/Forum/services/upload.service'
 import { ButtonView } from 'ckeditor5'
 
 // Custom Upload Adapter cho hình ảnh (khi paste ảnh hoặc dùng nút imageUpload)
@@ -13,7 +13,7 @@ class MyUploadAdapter {
       const formData = new FormData()
       formData.append('file', file)
       
-      api.post('/upload', formData, {
+      uploadService.upload(formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       .then(res => {
@@ -66,7 +66,7 @@ export function CustomUploadPlugin(editor) {
         files.forEach(file => formData.append('files', file));
         
         try {
-          const res = await api.post('/upload/multiple', formData, {
+          const res = await uploadService.uploadMultiple(formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
           

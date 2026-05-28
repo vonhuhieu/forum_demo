@@ -279,7 +279,10 @@
 </template>
 
 <script>
-import api from '@/shared/services/api.service'
+import threadService from '@/apps/Forum/services/thread.service'
+import postService from '@/apps/Forum/services/post.service'
+import reactionService from '@/apps/Forum/services/reaction.service'
+import categoryService from '@/apps/Forum/services/category.service'
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import PollDisplay from '@/shared/components/PollDisplay.vue'
@@ -513,7 +516,7 @@ export default {
     },
     async fetchReactionIcons() {
       try {
-        const res = await api.get('/reaction-icons');
+        const res = await reactionService.getIcons();
         this.reactionIconsList = res.data || [];
       } catch (e) {
         console.error('Lỗi khi tải Icons Reaction:', e);
@@ -529,7 +532,7 @@ export default {
     async fetchFollowStatus() {
       if (!this.isLoggedIn) return;
       try {
-        const res = await api.get(`/threads/${this.$route.params.id}/follow-status`);
+        const res = await threadService.getFollowStatus(this.$route.params.id);
         this.isFollowing = res.data === true;
       } catch (e) {
         console.error('Lỗi khi tải trạng thái theo dõi:', e);
@@ -545,7 +548,7 @@ export default {
       );
       if (confirmRes.isConfirmed) {
         try {
-          await api.post(`/threads/${this.$route.params.id}/follow?following=${!originalState}`);
+          await threadService.follow(this.$route.params.id, !originalState);
           this.isFollowing = !originalState;
           alertSuccess(`Đã ${originalState ? 'hủy theo dõi' : 'theo dõi'} bài viết thành công!`);
         } catch (e) {
@@ -556,7 +559,7 @@ export default {
     },
     async fetchThread() {
       try {
-        const response = await api.get(`/threads/${this.$route.params.id}`)
+        const response = await threadService.getById(this.$route.params.id)
         this.thread = response.data
         
         let content = this.thread.content || ''
@@ -568,8 +571,8 @@ export default {
         if (this.thread.category && this.thread.category.categoryGroupId) {
           try {
             const [catRes, groupRes] = await Promise.all([
-               api.get('/categories'),
-               api.get('/category-groups')
+               categoryService.getAll(),
+               categoryService.getGroups()
             ])
             this.allCategories = catRes.data
             this.categoryGroup = groupRes.data.find(g => g.id === this.thread.category.categoryGroupId)
@@ -585,7 +588,7 @@ export default {
     },
     async fetchPosts() {
       try {
-        const response = await api.get(`/posts/thread/${this.$route.params.id}`)
+        const response = await postService.getByThreadId(this.$route.params.id)
         this.posts = response.data || []
       } catch (error) {
         console.error('Lỗi khi tải bài bình luận:', error)
@@ -716,7 +719,7 @@ export default {
           attachedImages: JSON.stringify(attachedImages)
         }
 
-        const response = await api.post('/posts', payload)
+        const response = await postService.create(payload)
         
         await alertSuccess('Gửi trả lời thành công')
         
@@ -956,14 +959,14 @@ export default {
             category: this.thread.category,
             label: this.thread.label
           }
-          await api.put(`/threads/${this.thread.id}`, payload);
+          await threadService.update(this.thread.id, payload);
           await this.fetchThread();
         } else {
           const payload = {
             content: finalContent,
             attachedImages: JSON.stringify(attachedImages)
           }
-          await api.put(`/posts/${item.id}`, payload);
+          await postService.update(item.id, payload);
           await this.fetchPosts();
         }
 

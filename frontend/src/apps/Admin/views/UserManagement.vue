@@ -113,7 +113,7 @@
 <script>
 import DataTable from '@/shared/components/DataTable.vue'
 import BaseModal from '@/shared/components/BaseModal.vue'
-import api from '@/shared/services/api.service'
+import AdminService from '@/apps/Admin/services/admin.service'
 import { alertConfirm, toastSuccess, toastError } from '@/shared/utils/swal'
 
 export default {
@@ -251,7 +251,7 @@ export default {
     async fetchUsers() {
       this.loading = true
       try {
-        const response = await api.get('/users/admin')
+        const response = await AdminService.getAdminUsers()
         this.users = response.data
       } catch (error) {
         console.error('Lỗi khi tải danh sách thành viên:', error)
@@ -323,10 +323,10 @@ export default {
         }
 
         if (this.isEdit) {
-          await api.put(`/users/admin/${this.formData.id}`, payload)
+          await AdminService.updateAdminUser(this.formData.id, payload)
           toastSuccess('Cập nhật thành viên thành công')
         } else {
-          await api.post('/users/admin', payload)
+          await AdminService.createAdminUser(payload)
           toastSuccess('Thêm thành viên mới thành công')
         }
         this.showModal = false
@@ -345,7 +345,7 @@ export default {
       )
       if (result.isConfirmed) {
         try {
-          await api.delete(`/users/admin/${user.id}`)
+          await AdminService.deleteAdminUser(user.id)
           toastSuccess('Đã xóa thành viên thành công')
           this.fetchUsers()
         } catch (error) {

@@ -178,8 +178,10 @@
 </template>
 
 <script>
-import api from '@/shared/services/api.service'
 import webSocketService from '@/shared/services/websocket.service'
+import conversationService from '@/apps/Forum/services/conversation.service'
+import menuService from '@/apps/Forum/services/menu.service'
+import notificationService from '@/apps/Forum/services/notification.service'
 import { formatForumDate } from '@/shared/utils/date'
 import { alertSuccess } from '@/shared/utils/swal'
 
@@ -213,7 +215,7 @@ export default {
     document.addEventListener('click', this.handleClickOutside)
 
     try {
-      const response = await api.get('/menus')
+      const response = await menuService.getAll()
       this.menus = response.data
     } catch (error) {
       console.error('Lỗi khi tải menu:', error)
@@ -317,8 +319,8 @@ export default {
     async fetchNotifSummary() {
       try {
         const [listRes, countRes] = await Promise.all([
-          api.get('/notifications'),
-          api.get('/notifications/unread-count')
+          notificationService.getAll(),
+          notificationService.getUnreadCount()
         ])
         this.notifications = listRes.data
         this.unreadCount = countRes.data
@@ -341,16 +343,6 @@ export default {
       this.showMailDropdown = !this.showMailDropdown
       this.showNotifDropdown = false
       this.showUserDropdown = false
-      
-      if (this.showMailDropdown && this.unreadMailCount > 0) {
-        this.unreadMailCount = 0
-        this.conversations.forEach(c => c.isRead = true)
-        try {
-          api.put('/conversations/read-all')
-        } catch (e) {
-          console.error(e)
-        }
-      }
     },
     triggerMailShake() {
        this.isMailShaking = false;
@@ -364,8 +356,8 @@ export default {
     async fetchMailSummary() {
       try {
         const [listRes, countRes] = await Promise.all([
-          api.get('/conversations'),
-          api.get('/conversations/unread-count')
+          conversationService.getAll(),
+          conversationService.getUnreadCount()
         ])
         this.conversations = listRes.data || []
         this.unreadMailCount = countRes.data || 0
@@ -377,8 +369,27 @@ export default {
       this.showMailDropdown = false
       this.$router.push({ name: 'AddConversation' })
     },
-    goToConversation(convo) {
+    async goToConversation(convo) {
       this.showMailDropdown = false
+      
+      if (!convo.isRead) {
+        convo.isRead = true
+        this.unreadMailCount = Math.max(0, this.unreadMailCount - 1)
+        try {
+          await conversationService.markAsRead(convo.id)
+        } catch (e) {
+          console.error('Lỗi khi đánh dấu đã đọc hội thoại:', e)
+        }
+      }
+
+      // Dispatch global custom event for ConversationDetail to react if we are already on this conversation detail page
+      window.dispatchEvent(new CustomEvent('conversation-clicked', {
+        detail: {
+          conversationId: convo.id,
+          messageId: convo.firstMessageId
+        }
+      }))
+
       const query = convo.firstMessageId ? { messageId: convo.firstMessageId } : {}
       this.$router.push({ 
         name: 'ConversationDetail', 
@@ -423,7 +434,7 @@ export default {
     
     async markAllRead() {
       try {
-        await api.put('/notifications/read-all')
+        await notificationService.markAllRead()
         this.unreadCount = 0
         this.notifications.forEach(n => n.isRead = true)
       } catch (e) {
@@ -441,7 +452,7 @@ export default {
         
         // Fire off the API async background (no wait)
         try {
-          api.put(`/notifications/${notif.id}/read`)
+          notificationService.markAsRead(notif.id)
         } catch (e) {
           console.error(e)
         }

@@ -178,8 +178,8 @@
 </template>
 
 <script>
-import api from '@/shared/services/api.service'
 import webSocketService from '@/shared/services/websocket.service'
+import conversationService from '@/apps/Forum/services/conversation.service'
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import CustomEditor from '@/shared/components/CustomEditor.vue'
@@ -231,6 +231,7 @@ export default {
     }
   },
   async mounted() {
+    window.addEventListener('conversation-clicked', this.handleConversationClicked)
     await this.fetchConversation()
     this.subscribeToMessages()
     if (this.$route.query.messageId) {
@@ -240,6 +241,7 @@ export default {
     }
   },
   beforeUnmount() {
+    window.removeEventListener('conversation-clicked', this.handleConversationClicked)
     if (this.unsubscribeMessages) {
       this.unsubscribeMessages()
     }
@@ -273,7 +275,7 @@ export default {
     async fetchConversation() {
       this.loading = true
       try {
-        const res = await api.get(`/conversations/${this.$route.params.id}`)
+        const res = await conversationService.getById(this.$route.params.id)
         this.conversation = res.data
       } catch (e) {
         console.error('Lỗi khi tải chi tiết đối thoại:', e)
@@ -313,7 +315,7 @@ export default {
 
       this.submittingReply = true
       try {
-        await api.post(`/conversations/${this.conversation.id}/messages`, {
+        await conversationService.addMessage(this.conversation.id, {
           content: this.replyForm.content
         })
         
@@ -381,6 +383,21 @@ export default {
           }, 4000)
         }
       }, 400)
+    },
+    async handleConversationClicked(event) {
+      if (String(event.detail.conversationId) === String(this.conversation?.id)) {
+        if (event.detail.messageId) {
+          this.highlightedMessageId = event.detail.messageId
+          await this.$nextTick()
+          const element = document.getElementById(`msg-${event.detail.messageId}`)
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            setTimeout(() => {
+              this.highlightedMessageId = null
+            }, 4000)
+          }
+        }
+      }
     }
   }
 }

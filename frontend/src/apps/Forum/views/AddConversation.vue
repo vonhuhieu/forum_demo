@@ -86,7 +86,8 @@
 </template>
 
 <script>
-import api from '@/shared/services/api.service'
+import userService from '@/apps/Forum/services/user.service'
+import conversationService from '@/apps/Forum/services/conversation.service'
 import { alertSuccess, alertError } from '@/shared/utils/swal'
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import CustomEditor from '@/shared/components/CustomEditor.vue'
@@ -133,12 +134,10 @@ export default {
     },
     async fetchUsers() {
       try {
-        const response = await api.get('/users/search', {
-          params: {
-            keyword: this.searchQuery,
-            page: 0,
-            size: 10
-          }
+        const response = await userService.search({
+          keyword: this.searchQuery,
+          page: 0,
+          size: 10
         })
         if (response.data) {
           this.searchResults = response.data.content || []
@@ -218,9 +217,9 @@ export default {
           content: this.form.content
         }
 
-        const res = await api.post('/conversations', payload)
+        const res = await conversationService.create(payload)
         if (res.data) {
-          alertSuccess('Bắt đầu cuộc đối thoại thành công')
+          await alertSuccess('Bắt đầu cuộc đối thoại thành công')
           const convo = res.data
           this.$router.push({ 
             name: 'ConversationDetail', 

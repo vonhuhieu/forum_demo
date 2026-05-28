@@ -121,7 +121,7 @@
 <script>
 import DataTable from '@/shared/components/DataTable.vue'
 import BaseModal from '@/shared/components/BaseModal.vue'
-import api from '@/shared/services/api.service'
+import AdminService from '@/apps/Admin/services/admin.service'
 import { alertConfirm, toastSuccess, toastError } from '@/shared/utils/swal'
 
 export default {
@@ -202,7 +202,7 @@ export default {
     async fetchLabels() {
       this.loading = true
       try {
-        const response = await api.get('/labels')
+        const response = await AdminService.getLabels()
         this.labels = response.data
       } catch (error) {
         console.error('Lỗi khi tải danh sách nhãn:', error)
@@ -242,10 +242,10 @@ export default {
       this.saving = true
       try {
         if (this.isEdit) {
-          await api.put(`/labels/${this.formData.id}`, this.formData)
+          await AdminService.updateLabel(this.formData.id, this.formData)
           toastSuccess('Cập nhật nhãn thành công')
         } else {
-          await api.post('/labels', this.formData)
+          await AdminService.createLabel(this.formData)
           toastSuccess('Thêm nhãn mới thành công')
         }
         this.showModal = false
@@ -261,7 +261,7 @@ export default {
       const result = await alertConfirm('Xóa nhãn', `Bạn có chắc chắn muốn xóa nhãn "${label.name}"?`)
       if (result.isConfirmed) {
         try {
-          await api.delete(`/labels/${label.id}`)
+          await AdminService.deleteLabel(label.id)
           toastSuccess('Đã xóa nhãn thành công')
           this.fetchLabels()
         } catch (error) {

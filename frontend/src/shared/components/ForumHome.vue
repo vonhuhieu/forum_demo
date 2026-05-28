@@ -151,7 +151,8 @@
 </template>
 
 <script>
-import api from '@/shared/services/api.service'
+import threadService from '@/apps/Forum/services/thread.service'
+import categoryService from '@/apps/Forum/services/category.service'
 import { formatForumDate } from '@/shared/utils/date'
 import UserProfilePopup from '@/shared/components/UserProfilePopup.vue'
 
@@ -194,11 +195,11 @@ export default {
       this.loading = true
       try {
         // Fetch Mới ra lò
-        const latestRes = await api.get('/threads/latest')
+        const latestRes = await threadService.getLatest()
         this.latestThreads = latestRes.data || []
 
         // Fetch Groups with nested categories
-        const groupRes = await api.get('/category-groups')
+        const groupRes = await categoryService.getGroups()
         this.categoryGroups = groupRes.data || []
 
         // Fetch last thread for each category (this could be optimized in backend)
@@ -215,7 +216,7 @@ export default {
     },
     async fetchLastThread(catId) {
       try {
-        const res = await api.get('/threads', { params: { categoryId: catId, limit: 1 } })
+        const res = await threadService.getAll({ categoryId: catId, limit: 1 })
         if (res.data && res.data.length > 0) {
           this.lastThreadByCat = { ...this.lastThreadByCat, [catId]: res.data[0] }
         }
