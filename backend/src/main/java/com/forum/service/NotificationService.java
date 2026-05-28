@@ -2,12 +2,15 @@ package com.forum.service;
 
 import com.forum.dto.NotificationDTO;
 import com.forum.dto.ResponseDTO;
+import com.forum.dto.ConversationDTO;
 import com.forum.entity.Notification;
 import com.forum.entity.NotificationType;
 import com.forum.entity.Post;
 import com.forum.entity.ReactionIcon;
 import com.forum.entity.Thread;
 import com.forum.entity.User;
+import com.forum.entity.Conversation;
+import com.forum.entity.ConversationMessage;
 import com.forum.mapper.NotificationMapper;
 import com.forum.repository.NotificationRepository;
 import com.forum.repository.UserRepository;
@@ -124,12 +127,15 @@ public class NotificationService {
     public ResponseDTO<List<NotificationDTO>> getMyNotifications() {
         String username = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Notification> list = notificationRepository.findByRecipientUsernameOrderByCreatedAtDesc(username);
-        return ResponseDTO.success(notificationMapper.toDTOList(list));
+        List<Notification> filtered = list.stream()
+                .filter(n -> n.getType() != NotificationType.CONVERSATION_REACTION)
+                .collect(java.util.stream.Collectors.toList());
+        return ResponseDTO.success(notificationMapper.toDTOList(filtered));
     }
 
     public ResponseDTO<Long> getMyUnreadCount() {
         String username = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        long count = notificationRepository.countByRecipientUsernameAndIsReadFalse(username);
+        long count = notificationRepository.countByRecipientUsernameAndTypeNotAndIsReadFalse(username, NotificationType.CONVERSATION_REACTION);
         return ResponseDTO.success(count);
     }
 
@@ -218,5 +224,53 @@ public class NotificationService {
         String result = pattern.matcher(nfdNormalizedString).replaceAll("");
         result = result.replace('đ', 'd').replace('Đ', 'D');
         return result.toLowerCase();
+    }
+
+    @Async
+    @Transactional
+    public void sendConversationReactionNotification(User actor, User recipient, Conversation conversation, ConversationMessage message, ReactionIcon icon) {
+        if (recipient == null || actor == null || recipient.getId().equals(actor.getId())) {
+            return;
+        }
+
+        Notification notif = new Notification();
+        notif.setRecipient(recipient);
+        notif.setActor(actor);
+        notif.setType(NotificationType.CONVERSATION_REACTION);
+        notif.setConversation(conversation);
+        notif.setConversationMessage(message);
+        notif.setReactionIcon(icon.getIcon());
+        notif.setReactionName(icon.getTooltip());
+        notif.setReactionColor(icon.getColor());
+        notif.setRead(false);
+
+        Notification saved = notificationRepository.save(notif);
+        
+        ConversationDTO convoDTO = new ConversationDTO();
+        convoDTO.setId(conversation.getId());
+        convoDTO.setTitle(conversation.getTitle());
+        convoDTO.setFirstMessageId(message.getId());
+        convoDTO.setUpdatedAt(saved.getCreatedAt());
+        convoDTO.setCreatorAvatar(actor.getAvatar());
+        convoDTO.setCreatorUsername(actor.getUsername());
+        convoDTO.setCreatorDisplayName(actor.getDisplayName());
+        convoDTO.setRead(false);
+        convoDTO.setReaction(true);
+        convoDTO.setNotificationId(saved.getId());
+        convoDTO.setReactionIcon(icon.getIcon());
+        convoDTO.setReactionName(icon.getTooltip());
+        convoDTO.setReactionColor(icon.getColor());
+
+        pushConversationNotification(recipient.getId(), convoDTO);
+    }
+
+    private void pushConversationNotification(Long userId, ConversationDTO dto) {
+        try {
+            String dest = "/topic/conversations/" + userId;
+            messagingTemplate.convertAndSend(dest, dto);
+            log.info("Successfully pushed realtime conversation notification to topic: {}", dest);
+        } catch (Exception e) {
+            log.warn("Failed to push realtime websocket conversation notification: {}", e.getMessage());
+        }
     }
 }

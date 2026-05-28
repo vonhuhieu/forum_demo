@@ -39,6 +39,14 @@ public class Notification {
     @JoinColumn(name = "post_id")
     private Post post; // Linking to specific reply if exists
 
+    @ManyToOne
+    @JoinColumn(name = "conversation_id")
+    private Conversation conversation; // Linking to conversation if exists
+
+    @ManyToOne
+    @JoinColumn(name = "conversation_message_id")
+    private ConversationMessage conversationMessage; // Linking to conversation message if exists
+
     @Column(columnDefinition = "TEXT")
     private String content; // Optional brief snippet or text
 

@@ -26,6 +26,7 @@ public class ReactionService {
     private final UserRepository userRepository;
     private final ReactionIconService reactionIconService;
     private final NotificationService notificationService;
+    private final ConversationMessageRepository conversationMessageRepository;
 
     private Optional<User> getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -209,6 +210,73 @@ public class ReactionService {
             reactions = reactionRepository.findByPostIdAndReactionIconId(postId, iconId, pageable);
         } else {
             reactions = reactionRepository.findByPostId(postId, pageable);
+        }
+        return reactions.map(this::mapToParticipantDTO);
+    }
+
+    public void reactToMessage(Long messageId, Long iconId) {
+        User currentUser = getCurrentUser().orElseThrow(() -> new RuntimeException("Authentication required"));
+        ConversationMessage message = conversationMessageRepository.findById(messageId)
+                .orElseThrow(() -> new RuntimeException("Message not found"));
+        ReactionIcon icon = reactionIconRepository.findById(iconId)
+                .orElseThrow(() -> new RuntimeException("Reaction icon not found"));
+
+        if (message.getSender() != null && message.getSender().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("You cannot react to your own content");
+        }
+
+        Optional<Reaction> existing = reactionRepository.findByUserIdAndConversationMessageId(currentUser.getId(), messageId);
+        if (existing.isPresent()) {
+            Reaction reaction = existing.get();
+            reaction.setReactionIcon(icon);
+            reactionRepository.save(reaction);
+        } else {
+            Reaction newReaction = new Reaction();
+            newReaction.setUser(currentUser);
+            newReaction.setConversationMessage(message);
+            newReaction.setReactionIcon(icon);
+            reactionRepository.save(newReaction);
+        }
+
+        try {
+            notificationService.sendConversationReactionNotification(currentUser, message.getSender(), message.getConversation(), message, icon);
+        } catch (Exception e) {
+            // Don't block reaction
+        }
+    }
+
+    public void removeReactionFromMessage(Long messageId) {
+        User currentUser = getCurrentUser().orElseThrow(() -> new RuntimeException("Authentication required"));
+        reactionRepository.deleteByUserIdAndConversationMessageId(currentUser.getId(), messageId);
+    }
+
+    public List<ReactionSummaryDTO> getSummaryForMessage(Long messageId) {
+        List<Object[]> results = reactionRepository.aggregateByConversationMessageId(messageId);
+        return mapAggregateResults(results);
+    }
+
+    public ReactionIconDTO getCurrentUserReactionForMessage(Long messageId) {
+        return getCurrentUser().flatMap(user -> 
+            reactionRepository.findByUserIdAndConversationMessageId(user.getId(), messageId)
+                    .map(Reaction::getReactionIcon)
+                    .map(reactionIconService::convertToDTO)
+        ).orElse(null);
+    }
+
+    public List<com.forum.dto.UserDTO> getRecentReactorsForMessage(Long messageId) {
+        List<Reaction> reactions = reactionRepository.findTop3ByConversationMessageIdOrderByUpdatedAtDesc(messageId);
+        return reactions.stream()
+                .map(Reaction::getUser)
+                .map(this::mapUserToDTO)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public org.springframework.data.domain.Page<com.forum.dto.ReactionParticipantDTO> getMessageReactionParticipants(Long messageId, Long iconId, org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<Reaction> reactions;
+        if (iconId != null) {
+            reactions = reactionRepository.findByConversationMessageIdAndReactionIconId(messageId, iconId, pageable);
+        } else {
+            reactions = reactionRepository.findByConversationMessageId(messageId, pageable);
         }
         return reactions.map(this::mapToParticipantDTO);
     }

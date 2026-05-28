@@ -110,6 +110,10 @@ export default {
     summary: {
       type: Array,
       default: () => []
+    },
+    type: {
+      type: String,
+      default: ''
     }
   },
   data() {
@@ -159,7 +163,10 @@ export default {
     async fetchParticipants() {
       this.loading = true
       try {
-        const type = this.isMainPost ? 'threads' : 'posts'
+        let type = this.type
+        if (!type) {
+          type = this.isMainPost ? 'threads' : 'posts'
+        }
         const params = {
           page: this.currentPage - 1,
           size: this.itemsPerPage

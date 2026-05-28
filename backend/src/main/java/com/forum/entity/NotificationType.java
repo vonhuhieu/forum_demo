@@ -4,5 +4,6 @@ public enum NotificationType {
     NEW_COMMENT,
     QUOTE,
     MENTION,
-    REACTION
+    REACTION,
+    CONVERSATION_REACTION
 }

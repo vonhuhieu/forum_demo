@@ -41,4 +41,17 @@ public interface ReactionRepository extends JpaRepository<Reaction, Long> {
     org.springframework.data.domain.Page<Reaction> findByPostId(Long postId, org.springframework.data.domain.Pageable pageable);
 
     org.springframework.data.domain.Page<Reaction> findByPostIdAndReactionIconId(Long postId, Long iconId, org.springframework.data.domain.Pageable pageable);
+
+    Optional<Reaction> findByUserIdAndConversationMessageId(Long userId, Long messageId);
+
+    void deleteByUserIdAndConversationMessageId(Long userId, Long messageId);
+
+    @Query("SELECT r.reactionIcon, COUNT(r), MAX(r.updatedAt) FROM Reaction r WHERE r.conversationMessage.id = :messageId GROUP BY r.reactionIcon")
+    List<Object[]> aggregateByConversationMessageId(@Param("messageId") Long messageId);
+
+    List<Reaction> findTop3ByConversationMessageIdOrderByUpdatedAtDesc(Long messageId);
+
+    org.springframework.data.domain.Page<Reaction> findByConversationMessageId(Long messageId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<Reaction> findByConversationMessageIdAndReactionIconId(Long messageId, Long iconId, org.springframework.data.domain.Pageable pageable);
 }

@@ -67,7 +67,14 @@
                      </div>
                       <div class="notif-body">
                          <div class="notif-text">
-                            <template v-if="currentUser && convo.creatorUsername === currentUser.username">
+                            <template v-if="convo.isReaction">
+                               <strong>{{ convo.creatorDisplayName || convo.creatorUsername }}</strong> đã tương tác 
+                               <img :src="getReactionIconUrl(convo.reactionIcon)" class="notif-reaction-icon" :title="convo.reactionName" />
+                               <strong :style="{ color: convo.reactionColor || '#2c3e50' }">{{ convo.reactionName }}</strong>
+                               với trả lời của bạn trong hội thoại 
+                               <span class="convo-title-link" style="display: inline;">{{ convo.title }}</span>
+                            </template>
+                            <template v-else-if="currentUser && convo.creatorUsername === currentUser.username">
                                Bạn đã mở cuộc hội thoại 
                                <span class="convo-title-link" style="display: inline;">{{ convo.title }}</span>
                                với {{ getRecipients(convo) }}
@@ -284,8 +291,13 @@ export default {
 
       // Register callback for live conversations - USING NUMERICAL USER ID FOR TOPIC
       this.convoUnsubscribe = webSocketService.subscribe(`/topic/conversations/${this.currentUser.id}`, (newConvo) => {
-        // Add to top of list
-        this.conversations.unshift(newConvo)
+        // Add to top of list and avoid duplicates for same convo
+        if (newConvo.isReaction) {
+          this.conversations.unshift(newConvo)
+        } else {
+          this.conversations = this.conversations.filter(c => c.id !== newConvo.id || c.isReaction)
+          this.conversations.unshift(newConvo)
+        }
         
         // If not read (for recipient), trigger visual/audio notifications
         if (!newConvo.isRead) {
@@ -376,9 +388,13 @@ export default {
         convo.isRead = true
         this.unreadMailCount = Math.max(0, this.unreadMailCount - 1)
         try {
-          await conversationService.markAsRead(convo.id)
+          if (convo.isReaction) {
+            await notificationService.markAsRead(convo.notificationId)
+          } else {
+            await conversationService.markAsRead(convo.id)
+          }
         } catch (e) {
-          console.error('Lỗi khi đánh dấu đã đọc hội thoại:', e)
+          console.error('Lỗi khi đánh dấu đã đọc:', e)
         }
       }
 

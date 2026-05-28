@@ -85,11 +85,28 @@
                       <a href="#" class="action-link" @click.prevent>Báo cáo</a>
                     </div>
                     <div class="right-actions">
+                      <ReactionButton 
+                        v-if="canShowReactionForMessage(msg)"
+                        :targetId="msg.id"
+                        type="message"
+                        :allIcons="reactionIconsList"
+                        :userReaction="msg.currentUserReaction"
+                        @reaction-changed="fetchConversation(true)"
+                      />
                       <a href="#" class="action-link reply-link" @click.prevent="quoteMessage(msg.sender ? (msg.sender.displayName || msg.sender.username) : 'Ẩn danh', msg.content)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                         Trả lời
                       </a>
                     </div>
+                  </div>
+
+                  <!-- Reaction Summary for Message (XenForo Style) -->
+                  <div class="reactions-bar-container" v-if="msg.reactionSummary && msg.reactionSummary.length > 0">
+                    <ReactionSummary 
+                      :summary="msg.reactionSummary" 
+                      :recentReactors="msg.recentReactors" 
+                      @open-popup="openReactionPopup('#' + (index + 1), msg.id, msg.reactionSummary)"
+                    />
                   </div>
                 </div>
               </div>
@@ -170,6 +187,15 @@
 
       </div>
     </main>
+
+    <ReactionListPopup 
+      :show="showReactionPopup" 
+      @update:show="showReactionPopup = $event" 
+      :orderNumber="reactionPopupData.orderNumber" 
+      :targetId="reactionPopupData.targetId" 
+      type="messages"
+      :summary="reactionPopupData.summary" 
+    />
   </div>
 
   <div v-else-if="loading" class="container" style="padding: 3rem; text-align: center;">
@@ -185,13 +211,20 @@ import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import CustomEditor from '@/shared/components/CustomEditor.vue'
 import { formatForumDate } from '@/shared/utils/date'
 import { alertSuccess, alertError, toastSuccess } from '@/shared/utils/swal'
+import ReactionButton from '@/shared/components/ReactionButton.vue'
+import ReactionSummary from '@/shared/components/ReactionSummary.vue'
+import ReactionListPopup from '@/shared/components/ReactionListPopup.vue'
+import reactionService from '@/apps/Forum/services/reaction.service'
 
 export default {
   name: 'ConversationDetail',
   components: {
     ForumHeader,
     Breadcrumb,
-    CustomEditor
+    CustomEditor,
+    ReactionButton,
+    ReactionSummary,
+    ReactionListPopup
   },
   data() {
     const userStr = localStorage.getItem('user')
@@ -213,7 +246,14 @@ export default {
       currentUserAvatar: parsedUser ? parsedUser.avatar : '#3498db',
       currentUser: parsedUser,
       unsubscribeMessages: null,
-      highlightedMessageId: null
+      highlightedMessageId: null,
+      reactionIconsList: [],
+      showReactionPopup: false,
+      reactionPopupData: {
+        orderNumber: '#1',
+        targetId: null,
+        summary: []
+      }
     }
   },
   computed: {
@@ -232,6 +272,7 @@ export default {
   },
   async mounted() {
     window.addEventListener('conversation-clicked', this.handleConversationClicked)
+    await this.fetchReactionIcons()
     await this.fetchConversation()
     this.subscribeToMessages()
     if (this.$route.query.messageId) {
@@ -272,17 +313,19 @@ export default {
     }
   },
   methods: {
-    async fetchConversation() {
-      this.loading = true
+    async fetchConversation(silent = false) {
+      if (!silent) this.loading = true
       try {
         const res = await conversationService.getById(this.$route.params.id)
         this.conversation = res.data
       } catch (e) {
         console.error('Lỗi khi tải chi tiết đối thoại:', e)
-        alertError('Không thể tải cuộc đối thoại này.')
-        this.$router.push({ name: 'Home' })
+        if (!silent) {
+          alertError('Không thể tải cuộc đối thoại này.')
+          this.$router.push({ name: 'Home' })
+        }
       } finally {
-        this.loading = false
+        if (!silent) this.loading = false
       }
     },
     subscribeToMessages() {
@@ -295,7 +338,7 @@ export default {
             // Tránh chèn trùng tin nhắn
             if (!this.conversation.messages.some(m => m.id === newMsg.id)) {
               this.conversation.messages.push(newMsg)
-              this.conversation.replyCount = Math.max(0, this.conversation.messages.length - 1)
+              this.conversation.replyCount = this.conversation.messages.length
               this.conversation.lastReplyAt = newMsg.createdAt
               this.conversation.lastReplyAuthor = newMsg.sender
               
@@ -306,6 +349,26 @@ export default {
           }
         }
       )
+    },
+    async fetchReactionIcons() {
+      try {
+        const res = await reactionService.getIcons();
+        this.reactionIconsList = res.data || [];
+      } catch (e) {
+        console.error('Lỗi khi tải Icons Reaction:', e);
+      }
+    },
+    canShowReactionForMessage(msg) {
+      if (!this.currentUser || !msg || !msg.sender) return false;
+      return String(msg.sender.id) !== String(this.currentUser.id);
+    },
+    openReactionPopup(orderNumber, targetId, summary) {
+      this.reactionPopupData = {
+        orderNumber,
+        targetId,
+        summary
+      }
+      this.showReactionPopup = true
     },
     async submitReply() {
       if (!this.replyForm.content.trim()) {
@@ -756,5 +819,20 @@ export default {
   0% { background-color: #fff2c2; box-shadow: 0 0 15px #f39c12; }
   30% { background-color: #fff2c2; box-shadow: 0 0 10px #f39c12; }
   100% { background-color: #ffffff; box-shadow: none; }
+}
+
+/* Flexbox Patch for Aligning Actions Inline */
+.left-actions, .right-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 15px !important;
+  position: relative;
+}
+
+/* XenForo-style statistics bubble container */
+.reactions-bar-container {
+  padding: 0 15px 10px 15px;
+  margin-top: -5px;
+  display: flex;
 }
 </style>

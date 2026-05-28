@@ -18,4 +18,11 @@ public class ConversationDTO {
 
     @JsonProperty("isRead")
     private boolean isRead;
+
+    @JsonProperty("isReaction")
+    private boolean isReaction;
+    private Long notificationId;
+    private String reactionIcon;
+    private String reactionName;
+    private String reactionColor;
 }

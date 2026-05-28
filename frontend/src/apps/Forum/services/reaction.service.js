@@ -6,21 +6,31 @@ class ReactionService {
   }
 
   addReaction(type, targetId, iconId) {
-    const endpoint = type === 'thread'
-      ? `/reactions/threads/${targetId}`
-      : `/reactions/posts/${targetId}`
+    let endpoint
+    if (type === 'thread') {
+      endpoint = `/reactions/threads/${targetId}`
+    } else if (type === 'post') {
+      endpoint = `/reactions/posts/${targetId}`
+    } else if (type === 'message') {
+      endpoint = `/reactions/messages/${targetId}`
+    }
     return api.post(`${endpoint}?iconId=${iconId}`)
   }
 
   removeReaction(type, targetId) {
-    const endpoint = type === 'thread'
-      ? `/reactions/threads/${targetId}`
-      : `/reactions/posts/${targetId}`
+    let endpoint
+    if (type === 'thread') {
+      endpoint = `/reactions/threads/${targetId}`
+    } else if (type === 'post') {
+      endpoint = `/reactions/posts/${targetId}`
+    } else if (type === 'message') {
+      endpoint = `/reactions/messages/${targetId}`
+    }
     return api.delete(endpoint)
   }
 
   getParticipants(type, targetId, params) {
-    // type must be 'threads' or 'posts'
+    // type must be 'threads', 'posts', or 'messages'
     return api.get(`/reactions/${type}/${targetId}/participants`, { params })
   }
 }

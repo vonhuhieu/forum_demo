@@ -10,10 +10,13 @@ import com.forum.entity.Conversation;
 import com.forum.entity.ConversationMessage;
 import com.forum.entity.ConversationParticipant;
 import com.forum.entity.User;
+import com.forum.entity.Notification;
+import com.forum.entity.NotificationType;
 import com.forum.repository.ConversationMessageRepository;
 import com.forum.repository.ConversationParticipantRepository;
 import com.forum.repository.ConversationRepository;
 import com.forum.repository.UserRepository;
+import com.forum.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -37,6 +40,8 @@ public class ConversationService {
     private final ConversationParticipantRepository conversationParticipantRepository;
     private final ConversationMessageRepository conversationMessageRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ReactionService reactionService;
+    private final NotificationRepository notificationRepository;
 
     public ResponseDTO<ConversationDTO> createConversation(ConversationCreateDTO createDTO) {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -212,13 +217,47 @@ public class ConversationService {
             return dto;
         }).collect(Collectors.toList());
 
-        return ResponseDTO.success(dtos);
+        List<Notification> reactionNotifs = notificationRepository.findByRecipientUsernameAndTypeOrderByCreatedAtDesc(currentUsername, NotificationType.CONVERSATION_REACTION);
+        List<ConversationDTO> notifDtos = reactionNotifs.stream().map(n -> {
+            ConversationDTO dto = new ConversationDTO();
+            if (n.getConversation() != null) {
+                dto.setId(n.getConversation().getId());
+                dto.setTitle(n.getConversation().getTitle());
+            }
+            if (n.getConversationMessage() != null) {
+                dto.setFirstMessageId(n.getConversationMessage().getId());
+            }
+            dto.setUpdatedAt(n.getCreatedAt());
+            if (n.getActor() != null) {
+                dto.setCreatorAvatar(n.getActor().getAvatar());
+                dto.setCreatorUsername(n.getActor().getUsername());
+                dto.setCreatorDisplayName(n.getActor().getDisplayName());
+            }
+            dto.setRead(n.isRead());
+            
+            dto.setReaction(true);
+            dto.setNotificationId(n.getId());
+            dto.setReactionIcon(n.getReactionIcon());
+            dto.setReactionName(n.getReactionName());
+            dto.setReactionColor(n.getReactionColor());
+            
+            return dto;
+        }).collect(Collectors.toList());
+
+        List<ConversationDTO> merged = new java.util.ArrayList<>();
+        merged.addAll(dtos);
+        merged.addAll(notifDtos);
+        
+        merged.sort((a, b) -> b.getUpdatedAt().compareTo(a.getUpdatedAt()));
+
+        return ResponseDTO.success(merged);
     }
 
     public ResponseDTO<Long> getMyUnreadCount() {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         long unreadCount = conversationParticipantRepository.countByUserUsernameAndIsReadFalse(currentUsername);
-        return ResponseDTO.success(unreadCount);
+        long unreadNotifs = notificationRepository.countByRecipientUsernameAndTypeAndIsReadFalse(currentUsername, NotificationType.CONVERSATION_REACTION);
+        return ResponseDTO.success(unreadCount + unreadNotifs);
     }
 
     public ResponseDTO<Void> readAll() {
@@ -291,11 +330,14 @@ public class ConversationService {
                     mDto.setContent(m.getContent());
                     mDto.setSender(mapUserToDTO(m.getSender()));
                     mDto.setCreatedAt(m.getCreatedAt());
+                    mDto.setReactionSummary(reactionService.getSummaryForMessage(m.getId()));
+                    mDto.setCurrentUserReaction(reactionService.getCurrentUserReactionForMessage(m.getId()));
+                    mDto.setRecentReactors(reactionService.getRecentReactorsForMessage(m.getId()));
                     return mDto;
                 })
                 .collect(Collectors.toList());
         dto.setMessages(messageDTOs);
-        dto.setReplyCount(Math.max(0, messageDTOs.size() - 1));
+        dto.setReplyCount(messageDTOs.size());
 
         if (!messageDTOs.isEmpty()) {
             ConversationMessageDTO lastMsg = messageDTOs.get(messageDTOs.size() - 1);
