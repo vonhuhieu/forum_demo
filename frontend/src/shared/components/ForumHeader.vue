@@ -57,7 +57,7 @@
                      v-for="convo in conversations" 
                      :key="convo.id" 
                      class="notif-item" 
-                     :class="{ 'unread': !convo.read }"
+                     :class="{ 'unread': !convo.isRead }"
                    >
                      <div class="notif-avatar-wrapper">
                         <div class="notif-avatar" style="background-color: #3498db;">
@@ -72,10 +72,10 @@
                            <!-- Line 2: Participants -->
                            <span class="convo-participants">Với: {{ convo.participants.join(', ') }}</span>
                         </div>
-                        <!-- Line 3: Hardcoded Time -->
-                        <div class="notif-time">4 phút trước</div>
+                        <!-- Line 3: Dynamic Time -->
+                        <div class="notif-time">{{ formatTime(convo.updatedAt || convo.createdAt) }}</div>
                      </div>
-                     <div class="notif-status-dot" v-if="!convo.read"></div>
+                     <div class="notif-status-dot" v-if="!convo.isRead"></div>
                    </div>
                 </div>
                 
@@ -139,7 +139,7 @@
                               đã trả lời vào chủ đề
                            </template>
                            <span class="notif-link-block" @click.stop="handleNotifClick(notif)">
-                              <span v-if="notif.threadLabelName" class="notif-label-tag" :style="{ backgroundColor: notif.type === 'MENTION' ? '#2577b1' : (notif.threadLabelColor || '#95a5a6') }">{{ notif.threadLabelName }}</span>
+                              <span v-if="notif.threadLabelName" class="notif-label-tag" :style="{ backgroundColor: notif.type === 'MENTION' ? '#2577b1' : (notif.threadLabelColor || '#95a5a6'), color: notif.type === 'MENTION' ? '#fff' : (notif.threadLabelTextColor || '#fff'), borderColor: notif.type === 'MENTION' ? 'transparent' : (notif.threadLabelBorderColor || 'transparent') }">{{ notif.threadLabelName }}</span>
                               <span class="highlight-thread">{{ notif.threadTitle }}</span>
                            </span>.
                            <span v-if="notif.type !== 'QUOTE' && notif.type !== 'REACTION' && notif.type !== 'MENTION'" class="notif-extra">Có thể có bài viết thêm trong chủ đề</span>
@@ -280,7 +280,7 @@ export default {
         this.conversations.unshift(newConvo)
         
         // If not read (for recipient), trigger visual/audio notifications
-        if (!newConvo.read) {
+        if (!newConvo.isRead) {
           this.unreadMailCount++
           this.playNotifSound()
           this.triggerMailShake()
@@ -338,7 +338,7 @@ export default {
       
       if (this.showMailDropdown && this.unreadMailCount > 0) {
         this.unreadMailCount = 0
-        this.conversations.forEach(c => c.read = true)
+        this.conversations.forEach(c => c.isRead = true)
         try {
           api.put('/conversations/read-all')
         } catch (e) {
@@ -659,6 +659,7 @@ export default {
   margin: 0 4px;
   vertical-align: middle;
   line-height: 1.4;
+  border: 1px solid transparent;
 }
 
 .notif-reaction-icon {

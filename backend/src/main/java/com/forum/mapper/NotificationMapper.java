@@ -18,6 +18,8 @@ public interface NotificationMapper {
     @Mapping(source = "thread.title", target = "threadTitle")
     @Mapping(source = "thread.label.name", target = "threadLabelName")
     @Mapping(source = "thread.label.colorCode", target = "threadLabelColor")
+    @Mapping(source = "thread.label.textColor", target = "threadLabelTextColor")
+    @Mapping(source = "thread.label.borderColor", target = "threadLabelBorderColor")
     @Mapping(source = "post.id", target = "postId")
     NotificationDTO toDTO(Notification notification);
 
