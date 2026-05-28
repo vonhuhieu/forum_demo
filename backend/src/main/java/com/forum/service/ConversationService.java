@@ -2,6 +2,9 @@ package com.forum.service;
 
 import com.forum.dto.ConversationCreateDTO;
 import com.forum.dto.ConversationDTO;
+import com.forum.dto.ConversationDetailDTO;
+import com.forum.dto.ConversationMessageDTO;
+import com.forum.dto.UserDTO;
 import com.forum.dto.ResponseDTO;
 import com.forum.entity.Conversation;
 import com.forum.entity.ConversationMessage;
@@ -104,7 +107,7 @@ public class ConversationService {
         ConversationParticipant senderPart = new ConversationParticipant();
         senderPart.setConversation(conversation);
         senderPart.setUser(sender);
-        senderPart.setRead(true); // Người gửi đã đọc luôn
+        senderPart.setRead(false); // Người gửi chưa đọc (hiển thị thông báo chưa đọc cho chính người tạo)
         participantsToSave.add(senderPart);
 
         for (User recipient : recipients) {
@@ -137,7 +140,11 @@ public class ConversationService {
         senderDTO.setTitle(conversation.getTitle());
         senderDTO.setParticipants(participantNames);
         senderDTO.setUpdatedAt(conversation.getUpdatedAt());
-        senderDTO.setRead(true);
+        senderDTO.setCreatorAvatar(sender.getAvatar());
+        senderDTO.setCreatorUsername(sender.getUsername());
+        senderDTO.setCreatorDisplayName(sender.getDisplayName());
+        senderDTO.setFirstMessageId(message.getId());
+        senderDTO.setRead(false);
 
         // PUSH to sender
         pushToUser(sender.getId(), senderDTO);
@@ -149,6 +156,10 @@ public class ConversationService {
             recipientDTO.setTitle(conversation.getTitle());
             recipientDTO.setParticipants(participantNames);
             recipientDTO.setUpdatedAt(conversation.getUpdatedAt());
+            recipientDTO.setCreatorAvatar(sender.getAvatar());
+            recipientDTO.setCreatorUsername(sender.getUsername());
+            recipientDTO.setCreatorDisplayName(sender.getDisplayName());
+            recipientDTO.setFirstMessageId(message.getId());
             recipientDTO.setRead(false);
 
             pushToUser(recipient.getId(), recipientDTO);
@@ -176,6 +187,13 @@ public class ConversationService {
             dto.setId(c.getId());
             dto.setTitle(c.getTitle());
             dto.setUpdatedAt(c.getUpdatedAt());
+            dto.setCreatorAvatar(c.getCreator().getAvatar());
+            dto.setCreatorUsername(c.getCreator().getUsername());
+            dto.setCreatorDisplayName(c.getCreator().getDisplayName());
+            
+            conversationMessageRepository.findFirstByConversationIdOrderByCreatedAtAsc(c.getId())
+                    .map(ConversationMessage::getId)
+                    .ifPresent(dto::setFirstMessageId);
 
             // Tìm trạng thái read của user hiện tại
             boolean isRead = c.getParticipants().stream()
@@ -214,5 +232,152 @@ public class ConversationService {
         });
 
         return ResponseDTO.success(null);
+    }
+
+    public ResponseDTO<ConversationDetailDTO> getConversationDetail(Long id) {
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Conversation convo = conversationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Hội thoại không tồn tại"));
+
+        Optional<ConversationParticipant> currentPartOpt = convo.getParticipants().stream()
+                .filter(p -> p.getUser().getUsername().equals(currentUsername))
+                .findFirst();
+        if (currentPartOpt.isEmpty()) {
+            throw new IllegalArgumentException("Bạn không có quyền tham gia cuộc hội thoại này");
+        }
+
+        ConversationParticipant currentPart = currentPartOpt.get();
+        if (!currentPart.isRead()) {
+            currentPart.setRead(true);
+            conversationParticipantRepository.save(currentPart);
+        }
+
+        ConversationDetailDTO dto = new ConversationDetailDTO();
+        dto.setId(convo.getId());
+        dto.setTitle(convo.getTitle());
+        dto.setCreator(mapUserToDTO(convo.getCreator()));
+        dto.setCreatedAt(convo.getCreatedAt());
+        dto.setUpdatedAt(convo.getUpdatedAt());
+
+        List<UserDTO> participantDTOs = convo.getParticipants().stream()
+                .map(p -> mapUserToDTO(p.getUser()))
+                .collect(Collectors.toList());
+        dto.setParticipants(participantDTOs);
+        dto.setParticipantCount(participantDTOs.size());
+
+        List<ConversationMessageDTO> messageDTOs = convo.getMessages().stream()
+                .map(m -> {
+                    ConversationMessageDTO mDto = new ConversationMessageDTO();
+                    mDto.setId(m.getId());
+                    mDto.setContent(m.getContent());
+                    mDto.setSender(mapUserToDTO(m.getSender()));
+                    mDto.setCreatedAt(m.getCreatedAt());
+                    return mDto;
+                })
+                .collect(Collectors.toList());
+        dto.setMessages(messageDTOs);
+        dto.setReplyCount(Math.max(0, messageDTOs.size() - 1));
+
+        if (!messageDTOs.isEmpty()) {
+            ConversationMessageDTO lastMsg = messageDTOs.get(messageDTOs.size() - 1);
+            dto.setLastReplyAt(lastMsg.getCreatedAt());
+            dto.setLastReplyAuthor(lastMsg.getSender());
+        }
+
+        return ResponseDTO.success(dto);
+    }
+
+    public ResponseDTO<ConversationMessageDTO> addMessage(Long conversationId, String content) {
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new IllegalArgumentException("Người dùng không hợp lệ"));
+        Conversation convo = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Hội thoại không tồn tại"));
+
+        boolean isParticipant = convo.getParticipants().stream()
+                .anyMatch(p -> p.getUser().getUsername().equals(currentUsername));
+        if (!isParticipant) {
+            throw new IllegalArgumentException("Bạn không có quyền tham gia cuộc hội thoại này");
+        }
+
+        ConversationMessage message = new ConversationMessage();
+        message.setConversation(convo);
+        message.setSender(currentUser);
+        message.setContent(content);
+        ConversationMessage savedMsg = conversationMessageRepository.save(message);
+
+        convo.setUpdatedAt(java.time.LocalDateTime.now());
+        conversationRepository.save(convo);
+
+        List<String> participantNames = convo.getParticipants().stream()
+                .map(p -> p.getUser().getDisplayName() != null ? p.getUser().getDisplayName() : p.getUser().getUsername())
+                .collect(Collectors.toList());
+
+        Long firstMsgId = conversationMessageRepository.findFirstByConversationIdOrderByCreatedAtAsc(convo.getId())
+                .map(ConversationMessage::getId)
+                .orElse(null);
+
+        for (ConversationParticipant p : convo.getParticipants()) {
+            if (!p.getUser().getUsername().equals(currentUsername)) {
+                p.setRead(false);
+                conversationParticipantRepository.save(p);
+
+                ConversationDTO updatedConvoDTO = new ConversationDTO();
+                updatedConvoDTO.setId(convo.getId());
+                updatedConvoDTO.setTitle(convo.getTitle());
+                updatedConvoDTO.setParticipants(participantNames);
+                updatedConvoDTO.setUpdatedAt(convo.getUpdatedAt());
+                updatedConvoDTO.setCreatorAvatar(convo.getCreator().getAvatar());
+                updatedConvoDTO.setCreatorUsername(convo.getCreator().getUsername());
+                updatedConvoDTO.setCreatorDisplayName(convo.getCreator().getDisplayName());
+                updatedConvoDTO.setFirstMessageId(firstMsgId);
+                updatedConvoDTO.setRead(false);
+                pushToUser(p.getUser().getId(), updatedConvoDTO);
+            } else {
+                p.setRead(true);
+                conversationParticipantRepository.save(p);
+
+                ConversationDTO updatedConvoDTO = new ConversationDTO();
+                updatedConvoDTO.setId(convo.getId());
+                updatedConvoDTO.setTitle(convo.getTitle());
+                updatedConvoDTO.setParticipants(participantNames);
+                updatedConvoDTO.setUpdatedAt(convo.getUpdatedAt());
+                updatedConvoDTO.setCreatorAvatar(convo.getCreator().getAvatar());
+                updatedConvoDTO.setCreatorUsername(convo.getCreator().getUsername());
+                updatedConvoDTO.setCreatorDisplayName(convo.getCreator().getDisplayName());
+                updatedConvoDTO.setFirstMessageId(firstMsgId);
+                updatedConvoDTO.setRead(true);
+                pushToUser(p.getUser().getId(), updatedConvoDTO);
+            }
+        }
+
+        ConversationMessageDTO mDto = new ConversationMessageDTO();
+        mDto.setId(savedMsg.getId());
+        mDto.setContent(savedMsg.getContent());
+        mDto.setSender(mapUserToDTO(savedMsg.getSender()));
+        mDto.setCreatedAt(savedMsg.getCreatedAt());
+
+        try {
+            String dest = "/topic/conversations/" + conversationId + "/messages";
+            messagingTemplate.convertAndSend(dest, mDto);
+            log.info("WebSocket pushed conversation message to: {}", dest);
+        } catch (Exception e) {
+            log.warn("Failed to push websocket message to topic: {}, error: {}", conversationId, e.getMessage());
+        }
+
+        return ResponseDTO.success(mDto);
+    }
+
+    private UserDTO mapUserToDTO(User user) {
+        if (user == null) return null;
+        UserDTO dto = new UserDTO();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setDisplayName(user.getDisplayName());
+        dto.setEmail(user.getEmail());
+        dto.setAvatar(user.getAvatar());
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setRoles(user.getRoles());
+        return dto;
     }
 }

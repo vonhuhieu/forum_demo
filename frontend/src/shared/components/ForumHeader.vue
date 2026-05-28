@@ -58,23 +58,29 @@
                      :key="convo.id" 
                      class="notif-item" 
                      :class="{ 'unread': !convo.isRead }"
+                     @click="goToConversation(convo)"
                    >
                      <div class="notif-avatar-wrapper">
-                        <div class="notif-avatar" style="background-color: #3498db;">
-                           {{ (convo.participants && convo.participants.length > 0 ? convo.participants[0] : 'C').charAt(0).toUpperCase() }}
+                        <div class="notif-avatar" :style="{ backgroundColor: convo.creatorAvatar || '#3498db' }">
+                           {{ (convo.creatorDisplayName || convo.creatorUsername || 'C').charAt(0).toUpperCase() }}
                         </div>
                      </div>
-                     <div class="notif-body">
-                        <div class="notif-text">
-                           <!-- Line 1: Title -->
-                           <span class="convo-title-link">{{ convo.title }}</span>
-                           
-                           <!-- Line 2: Participants -->
-                           <span class="convo-participants">Với: {{ convo.participants.join(', ') }}</span>
-                        </div>
-                        <!-- Line 3: Dynamic Time -->
-                        <div class="notif-time">{{ formatTime(convo.updatedAt || convo.createdAt) }}</div>
-                     </div>
+                      <div class="notif-body">
+                         <div class="notif-text">
+                            <template v-if="currentUser && convo.creatorUsername === currentUser.username">
+                               Bạn đã mở cuộc hội thoại 
+                               <span class="convo-title-link" style="display: inline;">{{ convo.title }}</span>
+                               với {{ getRecipients(convo) }}
+                            </template>
+                            <template v-else>
+                               {{ convo.creatorDisplayName || convo.creatorUsername }} đã bắt đầu cuộc hội thoại 
+                               <span class="convo-title-link" style="display: inline;">{{ convo.title }}</span>
+                               với bạn
+                            </template>
+                         </div>
+                         <!-- Line 3: Dynamic Time -->
+                         <div class="notif-time">{{ formatTime(convo.updatedAt || convo.createdAt) }}</div>
+                      </div>
                      <div class="notif-status-dot" v-if="!convo.isRead"></div>
                    </div>
                 </div>
@@ -370,6 +376,22 @@ export default {
     goToAddConvo() {
       this.showMailDropdown = false
       this.$router.push({ name: 'AddConversation' })
+    },
+    goToConversation(convo) {
+      this.showMailDropdown = false
+      const query = convo.firstMessageId ? { messageId: convo.firstMessageId } : {}
+      this.$router.push({ 
+        name: 'ConversationDetail', 
+        params: { id: convo.id },
+        query
+      })
+    },
+    getRecipients(convo) {
+      if (!convo || !convo.participants) return ''
+      const myName = this.currentUser ? (this.currentUser.displayName || this.currentUser.username) : ''
+      const myUsername = this.currentUser ? this.currentUser.username : ''
+      const filtered = convo.participants.filter(p => p !== myName && p !== myUsername)
+      return filtered.join(', ')
     },
     
     handleClickOutside(e) {

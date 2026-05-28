@@ -11,6 +11,10 @@ public class ConversationDTO {
     private String title;
     private List<String> participants;
     private LocalDateTime updatedAt;
+    private String creatorAvatar;
+    private String creatorUsername;
+    private String creatorDisplayName;
+    private Long firstMessageId;
 
     @JsonProperty("isRead")
     private boolean isRead;

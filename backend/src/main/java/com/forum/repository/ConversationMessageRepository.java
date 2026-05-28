@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface ConversationMessageRepository extends JpaRepository<ConversationMessage, Long> {
     List<ConversationMessage> findByConversationIdOrderByCreatedAtAsc(Long conversationId);
+    java.util.Optional<ConversationMessage> findFirstByConversationIdOrderByCreatedAtAsc(Long conversationId);
 }

@@ -16,6 +16,7 @@ import CategoryView from '@/apps/Forum/views/CategoryView.vue'
 import LatestThreadsView from '@/apps/Forum/views/LatestThreadsView.vue'
 import ForgotPassword from '@/apps/Auth/views/ForgotPassword.vue'
 import AddConversation from '@/apps/Forum/views/AddConversation.vue'
+import ConversationDetail from '@/apps/Forum/views/ConversationDetail.vue'
 import UserManagement from '@/apps/Admin/views/UserManagement.vue'
 
 const routes = [
@@ -68,6 +69,12 @@ const routes = [
     path: '/conversations/add',
     name: 'AddConversation',
     component: AddConversation,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/conversations/:id',
+    name: 'ConversationDetail',
+    component: ConversationDetail,
     meta: { requiresAuth: true }
   },
   {

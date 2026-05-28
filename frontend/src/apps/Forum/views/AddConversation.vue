@@ -221,7 +221,12 @@ export default {
         const res = await api.post('/conversations', payload)
         if (res.data) {
           alertSuccess('Bắt đầu cuộc đối thoại thành công')
-          this.$router.push({ name: 'Home' })
+          const convo = res.data
+          this.$router.push({ 
+            name: 'ConversationDetail', 
+            params: { id: convo.id },
+            query: convo.firstMessageId ? { messageId: convo.firstMessageId } : {}
+          })
         } else {
           alertError('Có lỗi xảy ra khi bắt đầu đối thoại')
         }
