@@ -191,7 +191,7 @@ public class ConversationService {
             ConversationDTO dto = new ConversationDTO();
             dto.setId(c.getId());
             dto.setTitle(c.getTitle());
-            dto.setUpdatedAt(c.getUpdatedAt());
+            dto.setUpdatedAt(c.getCreatedAt());
             dto.setCreatorAvatar(c.getCreator().getAvatar());
             dto.setCreatorUsername(c.getCreator().getUsername());
             dto.setCreatorDisplayName(c.getCreator().getDisplayName());
@@ -213,12 +213,16 @@ public class ConversationService {
                     .map(p -> p.getUser().getDisplayName() != null ? p.getUser().getDisplayName() : p.getUser().getUsername())
                     .collect(Collectors.toList());
             dto.setParticipants(parts);
+            dto.setReply(false);
 
             return dto;
         }).collect(Collectors.toList());
 
-        List<Notification> reactionNotifs = notificationRepository.findByRecipientUsernameAndTypeOrderByCreatedAtDesc(currentUsername, NotificationType.CONVERSATION_REACTION);
-        List<ConversationDTO> notifDtos = reactionNotifs.stream().map(n -> {
+        List<Notification> conversationNotifs = notificationRepository.findByRecipientUsernameAndTypeInOrderByCreatedAtDesc(
+            currentUsername, 
+            List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY)
+        );
+        List<ConversationDTO> notifDtos = conversationNotifs.stream().map(n -> {
             ConversationDTO dto = new ConversationDTO();
             if (n.getConversation() != null) {
                 dto.setId(n.getConversation().getId());
@@ -234,12 +238,20 @@ public class ConversationService {
                 dto.setCreatorDisplayName(n.getActor().getDisplayName());
             }
             dto.setRead(n.isRead());
-            
-            dto.setReaction(true);
             dto.setNotificationId(n.getId());
-            dto.setReactionIcon(n.getReactionIcon());
-            dto.setReactionName(n.getReactionName());
-            dto.setReactionColor(n.getReactionColor());
+
+            if (n.getType() == NotificationType.CONVERSATION_REACTION) {
+                dto.setReaction(true);
+                dto.setReactionIcon(n.getReactionIcon());
+                dto.setReactionName(n.getReactionName());
+                dto.setReactionColor(n.getReactionColor());
+            } else if (n.getType() == NotificationType.CONVERSATION_REPLY) {
+                dto.setReply(true);
+                dto.setLastMessageSenderUsername(n.getActor() != null ? n.getActor().getUsername() : null);
+                dto.setLastMessageSenderDisplayName(n.getActor() != null ? n.getActor().getDisplayName() : null);
+                dto.setLastMessageSenderAvatar(n.getActor() != null ? n.getActor().getAvatar() : null);
+                dto.setLastMessageId(n.getConversationMessage() != null ? n.getConversationMessage().getId() : null);
+            }
             
             return dto;
         }).collect(Collectors.toList());
@@ -256,7 +268,7 @@ public class ConversationService {
     public ResponseDTO<Long> getMyUnreadCount() {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         long unreadCount = conversationParticipantRepository.countByUserUsernameAndIsReadFalse(currentUsername);
-        long unreadNotifs = notificationRepository.countByRecipientUsernameAndTypeAndIsReadFalse(currentUsername, NotificationType.CONVERSATION_REACTION);
+        long unreadNotifs = notificationRepository.countByRecipientUsernameAndTypeInAndIsReadFalse(currentUsername, List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY));
         return ResponseDTO.success(unreadCount + unreadNotifs);
     }
 
@@ -288,6 +300,8 @@ public class ConversationService {
             conversationParticipantRepository.save(participant);
         }
 
+        notificationRepository.markConversationNotificationsAsRead(currentUsername, id);
+
         return ResponseDTO.success(null);
     }
 
@@ -309,6 +323,8 @@ public class ConversationService {
             currentPart.setRead(true);
             conversationParticipantRepository.save(currentPart);
         }
+
+        notificationRepository.markConversationNotificationsAsRead(currentUsername, id);
 
         ConversationDetailDTO dto = new ConversationDetailDTO();
         dto.setId(convo.getId());
@@ -370,46 +386,35 @@ public class ConversationService {
         convo.setUpdatedAt(java.time.LocalDateTime.now());
         conversationRepository.save(convo);
 
-        List<String> participantNames = convo.getParticipants().stream()
-                .map(p -> p.getUser().getDisplayName() != null ? p.getUser().getDisplayName() : p.getUser().getUsername())
-                .collect(Collectors.toList());
-
-        Long firstMsgId = conversationMessageRepository.findFirstByConversationIdOrderByCreatedAtAsc(convo.getId())
-                .map(ConversationMessage::getId)
-                .orElse(null);
-
+        // Lưu thông báo phản hồi đối thoại (CONVERSATION_REPLY) cho tất cả người tham gia và push
         for (ConversationParticipant p : convo.getParticipants()) {
-            if (!p.getUser().getUsername().equals(currentUsername)) {
-                p.setRead(false);
-                conversationParticipantRepository.save(p);
+            Notification notif = new Notification();
+            notif.setRecipient(p.getUser());
+            notif.setActor(currentUser);
+            notif.setType(NotificationType.CONVERSATION_REPLY);
+            notif.setConversation(convo);
+            notif.setConversationMessage(savedMsg);
+            notif.setRead(false);
+            Notification savedNotif = notificationRepository.save(notif);
 
-                ConversationDTO updatedConvoDTO = new ConversationDTO();
-                updatedConvoDTO.setId(convo.getId());
-                updatedConvoDTO.setTitle(convo.getTitle());
-                updatedConvoDTO.setParticipants(participantNames);
-                updatedConvoDTO.setUpdatedAt(convo.getUpdatedAt());
-                updatedConvoDTO.setCreatorAvatar(convo.getCreator().getAvatar());
-                updatedConvoDTO.setCreatorUsername(convo.getCreator().getUsername());
-                updatedConvoDTO.setCreatorDisplayName(convo.getCreator().getDisplayName());
-                updatedConvoDTO.setFirstMessageId(firstMsgId);
-                updatedConvoDTO.setRead(false);
-                pushToUser(p.getUser().getId(), updatedConvoDTO);
-            } else {
-                p.setRead(true);
-                conversationParticipantRepository.save(p);
+            ConversationDTO replyDTO = new ConversationDTO();
+            replyDTO.setId(convo.getId());
+            replyDTO.setTitle(convo.getTitle());
+            replyDTO.setFirstMessageId(savedMsg.getId()); // ID tin nhắn phản hồi
+            replyDTO.setUpdatedAt(savedNotif.getCreatedAt());
+            replyDTO.setCreatorAvatar(currentUser.getAvatar());
+            replyDTO.setCreatorUsername(currentUser.getUsername());
+            replyDTO.setCreatorDisplayName(currentUser.getDisplayName());
+            replyDTO.setRead(false);
+            
+            replyDTO.setReply(true);
+            replyDTO.setNotificationId(savedNotif.getId());
+            replyDTO.setLastMessageSenderUsername(currentUser.getUsername());
+            replyDTO.setLastMessageSenderDisplayName(currentUser.getDisplayName());
+            replyDTO.setLastMessageSenderAvatar(currentUser.getAvatar());
+            replyDTO.setLastMessageId(savedMsg.getId());
 
-                ConversationDTO updatedConvoDTO = new ConversationDTO();
-                updatedConvoDTO.setId(convo.getId());
-                updatedConvoDTO.setTitle(convo.getTitle());
-                updatedConvoDTO.setParticipants(participantNames);
-                updatedConvoDTO.setUpdatedAt(convo.getUpdatedAt());
-                updatedConvoDTO.setCreatorAvatar(convo.getCreator().getAvatar());
-                updatedConvoDTO.setCreatorUsername(convo.getCreator().getUsername());
-                updatedConvoDTO.setCreatorDisplayName(convo.getCreator().getDisplayName());
-                updatedConvoDTO.setFirstMessageId(firstMsgId);
-                updatedConvoDTO.setRead(true);
-                pushToUser(p.getUser().getId(), updatedConvoDTO);
-            }
+            pushToUser(p.getUser().getId(), replyDTO);
         }
 
         ConversationMessageDTO mDto = new ConversationMessageDTO();

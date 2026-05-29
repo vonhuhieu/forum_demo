@@ -134,14 +134,14 @@ public class NotificationService {
         String username = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         List<Notification> list = notificationRepository.findByRecipientUsernameOrderByCreatedAtDesc(username);
         List<Notification> filtered = list.stream()
-                .filter(n -> n.getType() != NotificationType.CONVERSATION_REACTION)
+                .filter(n -> n.getType() != NotificationType.CONVERSATION_REACTION && n.getType() != NotificationType.CONVERSATION_REPLY)
                 .collect(java.util.stream.Collectors.toList());
         return ResponseDTO.success(notificationMapper.toDTOList(filtered));
     }
 
     public ResponseDTO<Long> getMyUnreadCount() {
         String username = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        long count = notificationRepository.countByRecipientUsernameAndTypeNotAndIsReadFalse(username, NotificationType.CONVERSATION_REACTION);
+        long count = notificationRepository.countByRecipientUsernameAndTypeNotInAndIsReadFalse(username, List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY));
         return ResponseDTO.success(count);
     }
 

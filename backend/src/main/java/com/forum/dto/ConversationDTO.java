@@ -25,4 +25,11 @@ public class ConversationDTO {
     private String reactionIcon;
     private String reactionName;
     private String reactionColor;
+
+    @JsonProperty("isReply")
+    private boolean isReply;
+    private String lastMessageSenderUsername;
+    private String lastMessageSenderDisplayName;
+    private String lastMessageSenderAvatar;
+    private Long lastMessageId;
 }

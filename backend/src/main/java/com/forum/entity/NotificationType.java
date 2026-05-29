@@ -5,5 +5,6 @@ public enum NotificationType {
     QUOTE,
     MENTION,
     REACTION,
-    CONVERSATION_REACTION
+    CONVERSATION_REACTION,
+    CONVERSATION_REPLY
 }

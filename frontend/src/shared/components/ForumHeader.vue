@@ -61,8 +61,8 @@
                      @click="goToConversation(convo)"
                    >
                      <div class="notif-avatar-wrapper">
-                        <div class="notif-avatar" :style="{ backgroundColor: convo.creatorAvatar || '#3498db' }">
-                           {{ (convo.creatorDisplayName || convo.creatorUsername || 'C').charAt(0).toUpperCase() }}
+                        <div class="notif-avatar" :style="{ backgroundColor: getConvoAvatarBg(convo) }">
+                           {{ getConvoAvatarText(convo) }}
                         </div>
                      </div>
                       <div class="notif-body">
@@ -73,6 +73,16 @@
                                <strong :style="{ color: convo.reactionColor || '#2c3e50' }">{{ convo.reactionName }}</strong>
                                với trả lời của bạn trong hội thoại 
                                <span class="convo-title-link" style="display: inline;">{{ convo.title }}</span>
+                            </template>
+                            <template v-else-if="convo.isReply">
+                               <template v-if="currentUser && convo.lastMessageSenderUsername === currentUser.username">
+                                  Bạn đã trả lời vào cuộc đối thoại 
+                                  <span class="convo-title-link" style="display: inline;">{{ convo.title }}</span>
+                               </template>
+                               <template v-else>
+                                  <strong>{{ convo.lastMessageSenderDisplayName || convo.lastMessageSenderUsername }}</strong> đã trả lời vào cuộc đối thoại 
+                                  <span class="convo-title-link" style="display: inline;">{{ convo.title }}</span>
+                               </template>
                             </template>
                             <template v-else-if="currentUser && convo.creatorUsername === currentUser.username">
                                Bạn đã mở cuộc hội thoại 
@@ -292,10 +302,10 @@ export default {
       // Register callback for live conversations - USING NUMERICAL USER ID FOR TOPIC
       this.convoUnsubscribe = webSocketService.subscribe(`/topic/conversations/${this.currentUser.id}`, (newConvo) => {
         // Add to top of list and avoid duplicates for same convo
-        if (newConvo.isReaction) {
+        if (newConvo.isReaction || newConvo.isReply) {
           this.conversations.unshift(newConvo)
         } else {
-          this.conversations = this.conversations.filter(c => c.id !== newConvo.id || c.isReaction)
+          this.conversations = this.conversations.filter(c => c.id !== newConvo.id || c.isReaction || c.isReply)
           this.conversations.unshift(newConvo)
         }
         
@@ -388,8 +398,9 @@ export default {
         convo.isRead = true
         this.unreadMailCount = Math.max(0, this.unreadMailCount - 1)
         try {
-          if (convo.isReaction) {
+          if (convo.isReaction || convo.isReply) {
             await notificationService.markAsRead(convo.notificationId)
+            await conversationService.markAsRead(convo.id)
           } else {
             await conversationService.markAsRead(convo.id)
           }
@@ -398,15 +409,17 @@ export default {
         }
       }
 
+      const targetMsgId = convo.isReaction ? convo.firstMessageId : (convo.isReply ? convo.lastMessageId : convo.firstMessageId)
+
       // Dispatch global custom event for ConversationDetail to react if we are already on this conversation detail page
       window.dispatchEvent(new CustomEvent('conversation-clicked', {
         detail: {
           conversationId: convo.id,
-          messageId: convo.firstMessageId
+          messageId: targetMsgId
         }
       }))
 
-      const query = convo.firstMessageId ? { messageId: convo.firstMessageId } : {}
+      const query = targetMsgId ? { messageId: targetMsgId } : {}
       this.$router.push({ 
         name: 'ConversationDetail', 
         params: { id: convo.id },
@@ -419,6 +432,22 @@ export default {
       const myUsername = this.currentUser ? this.currentUser.username : ''
       const filtered = convo.participants.filter(p => p !== myName && p !== myUsername)
       return filtered.join(', ')
+    },
+    getConvoAvatarBg(convo) {
+      if (convo.isReaction) return convo.creatorAvatar || '#3498db'
+      if (convo.isReply) return convo.lastMessageSenderAvatar || '#3498db'
+      return convo.creatorAvatar || '#3498db'
+    },
+    getConvoAvatarText(convo) {
+      let name = 'C'
+      if (convo.isReaction) {
+        name = convo.creatorDisplayName || convo.creatorUsername || 'C'
+      } else if (convo.isReply) {
+        name = convo.lastMessageSenderDisplayName || convo.lastMessageSenderUsername || 'C'
+      } else {
+        name = convo.creatorDisplayName || convo.creatorUsername || 'C'
+      }
+      return name.charAt(0).toUpperCase()
     },
     
     handleClickOutside(e) {

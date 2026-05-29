@@ -253,7 +253,8 @@ export default {
         orderNumber: '#1',
         targetId: null,
         summary: []
-      }
+      },
+      justClickedConvo: false
     }
   },
   computed: {
@@ -307,6 +308,10 @@ export default {
     '$route.query.messageId': {
       handler(newVal) {
         if (newVal) {
+          if (this.justClickedConvo) {
+            this.justClickedConvo = false
+            return
+          }
           this.jumpToTargetMessage()
         }
       }
@@ -449,6 +454,7 @@ export default {
     },
     async handleConversationClicked(event) {
       if (String(event.detail.conversationId) === String(this.conversation?.id)) {
+        this.justClickedConvo = true
         await this.fetchConversation(true)
         if (event.detail.messageId) {
           this.highlightedMessageId = event.detail.messageId
