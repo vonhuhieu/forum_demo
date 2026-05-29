@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 13, 2026 at 11:37 PM
+-- Generation Time: May 29, 2026 at 01:55 AM
 -- Server version: 8.4.3
 -- PHP Version: 8.3.26
 
@@ -89,6 +89,141 @@ INSERT INTO `category_groups` (`id`, `active`, `name`, `position_order`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `conversations`
+--
+
+CREATE TABLE `conversations` (
+  `id` bigint NOT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `title` varchar(255) NOT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `creator_id` bigint DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `conversations`
+--
+
+INSERT INTO `conversations` (`id`, `created_at`, `title`, `updated_at`, `creator_id`) VALUES
+(3, '2026-05-27 23:23:28.020756', 'Hội thoại kiểm thử 2026-05-27T23:23:27.980Z', '2026-05-27 23:23:28.020756', NULL),
+(4, '2026-05-27 23:24:26.480470', 'test hpopok ỵpaok', '2026-05-27 23:24:26.480470', NULL),
+(5, '2026-05-27 23:27:13.023671', 'Hội thoại kiểm thử 2026-05-27T23:27:12.981Z', '2026-05-27 23:27:13.023671', NULL),
+(6, '2026-05-27 23:30:03.679710', 'test hội thoại số 1', '2026-05-27 23:30:03.679710', NULL),
+(7, '2026-05-27 23:33:58.009877', 'Hội thoại kiểm thử 2026-05-27T23:33:58.002Z', '2026-05-27 23:33:58.009877', NULL),
+(8, '2026-05-28 12:14:29.360501', 'Test chức năng đối thoại', '2026-05-28 12:14:29.360501', NULL),
+(9, '2026-05-28 12:15:54.456816', 'test đối thoại 1', '2026-05-28 12:15:54.456816', NULL),
+(10, '2026-05-28 12:26:11.591652', 'test đối thoại 1', '2026-05-28 12:26:11.591652', NULL),
+(11, '2026-05-28 12:33:06.573022', 'test 2', '2026-05-28 12:33:06.573022', NULL),
+(12, '2026-05-28 16:25:47.462971', 'test user03 gửi user01', '2026-05-28 16:25:47.462971', NULL),
+(13, '2026-05-28 16:42:07.989783', 'test', '2026-05-28 16:42:07.989783', NULL),
+(14, '2026-05-28 16:46:08.781484', 'test', '2026-05-28 16:46:08.781484', NULL),
+(15, '2026-05-28 16:48:57.014551', 'test lại', '2026-05-28 17:02:11.072414', NULL),
+(16, '2026-05-28 17:10:38.012306', 'Xin chào', '2026-05-28 17:10:38.012306', NULL),
+(17, '2026-05-28 18:11:38.121695', 'Gin chào Vy nhé', '2026-05-28 18:11:38.121695', NULL),
+(18, '2026-05-28 18:16:33.770131', 'Hỏi thăm thường ngày', '2026-05-28 18:16:33.770131', NULL),
+(19, '2026-05-28 18:33:31.833681', 'Hôm nay mẹ thế nào', '2026-05-28 18:33:31.833681', NULL),
+(20, '2026-05-28 18:35:27.009285', 'Hôm nay của Vy thế nào', '2026-05-28 18:35:27.009285', NULL),
+(21, '2026-05-28 18:38:35.114381', 'sdsd', '2026-05-28 18:38:35.114381', NULL),
+(22, '2026-05-28 18:39:33.467461', 'shdjkahda', '2026-05-28 18:39:33.467461', NULL),
+(23, '2026-05-28 18:41:29.897500', 'dsa', '2026-05-28 18:41:29.897500', NULL),
+(24, '2026-05-28 18:42:03.310339', 'dsada', '2026-05-28 18:42:03.310339', NULL),
+(25, '2026-05-28 18:42:23.522594', 'dá', '2026-05-28 18:42:23.522594', NULL),
+(26, '2026-05-28 18:44:15.667061', 'dsa', '2026-05-28 18:44:15.667061', NULL),
+(27, '2026-05-28 18:46:48.093391', 'dsa', '2026-05-28 18:46:48.093391', NULL),
+(28, '2026-05-28 18:47:03.754955', 'dsad', '2026-05-28 18:47:03.754955', NULL),
+(29, '2026-05-28 18:48:46.079345', 'sad', '2026-05-28 18:48:46.079345', NULL),
+(30, '2026-05-28 18:54:06.394452', 'dsad', '2026-05-28 18:54:06.394452', NULL),
+(31, '2026-05-28 18:55:14.718151', 'test', '2026-05-28 18:55:14.718151', 93),
+(32, '2026-05-28 19:01:41.732434', 'test 2', '2026-05-28 19:01:41.732434', 93),
+(33, '2026-05-28 19:02:33.764510', 'test 3', '2026-05-28 19:02:33.764510', 93),
+(34, '2026-05-28 19:03:19.443316', 'dsad', '2026-05-28 19:03:19.443316', 93),
+(35, '2026-05-28 19:03:40.757167', 'sda', '2026-05-28 19:03:40.757167', 93),
+(36, '2026-05-28 19:04:41.546025', 'đá', '2026-05-28 19:04:41.546025', 92),
+(37, '2026-05-28 19:06:55.043797', 'sdasdsadsad', '2026-05-28 19:06:55.043797', 93),
+(38, '2026-05-28 19:09:46.863252', 'test lại', '2026-05-28 19:09:46.863252', 93),
+(39, '2026-05-28 19:10:12.606567', 'test lkaij lần 2', '2026-05-28 19:10:12.606567', 93),
+(40, '2026-05-28 19:10:54.913640', 'đasa', '2026-05-28 19:10:54.913640', 92),
+(41, '2026-05-28 19:11:07.099974', 'đá', '2026-05-28 19:11:07.099974', 92),
+(42, '2026-05-28 23:26:27.226899', 'Hỏi về việc tách component trong VueJS', '2026-05-28 23:26:27.226899', 94);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `conversation_messages`
+--
+
+CREATE TABLE `conversation_messages` (
+  `id` bigint NOT NULL,
+  `content` text NOT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `conversation_id` bigint NOT NULL,
+  `sender_id` bigint NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `conversation_messages`
+--
+
+INSERT INTO `conversation_messages` (`id`, `content`, `created_at`, `conversation_id`, `sender_id`) VALUES
+(32, '<p>test</p>', '2026-05-28 18:55:14.720699', 31, 93),
+(33, '<p>test 2</p>', '2026-05-28 19:01:41.745006', 32, 93),
+(34, '<p>test 3</p>', '2026-05-28 19:02:33.777529', 33, 93),
+(35, '<p>dsa</p>', '2026-05-28 19:03:19.445820', 34, 93),
+(36, '<p>dsad</p>', '2026-05-28 19:03:40.760167', 35, 93),
+(37, '<p>dsada</p>', '2026-05-28 19:04:41.547618', 36, 92),
+(38, '<p>dsadasd</p>', '2026-05-28 19:06:55.044797', 37, 93),
+(39, '<p>test lại</p>', '2026-05-28 19:09:46.865484', 38, 93),
+(40, '<p>dsadsad</p>', '2026-05-28 19:10:12.607569', 39, 93),
+(41, '<p>đâsd</p>', '2026-05-28 19:10:54.915588', 40, 92),
+(42, '<p>dsada</p>', '2026-05-28 19:11:07.101755', 41, 92),
+(43, '<p>Chào bạn, mình đang chuyển một project từ React sang VueJS nhưng hơi rối phần chia component. Mình đang có một component khá lớn, gần 1500 dòng. Bạn có thể góp ý giúp mình được không?</p>', '2026-05-28 23:26:27.234231', 42, 94);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `conversation_participants`
+--
+
+CREATE TABLE `conversation_participants` (
+  `id` bigint NOT NULL,
+  `is_read` bit(1) DEFAULT NULL,
+  `conversation_id` bigint NOT NULL,
+  `user_id` bigint NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Dumping data for table `conversation_participants`
+--
+
+INSERT INTO `conversation_participants` (`id`, `is_read`, `conversation_id`, `user_id`) VALUES
+(61, b'1', 31, 93),
+(62, b'1', 31, 92),
+(63, b'1', 32, 93),
+(64, b'1', 32, 92),
+(65, b'1', 33, 93),
+(66, b'1', 33, 92),
+(67, b'1', 34, 93),
+(68, b'1', 34, 92),
+(69, b'1', 35, 93),
+(70, b'1', 35, 92),
+(71, b'1', 36, 92),
+(72, b'1', 36, 93),
+(73, b'1', 37, 93),
+(74, b'1', 37, 92),
+(75, b'1', 38, 93),
+(76, b'1', 38, 92),
+(77, b'1', 39, 93),
+(78, b'1', 39, 92),
+(79, b'1', 40, 92),
+(80, b'1', 40, 93),
+(81, b'1', 41, 92),
+(82, b'1', 41, 93),
+(83, b'1', 42, 94),
+(84, b'1', 42, 95);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `labels`
 --
 
@@ -149,19 +284,24 @@ CREATE TABLE `notifications` (
   `content` text,
   `created_at` datetime(6) DEFAULT NULL,
   `is_read` bit(1) NOT NULL,
-  `type` enum('NEW_COMMENT','QUOTE','MENTION') DEFAULT NULL,
+  `type` enum('NEW_COMMENT','QUOTE','MENTION','REACTION') DEFAULT NULL,
   `actor_id` bigint DEFAULT NULL,
   `post_id` bigint DEFAULT NULL,
   `recipient_id` bigint NOT NULL,
-  `thread_id` bigint DEFAULT NULL
+  `thread_id` bigint DEFAULT NULL,
+  `reaction_icon` varchar(255) DEFAULT NULL,
+  `reaction_name` varchar(255) DEFAULT NULL,
+  `reaction_color` varchar(255) DEFAULT NULL,
+  `conversation_id` bigint DEFAULT NULL,
+  `conversation_message_id` bigint DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `notifications`
 --
 
-INSERT INTO `notifications` (`id`, `content`, `created_at`, `is_read`, `type`, `actor_id`, `post_id`, `recipient_id`, `thread_id`) VALUES
-(28, NULL, '2026-05-13 15:53:44.052628', b'0', 'NEW_COMMENT', 38, 142, 37, 189);
+INSERT INTO `notifications` (`id`, `content`, `created_at`, `is_read`, `type`, `actor_id`, `post_id`, `recipient_id`, `thread_id`, `reaction_icon`, `reaction_name`, `reaction_color`, `conversation_id`, `conversation_message_id`) VALUES
+(90, NULL, '2026-05-28 23:36:24.957986', b'1', 'REACTION', 95, NULL, 94, 220, 'like', 'Like', '#2577b1', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -222,13 +362,6 @@ CREATE TABLE `posts` (
   `thread_id` bigint DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Dumping data for table `posts`
---
-
-INSERT INTO `posts` (`id`, `attached_images`, `content`, `created_at`, `updated_at`, `author_id`, `thread_id`) VALUES
-(142, '[]', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">tao thấy né nhất là mấy con mê phim hàn quốc ra, đm tính cách thì hãm lol mơ mộng như phim, chuyện tình muốn lúc nào cũng đẹp như tranh hở tý là xúc động là khóc, là giận dỗi đime sợ hãi</span></p>', '2026-05-13 15:53:44.051118', '2026-05-13 15:53:44.051118', 38, 189);
-
 -- --------------------------------------------------------
 
 --
@@ -242,15 +375,16 @@ CREATE TABLE `reactions` (
   `post_id` bigint DEFAULT NULL,
   `reaction_icon_id` bigint NOT NULL,
   `thread_id` bigint DEFAULT NULL,
-  `user_id` bigint NOT NULL
+  `user_id` bigint NOT NULL,
+  `conversation_message_id` bigint DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `reactions`
 --
 
-INSERT INTO `reactions` (`id`, `created_at`, `updated_at`, `post_id`, `reaction_icon_id`, `thread_id`, `user_id`) VALUES
-(6, '2026-05-13 17:45:20.576609', '2026-05-13 17:45:20.576609', NULL, 2, 189, 1);
+INSERT INTO `reactions` (`id`, `created_at`, `updated_at`, `post_id`, `reaction_icon_id`, `thread_id`, `user_id`, `conversation_message_id`) VALUES
+(33, '2026-05-28 23:36:24.953950', '2026-05-28 23:36:24.953950', NULL, 1, 220, 95, NULL);
 
 -- --------------------------------------------------------
 
@@ -305,7 +439,20 @@ CREATE TABLE `threads` (
 --
 
 INSERT INTO `threads` (`id`, `active`, `content`, `created_at`, `pinned`, `reply_count`, `title`, `view_count`, `author_id`, `category_id`, `label_id`, `attached_images`, `last_post_at`) VALUES
-(189, b'1', '<p><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Ờ địt mẹ từ từ bố mày update dần dần.</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Cái tao share cho chúng mày là exp đúc kết về kinh nghiệm chăn và thực chiến gái trên mạng lẫn thực tế. Chỉ là những kinh nghiệm để chúng mày đỡ mắc những lỗi ngu sơ đẳng, chứ đéo có bí kíp kịch bản cặc gì đâu nhé, vì mỗi thằng mỗi hoàn cảnh khác nhau</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Vào việc:</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">1. Xác định luôn: Tỉ lệ thành công luôn chỉ ở tầm ~5% là ổn. Kể cả mày có mọi thứ trời ban, thì cũng chỉ có tỉ lệ cỡ 10%, chứ đéo bao giờ có chuyện gạ con nào là được con đấy, phần lớn thành bại là do gái nó có nứng với mày hay ko? Mà cái này thì chính bản thân đứa con gái nó cũng đéo biết được lúc nào nó nứng lên đâu tao nói thật. Cho nên: TUYỆT ĐỐI KO CỐ ĐẤM ĂN XÔI: Đi vài 3 nước thấy đéo trôi là bỏ luôn kiếm con khác, vì lợi thế của mày là có thể tiếp cận vô hạn số gái, tức DỄ TIẾP CẬN, còn nhược điểm của thời đại bây giờ là DỄ TUỘT -&gt; Như vậy việc của chúng mày là phải ĐÂM NHIỀU LÊN, chỗ nào trôi thì mới đâm vào tiếp chứ đéo phải lock mục tiêu rồi cố đâm bằng được.</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">2. Được hay ko thì phát đầu quyết định hết. Bắt đầu nói chuyện thì 5-10 câu đầu tiên quyết định thắng thua, nghĩ cho kĩ rồi hãy nói. Gặp trực tiếp thì ấn tượng trong 1 phút đầu tiên sẽ là 80% định kiến của gái về mày, đéo bao giờ thay đổi được, cho nên làm gì thì làm luôn buổi đầu, đừng bao giờ tư duy theo kiểu \"từ từ\", phông bạt bao nhiêu tất tay con mẹ mày hết đi.</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Buổi hẹn đầu tiên thì cứ sang xịn nhất có thể, có lần sau thì có tất mẹ rồi cần lồn gì nữa.</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">3. Luôn tìm múi mít: Độ tuổi 16-21 luôn thèm địt thèm yêu. Đừng bao giờ có suy nghĩ tìm mấy con \"trưởng thành\" hay mẹ đơn thân với suy nghĩ \"hàng ế sẽ giảm giá\".</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">4. Mấy con kín đáo, ra dáng ngoan hiền, nói chuyện nhã nhặn lịch sự, sở thích lành mạnh như thích mèo, truyện tranh, nhạc nhẽo phim ảnh vớ vẩn,... giờ giấc chuẩn chỉ, không dính líu vào bất cứ thói xấu dễ thấy nào, không bao giờ thả thính vớ vẩn, và đặc biệt nhất là hay cười -&gt; Đích xác là những con thèm địt nhất, thơm tho nhất, đáng theo đuổi nhất. Đâm mấy con này vừa dễ thành công vừa mang lại cho chúng mày sướng khoái</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Ngược lại mấy con có biểu hiện như sau tránh cho xa:</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- Hay chán, hay \"tâm trạng\" thất thường, hay tỏ ra dark deep, đặc biệt là hay thả thính bâng qơ</span><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">- Không có thú vui, sở thích nào rõ rệt. Nói nôm na là đéo \"nghiện\" cái gì hết. Tin tao đi con người phải \"nghiện\" thì mới chơi được, đéo biết nghiện thì cũng tức là sẵn sàng buông bỏ buông thả, lúc êm đẹp đéo sao, hơi sóng gió tí nó bỏ mày ngay.</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">5. Mình chăn nó, nó cũng đang chăn mình. Chúng mày đéo bao giờ được quên đàn bà nó cũng đang nhìn chúng mày và đánh giá y hệt những gì chúng mày đang làm với nó. Chỉ cần luôn nhớ như vậy, đừng bao giờ ảo tưởng chỉ có mình là kẻ đi săn, tự chúng mày sẽ ngộ ra rất nhiều thứ nhỏ nhặt lợi hại. Tóm lại \"luôn nghĩ 2 chiều, đừng chỉ nhìn ở góc của mình\"</span><br><br><span style=\"background-color:rgb(254,254,254);color:rgb(20,20,20);font-size:18px;\">Ờ rồi thằng nào có exp gì thì anh em trao đổi học hỏi lẫn nhau đi.</span></p>', '2026-05-13 15:50:02.699925', b'0', 1, 'Trao đổi kinh nghiệm về gái', 23, 37, 10, 6, '[]', '2026-05-13 15:53:44.051118');
+(220, b'1', '<p>đây là nội dung test bài viết số 1</p>', '2026-05-28 23:36:11.050508', b'0', 0, 'test bài viết số 1', 7, 94, 7, 7, '[]', '2026-05-28 23:36:11.047402');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `thread_subscriptions`
+--
+
+CREATE TABLE `thread_subscriptions` (
+  `id` bigint NOT NULL,
+  `is_following` bit(1) NOT NULL,
+  `thread_id` bigint NOT NULL,
+  `user_id` bigint NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -321,53 +468,21 @@ CREATE TABLE `users` (
   `email` varchar(255) DEFAULT NULL,
   `reset_code` varchar(255) DEFAULT NULL,
   `reset_code_expiry` datetime(6) DEFAULT NULL,
-  `display_name` varchar(255) DEFAULT NULL
+  `display_name` varchar(255) DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `password`, `username`, `avatar`, `email`, `reset_code`, `reset_code_expiry`, `display_name`) VALUES
-(1, '$2a$10$9ijOKopSb6/uK3Z.ZGsrcuNOf4F16p8FDO0llFVLobiCOn5q9I2o.', 'admin', '#3f51b5', NULL, NULL, NULL, NULL),
-(2, '$2a$10$jAk/ZlViZS5D3VYASEplYurbzK0lLmhwKe66h/wzwtYPz3hsFs8Ty', 'user01', '#ff9800', NULL, NULL, NULL, NULL),
-(3, '$2a$10$i52hSXKbS4RqeYimw7xAHu4YXFtxLAg5zGKkPHC37PVeG.EtWpZk2', 'tester', NULL, NULL, NULL, NULL, NULL),
-(4, '$2a$10$vZ8cyER2eHAdBzyqf/w5uuxMoWLz7tfqq4pPoztnsjb7hZjRuPWfC', 'user02', NULL, NULL, NULL, NULL, NULL),
-(5, '$2a$10$PWHubAcanB47WaEkH0PnZuPBlj4SJxcuKs0/LvXlI1W9mEDsEsS5a', 'user03', '#ff5722', NULL, NULL, NULL, NULL),
-(6, '$2a$10$e4R42eA1hMYXYFf.mWNf4OitBIC3lhG6gucoNAplHb6JHJvb3L48u', 'user04', '#03a9f4', 'vonhuhieu2003@gmail.com', NULL, NULL, NULL),
-(7, '$2a$10$XO3NuxFEJ/YVB7tsWTPcyeEAlp4aktEXqfUaXf9vq9zoukLF1pWEK', 'Pro Trader ❤️', '#795548', 'ProTrader@gmail.com', NULL, NULL, NULL),
-(8, '$2a$10$5B9MOACgtBo9V6veWd8UiugDi9cQb6hslty9Z81Y8LBVwhKMegGmS', 'Fast159', '#e91e63', 'Fast159@gmail.com', NULL, NULL, NULL),
-(9, '$2a$10$nId8mosJxLhj7r3Sr7LSbeQgC3q.v7boo7JliQsnr6I0xaS0TpkMy', 'Wun', '#e91e63', 'Wun@gmail.com', NULL, NULL, NULL),
-(10, '$2a$10$lBfypm18sqFhUFLa1OoM4OjdL0rHkfwDhpG79BfCUgoIXYmxL4yYO', 'archi', '#3f51b5', 'archi@gmail.com', NULL, NULL, NULL),
-(11, '$2a$10$/FwHbZ1r3VifLosbJ8DOuOJ36LOkWTL8S69we1a4CG0fwPNN94wkq', 'Polimen', '#009688', 'Polimen@gmail.com', NULL, NULL, NULL),
-(12, '$2a$10$MDZFGN5vgixFWGhmossdougu.EbZMJS06ID/sLFi5dJFyDW5EPT4q', 'Tun2k', '#03a9f4', 'Tun2k@gmail.com', NULL, NULL, NULL),
-(13, '$2a$10$RWIw.qotsRWxqlLAxgLPB.OOgIsZ9hBQsnlEdZQoF9Az4QPInQjvW', 'Sharingan Vạn Hoa Đồng', '#ffc107', 'test@gmail.com', NULL, NULL, NULL),
-(14, '$2a$10$il6sgCWMEnCFFbYbtzgpD.ExWsxsaFdjAXlePRNyYOZKdF7/jrtuy', 'binzuto', '#8bc34a', 'binzuto@gmail.com', NULL, NULL, NULL),
-(15, '$2a$10$TWRa36ioAfMQkR2wafV1U.hvuTcgsRxUih8HotZbgO9W03GUtYENa', 'ducpm9', '#2196f3', 'ducpm9@gmail.com', NULL, NULL, NULL),
-(16, '$2a$10$rvV73hLsN98ZZvL9CM9rBuFPOWOhTyg0LCnSh0aGhfKVLoxtQDnQy', 'banhkeoth', '#673ab7', 'banhkeoth@gmail.com', NULL, NULL, NULL),
-(17, '$2a$10$U7RXDfzyCocZGpG8yZBwwOtqrfQ8GpXfodvLdZz0weieOHmQW/hgW', 'laokhonglo', '#4caf50', 'laokhonglo@gmail.com', NULL, NULL, NULL),
-(18, '$2a$10$wOk/dsG58NG/SVNCZlZx5eLOvB.ud283HGYGQKuP4llDFgvb4Fbf6', 'klu123', '#4caf50', 'klu123@gmail.com', NULL, NULL, NULL),
-(19, '$2a$10$6x4r/6kUQeunvrje3kygS.aQvchHMbz9hskXkwLuWm91AHaB01scC', 'tnhuw', '#00bcd4', 'tnhuw@gmail.com', NULL, NULL, NULL),
-(20, '$2a$10$4Tu2ZQD8pLaTr2Pb2GJWIeSNJmU63S.2vCZhQ/sOjtzpd5MDmPjxS', 'hettienchoigai', '#f44336', 'hettienchoigai@gmail.com', NULL, NULL, NULL),
-(21, '$2a$10$ZftL7Gcl48hboKC.cE6Am.l.nBm1azVs.9E4Z56Qw1dP6IFLulBxq', 'Henry888888', 'hsl(311, 70%, 45%)', 'Henry888888@gmail.com', NULL, NULL, NULL),
-(22, '$2a$10$HIJPFmaTnPTIRVz4akfUUOgNUpChME4ndmxEtbeoOriKVKUW5gyYa', 'ThichDamLon', 'hsl(48, 70%, 45%)', 'ThichDamLon@gmail.com', NULL, NULL, 'Thích Dâm Lồn'),
-(23, '$2a$10$nVvti/12tyRvGbhrAoYaPOLcmsmAQJ15YXMrXBXXxF31tbhkJBUYa', 'Tuanh020393', 'hsl(200, 70%, 45%)', 'Tuanh020393@gmail.com', NULL, NULL, 'Tuanh020393'),
-(24, '$2a$10$O5kH/e91wJeuN9Dsp9a6x.JoxlpiR3m8DC4Q35F3L5p1UEeFwBZ.S', 'ditieubao88', 'hsl(319, 70%, 45%)', 'ditieubao88@gmail.com', NULL, NULL, 'ditieubao88'),
-(25, '$2a$10$4b7nUIlmGxPcao1NNo53XO35Jvpwa6ec3aYQizRucToBLxMnjmlnu', 'Elian', 'hsl(226, 70%, 45%)', 'Elian@gmail.com', NULL, NULL, 'Elian'),
-(26, '$2a$10$3FU08KvYJg9FD.ORJ7xQJ.dqJ2GrRSRJ4EKno8q4LL13yFe.PnkQu', 'spy_cnn', 'hsl(179, 70%, 45%)', 'spy_cnn@gmail.com', NULL, NULL, 'spy_cnn'),
-(27, '$2a$10$d20GvSVkE62vxhX/9HjxAOMywe0MKWk/kmmBm9Ora8Q8.H3r8ZMyK', 'Vklaeoi', 'hsl(247, 70%, 45%)', 'Vklaeoi@gmail.com', NULL, NULL, 'Vklaeoi'),
-(28, '$2a$10$3mbQjMu5ZeUfnrWokyXgkOS.ePvu7R2f9Dzzw1sdkaveZB0kokEEW', 'Dskinder18', 'hsl(184, 70%, 45%)', 'Dskinder18@gmail.com', NULL, NULL, 'Dskinder18'),
-(29, '$2a$10$E74.hGwd6bHj/P9K/fBh6ut2oLhGCwPbib7gc.9ym5y.ytUKNQxRe', 'Tanker69', 'hsl(280, 70%, 45%)', 'Tanker69@gmail.com', NULL, NULL, 'Tanker69'),
-(30, '$2a$10$i3M/XadwHhb9NduLdP9N2.VQNiiztwKcSc203o4vIMPbkdWlbFDG.', 'ksonnn', 'hsl(156, 70%, 45%)', 'ksonnn@gmail.com', NULL, NULL, 'ksonnn'),
-(31, '$2a$10$0Troodt97ElI1GWe/D0DBuWgsU7ARyD8gbla0tGFlFq1HqWgHFcaS', 'Vinhsinh12', 'hsl(129, 70%, 45%)', 'Vinhsinh12@gmail.com', NULL, NULL, 'Vinhsinh12'),
-(32, '$2a$10$Mi79uXqPivU.fN0Z7obaXOZpM5lLOQZpiixWG3BWNv.mTeo6V1eqW', 'garung193', 'hsl(165, 70%, 45%)', 'garung193@gmail.com', NULL, NULL, 'garung193'),
-(33, '$2a$10$PY9tRPzS.pAysOu8zdNR3OJEf2FzzyqqQJl9PihczaNu9rSdswURy', 'thanchien', 'hsl(63, 70%, 45%)', 'thanchien@gmail.com', NULL, NULL, 'thanchien'),
-(34, '$2a$10$9hSMHhp01hvd6GL.WXCgyOYAlZq8Z2jctA7dmYLZuJ/LpTdAgfh9i', 'haimyxam', 'hsl(284, 70%, 45%)', 'haimyxam@gmail.com', NULL, NULL, 'haimyxam'),
-(35, '$2a$10$6QvA9qHcJdBhqhsVypuZIugtK2Af/j6RD82.H0c1tc12vL0VJNP2q', 'Android17', 'hsl(225, 70%, 45%)', 'Android17@gmail.com', NULL, NULL, 'Android17'),
-(36, '$2a$10$d0ibjCGyIliI6vQ95dlEdOdL23wf6Zxo2taBR94ofvNxdVuNFPjtu', 'Voldermort', 'hsl(33, 70%, 45%)', 'Voldermort@gmail.com', NULL, NULL, 'Voldermort'),
-(37, '$2a$10$oz7oXRIkXj.YmbCXpeuv4eLryo6yrvcnKaVvocgQfmjRcwN6tCEb6', 'hongtran', 'hsl(99, 70%, 45%)', 'hongtran@gmail.com', NULL, NULL, 'Hồng Trần'),
-(38, '$2a$10$FcySdHCTPCvbbcqdb8.gluz0BjYXaYNO23DmObisuPvW/qFaA4DTe', 'slowguy', 'hsl(182, 70%, 45%)', 'slowguy@gmail.com', NULL, NULL, 'slowguy'),
-(39, '$2a$10$Rv5GQaBR7T9Fd5yXJVxg/ePrx1BNq4dPnxYTCzgYUWpIiluEV4BzS', 'Deadpoo', 'hsl(39, 70%, 45%)', 'Deadpoo@gmail.com', NULL, NULL, 'Deadpoo');
+INSERT INTO `users` (`id`, `password`, `username`, `avatar`, `email`, `reset_code`, `reset_code_expiry`, `display_name`, `created_at`) VALUES
+(1, '$2a$10$9ijOKopSb6/uK3Z.ZGsrcuNOf4F16p8FDO0llFVLobiCOn5q9I2o.', 'admin', '#3f51b5', NULL, NULL, NULL, NULL, '2025-08-29 12:00:00.000000'),
+(65, '$2a$10$pEHY0q6kk0w1.2VFEI4s3u34Y5rXNdmukyrTnBXv0bZuz.jabwna6', 'superadmin', 'hsl(18, 70%, 45%)', NULL, NULL, NULL, NULL, '2026-05-27 14:31:01.860628'),
+(92, '$2a$10$ORRDXmQcqo0dTttFQ9JZWup0HiwmrNL4SQVECZA1DPKN962jsLh5e', 'user01', 'hsl(59, 70%, 45%)', NULL, NULL, NULL, NULL, '2026-05-28 18:54:38.421153'),
+(93, '$2a$10$haFXhZd2GBkGh2QBjCJDKOZh4P0OHBhQjFfd0SVtjyp78dmrCIi0a', 'user02', 'hsl(291, 70%, 45%)', NULL, NULL, NULL, NULL, '2026-05-28 18:54:45.466867'),
+(94, '$2a$10$ODEKTB5tRc9v83ZwREL51.6tuJQ5a.qBwsDo/o6h9LEeOHdcJg/Zy', 'userA', 'hsl(44, 70%, 45%)', NULL, NULL, NULL, 'user A', '2026-05-28 23:25:02.756643'),
+(95, '$2a$10$fP4sChBRkEbHO52m8CHWYekX8Ktvo8L0bFDC5W2For6FYBMtzVmKa', 'userB', 'hsl(282, 70%, 45%)', NULL, NULL, NULL, 'user B', '2026-05-28 23:25:14.916841');
 
 -- --------------------------------------------------------
 
@@ -386,44 +501,11 @@ CREATE TABLE `user_roles` (
 
 INSERT INTO `user_roles` (`user_id`, `role`) VALUES
 (1, 'ROLE_ADMIN'),
-(2, 'ROLE_USER'),
-(3, 'ROLE_USER'),
-(4, 'ROLE_USER'),
-(5, 'ROLE_USER'),
-(6, 'ROLE_USER'),
-(7, 'ROLE_USER'),
-(8, 'ROLE_USER'),
-(9, 'ROLE_USER'),
-(10, 'ROLE_USER'),
-(11, 'ROLE_USER'),
-(12, 'ROLE_USER'),
-(13, 'ROLE_USER'),
-(14, 'ROLE_USER'),
-(15, 'ROLE_USER'),
-(16, 'ROLE_USER'),
-(17, 'ROLE_USER'),
-(18, 'ROLE_USER'),
-(19, 'ROLE_USER'),
-(20, 'ROLE_USER'),
-(21, 'ROLE_USER'),
-(22, 'ROLE_USER'),
-(23, 'ROLE_USER'),
-(24, 'ROLE_USER'),
-(25, 'ROLE_USER'),
-(26, 'ROLE_USER'),
-(27, 'ROLE_USER'),
-(28, 'ROLE_USER'),
-(29, 'ROLE_USER'),
-(30, 'ROLE_USER'),
-(31, 'ROLE_USER'),
-(32, 'ROLE_USER'),
-(33, 'ROLE_USER'),
-(34, 'ROLE_USER'),
-(35, 'ROLE_USER'),
-(36, 'ROLE_USER'),
-(37, 'ROLE_USER'),
-(38, 'ROLE_USER'),
-(39, 'ROLE_USER');
+(65, 'ROLE_SUPER_ADMIN'),
+(92, 'ROLE_USER'),
+(93, 'ROLE_USER'),
+(94, 'ROLE_USER'),
+(95, 'ROLE_USER');
 
 --
 -- Indexes for dumped tables
@@ -442,6 +524,29 @@ ALTER TABLE `categories`
 --
 ALTER TABLE `category_groups`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `conversations`
+--
+ALTER TABLE `conversations`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `FK537ttdl13uqjd45m9850v038i` (`creator_id`);
+
+--
+-- Indexes for table `conversation_messages`
+--
+ALTER TABLE `conversation_messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `FKcr8qqgnqnaqq2hw3gr4wtfe2a` (`conversation_id`),
+  ADD KEY `FK57egbymdh9yllolr5i6hdwiwq` (`sender_id`);
+
+--
+-- Indexes for table `conversation_participants`
+--
+ALTER TABLE `conversation_participants`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `FK84npv3fo2vwl7ut63im0p417q` (`conversation_id`),
+  ADD KEY `FKjukjgq6uinvvk4307y8u9lixu` (`user_id`);
 
 --
 -- Indexes for table `labels`
@@ -464,7 +569,9 @@ ALTER TABLE `notifications`
   ADD KEY `FK4sd9fik0uthbk6d9rsxco4uja` (`actor_id`),
   ADD KEY `FK599539lym3mnkbqks0u806eac` (`post_id`),
   ADD KEY `FKqqnsjxlwleyjbxlmm213jaj3f` (`recipient_id`),
-  ADD KEY `FKny4eo4f76xn6u916yyy223q2b` (`thread_id`);
+  ADD KEY `FKny4eo4f76xn6u916yyy223q2b` (`thread_id`),
+  ADD KEY `FKgvf1ydtdpj3mv66w9o9uf0rmd` (`conversation_id`),
+  ADD KEY `FKl50ermcl00s5lxyy7k2c8s2ab` (`conversation_message_id`);
 
 --
 -- Indexes for table `polls`
@@ -504,9 +611,11 @@ ALTER TABLE `reactions`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_user_thread_reaction` (`user_id`,`thread_id`),
   ADD UNIQUE KEY `uq_user_post_reaction` (`user_id`,`post_id`),
+  ADD UNIQUE KEY `uq_user_message_reaction` (`user_id`,`conversation_message_id`),
   ADD KEY `FKh8b4h9wybhu8tc5w11e8t3krc` (`post_id`),
   ADD KEY `FKp9d3mnkttyrrly1e9hwcthyxe` (`reaction_icon_id`),
-  ADD KEY `FK4udx0pcqyqe9787n6lg8qhwwn` (`thread_id`);
+  ADD KEY `FK4udx0pcqyqe9787n6lg8qhwwn` (`thread_id`),
+  ADD KEY `FK5r3gua5lg2y4roccbye9vxjux` (`conversation_message_id`);
 
 --
 -- Indexes for table `reaction_icons`
@@ -522,6 +631,14 @@ ALTER TABLE `threads`
   ADD KEY `FK7n8uiua8ljj5dwubk7wxlm9d0` (`author_id`),
   ADD KEY `FKnxv40ka4vbktf3ab4pl4m9lvx` (`category_id`),
   ADD KEY `FKijm3d2bl51uo6ap2dr696fdul` (`label_id`);
+
+--
+-- Indexes for table `thread_subscriptions`
+--
+ALTER TABLE `thread_subscriptions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `UK6lf429wbhgcjs6vaswuhig7m2` (`thread_id`,`user_id`),
+  ADD KEY `FKm86an08p03ogwypwpghn7uedy` (`user_id`);
 
 --
 -- Indexes for table `users`
@@ -553,6 +670,24 @@ ALTER TABLE `category_groups`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT for table `conversations`
+--
+ALTER TABLE `conversations`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+
+--
+-- AUTO_INCREMENT for table `conversation_messages`
+--
+ALTER TABLE `conversation_messages`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+
+--
+-- AUTO_INCREMENT for table `conversation_participants`
+--
+ALTER TABLE `conversation_participants`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
+
+--
 -- AUTO_INCREMENT for table `labels`
 --
 ALTER TABLE `labels`
@@ -568,7 +703,7 @@ ALTER TABLE `menus`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=29;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=91;
 
 --
 -- AUTO_INCREMENT for table `polls`
@@ -592,13 +727,13 @@ ALTER TABLE `poll_votes`
 -- AUTO_INCREMENT for table `posts`
 --
 ALTER TABLE `posts`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=143;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=201;
 
 --
 -- AUTO_INCREMENT for table `reactions`
 --
 ALTER TABLE `reactions`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT for table `reaction_icons`
@@ -610,13 +745,19 @@ ALTER TABLE `reaction_icons`
 -- AUTO_INCREMENT for table `threads`
 --
 ALTER TABLE `threads`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=193;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=221;
+
+--
+-- AUTO_INCREMENT for table `thread_subscriptions`
+--
+ALTER TABLE `thread_subscriptions`
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
 
 --
 -- Constraints for dumped tables
@@ -630,11 +771,33 @@ ALTER TABLE `categories`
   ADD CONSTRAINT `FKsaok720gsu4u2wrgbk10b5n8d` FOREIGN KEY (`parent_id`) REFERENCES `categories` (`id`);
 
 --
+-- Constraints for table `conversations`
+--
+ALTER TABLE `conversations`
+  ADD CONSTRAINT `FK537ttdl13uqjd45m9850v038i` FOREIGN KEY (`creator_id`) REFERENCES `users` (`id`);
+
+--
+-- Constraints for table `conversation_messages`
+--
+ALTER TABLE `conversation_messages`
+  ADD CONSTRAINT `FK57egbymdh9yllolr5i6hdwiwq` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `FKcr8qqgnqnaqq2hw3gr4wtfe2a` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`);
+
+--
+-- Constraints for table `conversation_participants`
+--
+ALTER TABLE `conversation_participants`
+  ADD CONSTRAINT `FK84npv3fo2vwl7ut63im0p417q` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`),
+  ADD CONSTRAINT `FKjukjgq6uinvvk4307y8u9lixu` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
+
+--
 -- Constraints for table `notifications`
 --
 ALTER TABLE `notifications`
   ADD CONSTRAINT `FK4sd9fik0uthbk6d9rsxco4uja` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `FK599539lym3mnkbqks0u806eac` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`),
+  ADD CONSTRAINT `FKgvf1ydtdpj3mv66w9o9uf0rmd` FOREIGN KEY (`conversation_id`) REFERENCES `conversations` (`id`),
+  ADD CONSTRAINT `FKl50ermcl00s5lxyy7k2c8s2ab` FOREIGN KEY (`conversation_message_id`) REFERENCES `conversation_messages` (`id`),
   ADD CONSTRAINT `FKny4eo4f76xn6u916yyy223q2b` FOREIGN KEY (`thread_id`) REFERENCES `threads` (`id`),
   ADD CONSTRAINT `FKqqnsjxlwleyjbxlmm213jaj3f` FOREIGN KEY (`recipient_id`) REFERENCES `users` (`id`);
 
@@ -670,6 +833,7 @@ ALTER TABLE `posts`
 --
 ALTER TABLE `reactions`
   ADD CONSTRAINT `FK4udx0pcqyqe9787n6lg8qhwwn` FOREIGN KEY (`thread_id`) REFERENCES `threads` (`id`),
+  ADD CONSTRAINT `FK5r3gua5lg2y4roccbye9vxjux` FOREIGN KEY (`conversation_message_id`) REFERENCES `conversation_messages` (`id`),
   ADD CONSTRAINT `FKh8b4h9wybhu8tc5w11e8t3krc` FOREIGN KEY (`post_id`) REFERENCES `posts` (`id`),
   ADD CONSTRAINT `FKp9d3mnkttyrrly1e9hwcthyxe` FOREIGN KEY (`reaction_icon_id`) REFERENCES `reaction_icons` (`id`),
   ADD CONSTRAINT `FKqmewaibcp5bxtlqxc2cawhuln` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`);
@@ -681,6 +845,13 @@ ALTER TABLE `threads`
   ADD CONSTRAINT `FK7n8uiua8ljj5dwubk7wxlm9d0` FOREIGN KEY (`author_id`) REFERENCES `users` (`id`),
   ADD CONSTRAINT `FKijm3d2bl51uo6ap2dr696fdul` FOREIGN KEY (`label_id`) REFERENCES `labels` (`id`),
   ADD CONSTRAINT `FKnxv40ka4vbktf3ab4pl4m9lvx` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`);
+
+--
+-- Constraints for table `thread_subscriptions`
+--
+ALTER TABLE `thread_subscriptions`
+  ADD CONSTRAINT `FKm86an08p03ogwypwpghn7uedy` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `FKotxm1mv6djj99sssd61hd5er8` FOREIGN KEY (`thread_id`) REFERENCES `threads` (`id`);
 
 --
 -- Constraints for table `user_roles`
