@@ -239,7 +239,7 @@ public class ReactionService {
         }
 
         try {
-            notificationService.sendConversationReactionNotification(currentUser, message.getSender(), message.getConversation(), message, icon);
+            notificationService.sendConversationReactionNotification(currentUser.getId(), message.getSender().getId(), message.getConversation().getId(), message.getId(), icon.getId());
         } catch (Exception e) {
             // Don't block reaction
         }

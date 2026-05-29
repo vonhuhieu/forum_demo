@@ -14,6 +14,9 @@ import com.forum.entity.ConversationMessage;
 import com.forum.mapper.NotificationMapper;
 import com.forum.repository.NotificationRepository;
 import com.forum.repository.UserRepository;
+import com.forum.repository.ConversationRepository;
+import com.forum.repository.ConversationMessageRepository;
+import com.forum.repository.ReactionIconRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -35,6 +38,9 @@ public class NotificationService {
     private final NotificationMapper notificationMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
+    private final ConversationRepository conversationRepository;
+    private final ConversationMessageRepository conversationMessageRepository;
+    private final ReactionIconRepository reactionIconRepository;
 
     /**
      * Logic to generate notification record and fire realtime message to targeted user socket.
@@ -228,8 +234,18 @@ public class NotificationService {
 
     @Async
     @Transactional
-    public void sendConversationReactionNotification(User actor, User recipient, Conversation conversation, ConversationMessage message, ReactionIcon icon) {
-        if (recipient == null || actor == null || recipient.getId().equals(actor.getId())) {
+    public void sendConversationReactionNotification(Long actorId, Long recipientId, Long conversationId, Long messageId, Long iconId) {
+        User actor = userRepository.findById(actorId).orElse(null);
+        User recipient = userRepository.findById(recipientId).orElse(null);
+        Conversation conversation = conversationRepository.findById(conversationId).orElse(null);
+        ConversationMessage message = conversationMessageRepository.findById(messageId).orElse(null);
+        ReactionIcon icon = reactionIconRepository.findById(iconId).orElse(null);
+
+        if (recipient == null || actor == null || conversation == null || message == null || icon == null) {
+            return;
+        }
+
+        if (recipient.getId().equals(actor.getId())) {
             return;
         }
 

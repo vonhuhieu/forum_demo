@@ -284,7 +284,7 @@ CREATE TABLE `notifications` (
   `content` text,
   `created_at` datetime(6) DEFAULT NULL,
   `is_read` bit(1) NOT NULL,
-  `type` enum('NEW_COMMENT','QUOTE','MENTION','REACTION') DEFAULT NULL,
+  `type` enum('NEW_COMMENT','QUOTE','MENTION','REACTION','CONVERSATION_REACTION') DEFAULT NULL,
   `actor_id` bigint DEFAULT NULL,
   `post_id` bigint DEFAULT NULL,
   `recipient_id` bigint NOT NULL,

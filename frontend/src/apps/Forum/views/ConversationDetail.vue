@@ -449,6 +449,7 @@ export default {
     },
     async handleConversationClicked(event) {
       if (String(event.detail.conversationId) === String(this.conversation?.id)) {
+        await this.fetchConversation(true)
         if (event.detail.messageId) {
           this.highlightedMessageId = event.detail.messageId
           await this.$nextTick()

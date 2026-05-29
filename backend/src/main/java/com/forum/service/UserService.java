@@ -245,6 +245,16 @@ public class UserService {
                 .setParameter("userId", id)
                 .executeUpdate();
 
+        // Clean up reactions on the conversation messages sent by this user to prevent FK constraint violation
+        entityManager.createQuery("DELETE FROM Reaction r WHERE r.conversationMessage.id IN (SELECT cm.id FROM ConversationMessage cm WHERE cm.sender.id = :userId)")
+                .setParameter("userId", id)
+                .executeUpdate();
+
+        // Clean up notifications pointing to the conversation messages sent by this user to prevent FK constraint violation
+        entityManager.createQuery("DELETE FROM Notification n WHERE n.conversationMessage.id IN (SELECT cm.id FROM ConversationMessage cm WHERE cm.sender.id = :userId)")
+                .setParameter("userId", id)
+                .executeUpdate();
+
         entityManager.createQuery("DELETE FROM ConversationMessage cm WHERE cm.sender.id = :userId")
                 .setParameter("userId", id)
                 .executeUpdate();
