@@ -21,6 +21,15 @@ export const alertSuccess = (message) => {
   })
 }
 
+export const alertWarning = (message) => {
+  return Swal.fire({
+    icon: 'warning',
+    title: 'Thông báo',
+    text: message,
+    confirmButtonColor: '#f39c12'
+  })
+}
+
 export const alertError = (message) => {
   return Swal.fire({
     icon: 'error',
@@ -59,6 +68,7 @@ export const toastError = (message) => {
 
 export default {
   alertSuccess,
+  alertWarning,
   alertError,
   alertConfirm,
   toastSuccess,

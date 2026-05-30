@@ -52,9 +52,15 @@
                    <span class="notif-title">Hộp thư</span>
                 </div>
                 
-                <div class="notif-list" v-if="conversations.length > 0">
+                <!-- Mail Tabs -->
+                <div class="mail-tabs">
+                   <button class="mail-tab-btn" :class="{ 'active': activeMailTab === 'all' }" @click="activeMailTab = 'all'">Tất cả</button>
+                   <button class="mail-tab-btn" :class="{ 'active': activeMailTab === 'unread' }" @click="activeMailTab = 'unread'">Chưa đọc</button>
+                </div>
+                
+                <div class="notif-list" v-if="paginatedConversations.length > 0">
                    <div 
-                     v-for="convo in conversations" 
+                     v-for="convo in paginatedConversations" 
                      :key="convo.id" 
                      class="notif-item" 
                      :class="{ 'unread': !convo.isRead }"
@@ -107,10 +113,13 @@
                 </div>
                 
                 <div class="notif-empty" v-else>
-                   Không có cuộc hội thoại nào mới.
+                   <span v-if="activeMailTab === 'unread'">Không có cuộc đối thoại chưa đọc nào.</span>
+                   <span v-else>Không có cuộc đối thoại nào mới.</span>
                 </div>
                 
                 <div class="notif-footer">
+                   <a href="#" class="btn-load-more" :class="{ 'disabled': !hasMoreMail }" @click.prevent="loadMoreMail">Xem thêm</a>
+                   <span style="color: #ccc;">·</span>
                    <a href="#" @click.prevent>Xem tất cả</a>
                    <span style="color: #ccc;">·</span>
                    <a href="#" @click.prevent="goToAddConvo">Bắt đầu đối thoại mới</a>
@@ -204,7 +213,7 @@ import conversationService from '@/apps/Forum/services/conversation.service'
 import menuService from '@/apps/Forum/services/menu.service'
 import notificationService from '@/apps/Forum/services/notification.service'
 import { formatForumDate } from '@/shared/utils/date'
-import { alertSuccess } from '@/shared/utils/swal'
+import { alertSuccess, alertWarning } from '@/shared/utils/swal'
 
 export default {
   name: 'ForumHeader',
@@ -221,7 +230,26 @@ export default {
       isShaking: false,
       conversations: [],
       unreadMailCount: 0,
-      isMailShaking: false
+      isMailShaking: false,
+      activeMailTab: 'all',
+      mailLimitAll: 10,
+      mailLimitUnread: 10
+    }
+  },
+  computed: {
+    filteredConversations() {
+      if (this.activeMailTab === 'unread') {
+        return this.conversations.filter(c => !c.isRead)
+      }
+      return this.conversations
+    },
+    paginatedConversations() {
+      const limit = this.activeMailTab === 'all' ? this.mailLimitAll : this.mailLimitUnread
+      return this.filteredConversations.slice(0, limit)
+    },
+    hasMoreMail() {
+      const limit = this.activeMailTab === 'all' ? this.mailLimitAll : this.mailLimitUnread
+      return this.filteredConversations.length > limit
     }
   },
   async mounted() {
@@ -369,6 +397,22 @@ export default {
       this.showMailDropdown = !this.showMailDropdown
       this.showNotifDropdown = false
       this.showUserDropdown = false
+      if (this.showMailDropdown) {
+        this.activeMailTab = 'all'
+        this.mailLimitAll = 10
+        this.mailLimitUnread = 10
+      }
+    },
+    loadMoreMail() {
+      if (this.hasMoreMail) {
+        if (this.activeMailTab === 'all') {
+          this.mailLimitAll += 10
+        } else {
+          this.mailLimitUnread += 10
+        }
+      } else {
+        alertWarning('Đã tải toàn bộ thông báo')
+      }
     },
     triggerMailShake() {
        this.isMailShaking = false;
@@ -901,5 +945,46 @@ export default {
   font-size: 0.85rem;
   color: #666;
   margin-top: 2px;
+}
+
+/* Mail Tabs and Pagination styling */
+.mail-tabs {
+  display: flex;
+  background: #fdfdfd;
+  border-bottom: 1px solid #eee;
+  padding: 0 15px;
+}
+
+.mail-tab-btn {
+  background: none;
+  border: none;
+  padding: 10px 15px;
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  outline: none;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+.mail-tab-btn:hover {
+  color: #2980b9;
+}
+
+.mail-tab-btn.active {
+  color: #2980b9;
+  border-bottom-color: #3498db;
+  font-weight: bold;
+}
+
+.btn-load-more.disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.notif-footer a.btn-load-more.disabled:hover {
+  text-decoration: none;
 }
 </style>
