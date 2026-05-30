@@ -288,6 +288,8 @@ public class ConversationService {
             conversationParticipantRepository.save(p);
         });
 
+        notificationRepository.markAllConversationNotificationsAsRead(currentUsername);
+
         return ResponseDTO.success(null);
     }
 

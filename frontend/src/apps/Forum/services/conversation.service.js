@@ -24,6 +24,10 @@ class ConversationService {
   addMessage(id, payload) {
     return api.post(`/conversations/${id}/messages`, payload)
   }
+
+  markAllAsRead() {
+    return api.put('/conversations/read-all')
+  }
 }
 
 export default new ConversationService()

@@ -52,11 +52,14 @@
                    <span class="notif-title">Hộp thư</span>
                 </div>
                 
-                <!-- Mail Tabs -->
-                <div class="mail-tabs">
-                   <button class="mail-tab-btn" :class="{ 'active': activeMailTab === 'all' }" @click="activeMailTab = 'all'">Tất cả</button>
-                   <button class="mail-tab-btn" :class="{ 'active': activeMailTab === 'unread' }" @click="activeMailTab = 'unread'">Chưa đọc</button>
-                </div>
+                 <!-- Mail Tabs -->
+                 <div class="mail-tabs">
+                    <div class="mail-tabs-left">
+                       <button class="mail-tab-btn" :class="{ 'active': activeMailTab === 'all' }" @click="activeMailTab = 'all'">Tất cả</button>
+                       <button class="mail-tab-btn" :class="{ 'active': activeMailTab === 'unread' }" @click="activeMailTab = 'unread'">Chưa đọc</button>
+                    </div>
+                    <button class="btn-mark-mail-read-header" @click.stop="markAllMailRead">Đánh dấu đã xem</button>
+                 </div>
                 
                 <div class="notif-list" v-if="paginatedConversations.length > 0">
                    <div 
@@ -139,15 +142,23 @@
 
              <!-- Notification Dropdown -->
              <div class="notif-dropdown" v-show="showNotifDropdown">
-                <div class="notif-header">
-                   <span class="notif-title">Thông báo</span>
-                   <button class="btn-read-all" v-if="unreadCount > 0" @click.stop="markAllRead">Đánh dấu đã đọc</button>
-                </div>
-                
-                <div class="notif-list" v-if="notifications.length > 0">
-                   <div 
-                     v-for="notif in notifications" 
-                     :key="notif.id" 
+                 <div class="notif-header">
+                    <span class="notif-title">Thông báo</span>
+                 </div>
+                 
+                 <!-- Notification Tabs -->
+                 <div class="mail-tabs">
+                    <div class="mail-tabs-left">
+                       <button class="mail-tab-btn" :class="{ 'active': activeNotifTab === 'all' }" @click="activeNotifTab = 'all'">Tất cả</button>
+                       <button class="mail-tab-btn" :class="{ 'active': activeNotifTab === 'unread' }" @click="activeNotifTab = 'unread'">Chưa đọc</button>
+                    </div>
+                    <button class="btn-mark-mail-read-header" @click.stop="markAllRead">Đánh dấu đã xem</button>
+                 </div>
+                 
+                 <div class="notif-list" v-if="paginatedNotifications.length > 0">
+                    <div 
+                      v-for="notif in paginatedNotifications" 
+                      :key="notif.id" 
                      class="notif-item" 
                      :class="{ 'unread': !notif.isRead }"
                      @click="handleNotifClick(notif)"
@@ -187,12 +198,14 @@
                 </div>
                 
                 <div class="notif-empty" v-else>
-                   Không có thông báo nào.
+                   <span v-if="activeNotifTab === 'unread'">Không có thông báo chưa đọc nào.</span>
+                   <span v-else>Không có thông báo nào mới.</span>
                 </div>
                 
                 <div class="notif-footer">
+                    <a href="#" class="btn-load-more" :class="{ 'disabled': !hasMoreNotif }" @click.prevent="loadMoreNotif">Xem thêm</a>
+                    <span style="color: #ccc;">·</span>
                     <a href="#" @click.prevent>Xem tất cả</a>
-                    <button class="btn-mark-all-read" @click.stop="markAllRead">Đánh dấu đã xem</button>
                  </div>
              </div>
           </div>
@@ -233,7 +246,10 @@ export default {
       isMailShaking: false,
       activeMailTab: 'all',
       mailLimitAll: 10,
-      mailLimitUnread: 10
+      mailLimitUnread: 10,
+      activeNotifTab: 'all',
+      notifLimitAll: 10,
+      notifLimitUnread: 10
     }
   },
   computed: {
@@ -250,6 +266,20 @@ export default {
     hasMoreMail() {
       const limit = this.activeMailTab === 'all' ? this.mailLimitAll : this.mailLimitUnread
       return this.filteredConversations.length > limit
+    },
+    filteredNotifications() {
+      if (this.activeNotifTab === 'unread') {
+        return this.notifications.filter(n => !n.isRead)
+      }
+      return this.notifications
+    },
+    paginatedNotifications() {
+      const limit = this.activeNotifTab === 'all' ? this.notifLimitAll : this.notifLimitUnread
+      return this.filteredNotifications.slice(0, limit)
+    },
+    hasMoreNotif() {
+      const limit = this.activeNotifTab === 'all' ? this.notifLimitAll : this.notifLimitUnread
+      return this.filteredNotifications.length > limit
     }
   },
   async mounted() {
@@ -387,6 +417,22 @@ export default {
       this.showNotifDropdown = !this.showNotifDropdown
       this.showUserDropdown = false
       this.showMailDropdown = false
+      if (this.showNotifDropdown) {
+        this.activeNotifTab = 'all'
+        this.notifLimitAll = 10
+        this.notifLimitUnread = 10
+      }
+    },
+    loadMoreNotif() {
+      if (this.hasMoreNotif) {
+        if (this.activeNotifTab === 'all') {
+          this.notifLimitAll += 10
+        } else {
+          this.notifLimitUnread += 10
+        }
+      } else {
+        alertWarning('Đã tải toàn bộ thông báo')
+      }
     },
     toggleUserDropdown() {
       this.showUserDropdown = !this.showUserDropdown
@@ -412,6 +458,15 @@ export default {
         }
       } else {
         alertWarning('Đã tải toàn bộ thông báo')
+      }
+    },
+    async markAllMailRead() {
+      try {
+        await conversationService.markAllAsRead()
+        this.unreadMailCount = 0
+        this.conversations.forEach(c => c.isRead = true)
+      } catch (e) {
+        console.error('Lỗi khi đánh dấu đã đọc tất cả tin nhắn đối thoại:', e)
       }
     },
     triggerMailShake() {
@@ -950,9 +1005,32 @@ export default {
 /* Mail Tabs and Pagination styling */
 .mail-tabs {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   background: #fdfdfd;
   border-bottom: 1px solid #eee;
   padding: 0 15px;
+}
+
+.mail-tabs-left {
+  display: flex;
+}
+
+.btn-mark-mail-read-header {
+  background: none;
+  border: none;
+  color: #3498db;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 500;
+  transition: color 0.2s;
+  font-family: inherit;
+}
+
+.btn-mark-mail-read-header:hover {
+  color: #2980b9;
+  text-decoration: underline;
 }
 
 .mail-tab-btn {
