@@ -220,7 +220,7 @@ public class ConversationService {
 
         List<Notification> conversationNotifs = notificationRepository.findByRecipientUsernameAndTypeInOrderByCreatedAtDesc(
             currentUsername, 
-            List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY)
+            List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY, NotificationType.CONVERSATION_QUOTE)
         );
         List<ConversationDTO> notifDtos = conversationNotifs.stream().map(n -> {
             ConversationDTO dto = new ConversationDTO();
@@ -251,6 +251,12 @@ public class ConversationService {
                 dto.setLastMessageSenderDisplayName(n.getActor() != null ? n.getActor().getDisplayName() : null);
                 dto.setLastMessageSenderAvatar(n.getActor() != null ? n.getActor().getAvatar() : null);
                 dto.setLastMessageId(n.getConversationMessage() != null ? n.getConversationMessage().getId() : null);
+            } else if (n.getType() == NotificationType.CONVERSATION_QUOTE) {
+                dto.setQuote(true);
+                dto.setLastMessageSenderUsername(n.getActor() != null ? n.getActor().getUsername() : null);
+                dto.setLastMessageSenderDisplayName(n.getActor() != null ? n.getActor().getDisplayName() : null);
+                dto.setLastMessageSenderAvatar(n.getActor() != null ? n.getActor().getAvatar() : null);
+                dto.setLastMessageId(n.getConversationMessage() != null ? n.getConversationMessage().getId() : null);
             }
             
             return dto;
@@ -268,7 +274,7 @@ public class ConversationService {
     public ResponseDTO<Long> getMyUnreadCount() {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         long unreadCount = conversationParticipantRepository.countByUserUsernameAndIsReadFalse(currentUsername);
-        long unreadNotifs = notificationRepository.countByRecipientUsernameAndTypeInAndIsReadFalse(currentUsername, List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY));
+        long unreadNotifs = notificationRepository.countByRecipientUsernameAndTypeInAndIsReadFalse(currentUsername, List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY, NotificationType.CONVERSATION_QUOTE));
         return ResponseDTO.success(unreadCount + unreadNotifs);
     }
 
@@ -364,7 +370,7 @@ public class ConversationService {
         return ResponseDTO.success(dto);
     }
 
-    public ResponseDTO<ConversationMessageDTO> addMessage(Long conversationId, String content) {
+    public ResponseDTO<ConversationMessageDTO> addMessage(Long conversationId, String content, Long quotedMessageId) {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User currentUser = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Người dùng không hợp lệ"));
@@ -386,15 +392,34 @@ public class ConversationService {
         convo.setUpdatedAt(java.time.LocalDateTime.now());
         conversationRepository.save(convo);
 
-        // Lưu thông báo phản hồi đối thoại (CONVERSATION_REPLY) cho tất cả người tham gia và push
+        // Tìm xem có người dùng bị trích dẫn (quote) không
+        User quotedUser = null;
+        if (quotedMessageId != null) {
+            quotedUser = conversationMessageRepository.findById(quotedMessageId)
+                    .map(ConversationMessage::getSender)
+                    .orElse(null);
+        }
+
+        // Lưu thông báo phản hồi đối thoại cho tất cả người tham gia và push
         for (ConversationParticipant p : convo.getParticipants()) {
             Notification notif = new Notification();
             notif.setRecipient(p.getUser());
             notif.setActor(currentUser);
-            notif.setType(NotificationType.CONVERSATION_REPLY);
+            
+            boolean isQuoteNotif = quotedUser != null 
+                    && p.getUser().getId().equals(quotedUser.getId()) 
+                    && !p.getUser().getId().equals(currentUser.getId());
+
+            if (isQuoteNotif) {
+                notif.setType(NotificationType.CONVERSATION_QUOTE);
+            } else {
+                notif.setType(NotificationType.CONVERSATION_REPLY);
+            }
+            
             notif.setConversation(convo);
             notif.setConversationMessage(savedMsg);
             notif.setRead(false);
+            
             Notification savedNotif = notificationRepository.save(notif);
 
             ConversationDTO replyDTO = new ConversationDTO();
@@ -407,7 +432,11 @@ public class ConversationService {
             replyDTO.setCreatorDisplayName(currentUser.getDisplayName());
             replyDTO.setRead(false);
             
-            replyDTO.setReply(true);
+            if (savedNotif.getType() == NotificationType.CONVERSATION_QUOTE) {
+                replyDTO.setQuote(true);
+            } else {
+                replyDTO.setReply(true);
+            }
             replyDTO.setNotificationId(savedNotif.getId());
             replyDTO.setLastMessageSenderUsername(currentUser.getUsername());
             replyDTO.setLastMessageSenderDisplayName(currentUser.getDisplayName());

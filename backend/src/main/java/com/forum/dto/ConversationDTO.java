@@ -28,6 +28,10 @@ public class ConversationDTO {
 
     @JsonProperty("isReply")
     private boolean isReply;
+
+    @JsonProperty("isQuote")
+    private boolean isQuote;
+
     private String lastMessageSenderUsername;
     private String lastMessageSenderDisplayName;
     private String lastMessageSenderAvatar;

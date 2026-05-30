@@ -53,9 +53,19 @@
         
         <!-- Left Block: Messages & Reply -->
         <div class="convo-main">
+          <!-- TOP PAGINATION -->
+          <div class="pagination-wrapper-left" style="margin-bottom: 1rem;">
+            <ForumPagination 
+              v-if="totalPages > 1"
+              :current-page="currentPage" 
+              :total-pages="totalPages" 
+              @page-changed="changePage"
+            />
+          </div>
+
           <div class="message-list">
             <div 
-              v-for="(msg, index) in conversation.messages" 
+              v-for="(msg, index) in paginatedMessages" 
               :key="msg.id" 
               class="message-card card"
               :class="{ 'highlight-jump': String(msg.id) === String(highlightedMessageId) }"
@@ -74,7 +84,7 @@
                   <div class="post-meta-top">
                     <span class="post-time-top">{{ formatDate(msg.createdAt) }}</span>
                     <div class="post-actions-top">
-                      <span class="post-number">#{{ index + 1 }}</span>
+                      <span class="post-number">#{{ (currentPage - 1) * itemsPerPage + index + 1 }}</span>
                     </div>
                   </div>
 
@@ -93,7 +103,7 @@
                         :userReaction="msg.currentUserReaction"
                         @reaction-changed="fetchConversation(true)"
                       />
-                      <a href="#" class="action-link reply-link" @click.prevent="quoteMessage(msg.sender ? (msg.sender.displayName || msg.sender.username) : 'Ẩn danh', msg.content)">
+                      <a href="#" class="action-link reply-link" @click.prevent="quoteMessage(msg.sender ? (msg.sender.displayName || msg.sender.username) : 'Ẩn danh', msg.content, msg.id)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>
                         Trả lời
                       </a>
@@ -105,12 +115,21 @@
                     <ReactionSummary 
                       :summary="msg.reactionSummary" 
                       :recentReactors="msg.recentReactors" 
-                      @open-popup="openReactionPopup('#' + (index + 1), msg.id, msg.reactionSummary)"
+                      @open-popup="openReactionPopup('#' + ((currentPage - 1) * itemsPerPage + index + 1), msg.id, msg.reactionSummary)"
                     />
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- BOTTOM PAGINATION -->
+          <div class="pagination-wrapper" v-if="totalPages > 1" style="margin-top: 1rem; margin-bottom: 1rem;">
+            <ForumPagination 
+              :current-page="currentPage" 
+              :total-pages="totalPages" 
+              @page-changed="changePage"
+            />
           </div>
 
           <!-- Reply Editor Container -->
@@ -215,6 +234,7 @@ import ReactionButton from '@/shared/components/ReactionButton.vue'
 import ReactionSummary from '@/shared/components/ReactionSummary.vue'
 import ReactionListPopup from '@/shared/components/ReactionListPopup.vue'
 import reactionService from '@/apps/Forum/services/reaction.service'
+import ForumPagination from '@/shared/components/ForumPagination.vue'
 
 export default {
   name: 'ConversationDetail',
@@ -224,7 +244,8 @@ export default {
     CustomEditor,
     ReactionButton,
     ReactionSummary,
-    ReactionListPopup
+    ReactionListPopup,
+    ForumPagination
   },
   data() {
     const userStr = localStorage.getItem('user')
@@ -240,7 +261,8 @@ export default {
       loading: true,
       submittingReply: false,
       replyForm: {
-        content: ''
+        content: '',
+        quotedMessageId: null
       },
       currentUsername: parsedUser ? (parsedUser.displayName || parsedUser.username) : 'Me',
       currentUserAvatar: parsedUser ? parsedUser.avatar : '#3498db',
@@ -254,7 +276,9 @@ export default {
         targetId: null,
         summary: []
       },
-      justClickedConvo: false
+      justClickedConvo: false,
+      currentPage: 1,
+      itemsPerPage: 10
     }
   },
   computed: {
@@ -269,6 +293,16 @@ export default {
       return this.conversation.participants
         .map(p => p.displayName || p.username)
         .join(', ')
+    },
+    totalPages() {
+      if (!this.conversation || !this.conversation.messages) return 1;
+      return Math.ceil(this.conversation.messages.length / this.itemsPerPage) || 1;
+    },
+    paginatedMessages() {
+      if (!this.conversation || !this.conversation.messages) return [];
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.conversation.messages.slice(start, end);
     }
   },
   async mounted() {
@@ -347,6 +381,7 @@ export default {
               this.conversation.lastReplyAt = newMsg.createdAt
               this.conversation.lastReplyAuthor = newMsg.sender
               
+              this.currentPage = this.totalPages
               this.$nextTick(() => {
                 this.scrollToBottom()
               })
@@ -383,11 +418,18 @@ export default {
 
       this.submittingReply = true
       try {
-        await conversationService.addMessage(this.conversation.id, {
+        const hasQuote = this.replyForm.content.includes('<blockquote')
+        const payload = {
           content: this.replyForm.content
-        })
+        }
+        if (hasQuote && this.replyForm.quotedMessageId) {
+          payload.quotedMessageId = this.replyForm.quotedMessageId
+        }
+
+        await conversationService.addMessage(this.conversation.id, payload)
         
         this.replyForm.content = ''
+        this.replyForm.quotedMessageId = null
         toastSuccess('Gửi tin nhắn thành công')
         this.scrollToBottom()
       } catch (e) {
@@ -397,7 +439,7 @@ export default {
         this.submittingReply = false
       }
     },
-    quoteMessage(authorName, rawContent) {
+    quoteMessage(authorName, rawContent, msgId) {
       const tempDiv = document.createElement('div')
       tempDiv.innerHTML = rawContent
       
@@ -409,6 +451,7 @@ export default {
       const quoteHtml = `<blockquote><p><strong>${authorName} đã viết:</strong></p>${trimmedContent}</blockquote><p>&nbsp;</p>`
       
       this.replyForm.content = this.replyForm.content + quoteHtml
+      this.replyForm.quotedMessageId = msgId
       
       this.$nextTick(() => {
         const element = this.$refs.replyFormContainer
@@ -437,9 +480,21 @@ export default {
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
       })
     },
+    changePage(page) {
+      this.currentPage = page;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
     async jumpToTargetMessage() {
       const msgId = this.$route.query.messageId
       if (!msgId) return
+
+      if (this.conversation && this.conversation.messages) {
+        const idx = this.conversation.messages.findIndex(m => String(m.id) === String(msgId));
+        if (idx !== -1) {
+          this.currentPage = Math.ceil((idx + 1) / this.itemsPerPage);
+        }
+      }
+
       this.highlightedMessageId = msgId
       await this.$nextTick()
       setTimeout(() => {
@@ -457,6 +512,12 @@ export default {
         this.justClickedConvo = true
         await this.fetchConversation(true)
         if (event.detail.messageId) {
+          if (this.conversation && this.conversation.messages) {
+            const idx = this.conversation.messages.findIndex(m => String(m.id) === String(event.detail.messageId));
+            if (idx !== -1) {
+              this.currentPage = Math.ceil((idx + 1) / this.itemsPerPage);
+            }
+          }
           this.highlightedMessageId = event.detail.messageId
           await this.$nextTick()
           const element = document.getElementById(`msg-${event.detail.messageId}`)

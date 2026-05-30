@@ -63,13 +63,21 @@ public class ConversationController {
     }
 
     @PostMapping("/{id}/messages")
-    public ResponseEntity<ResponseDTO<ConversationMessageDTO>> addMessage(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+    public ResponseEntity<ResponseDTO<ConversationMessageDTO>> addMessage(@PathVariable Long id, @RequestBody Map<String, Object> payload) {
         try {
-            String content = payload.get("content");
+            String content = (String) payload.get("content");
             if (content == null || content.trim().isEmpty()) {
                 throw new IllegalArgumentException("Nội dung tin nhắn không được để trống");
             }
-            return ResponseEntity.ok(conversationService.addMessage(id, content));
+            Long quotedMessageId = null;
+            if (payload.containsKey("quotedMessageId") && payload.get("quotedMessageId") != null) {
+                try {
+                    quotedMessageId = Long.parseLong(String.valueOf(payload.get("quotedMessageId")));
+                } catch (NumberFormatException e) {
+                    // Ignore
+                }
+            }
+            return ResponseEntity.ok(conversationService.addMessage(id, content, quotedMessageId));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ResponseDTO.fail(null, e.getMessage()));
         }
