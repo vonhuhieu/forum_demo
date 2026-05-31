@@ -116,7 +116,7 @@ public class ConversationService {
         ConversationParticipant senderPart = new ConversationParticipant();
         senderPart.setConversation(conversation);
         senderPart.setUser(sender);
-        senderPart.setRead(true); // Người tạo conversation đã biết nội dung mình gửi → đánh dấu đã đọc
+        senderPart.setRead(true); // Sender là người tạo conversation, đã biết nội dung → mark as read = true từ đầu
         participantsToSave.add(senderPart);
 
         for (User recipient : recipients) {
@@ -147,7 +147,8 @@ public class ConversationService {
             participantNames.add(recipient.getDisplayName() != null ? recipient.getDisplayName() : recipient.getUsername());
         }
 
-        // PUSH WebSocket: Chỉ gửi tới recipients (không gửi tới sender vì sender sẽ được redirect sang ConversationDetail ngay sau)
+        // PUSH WebSocket: Chỉ gửi tới recipients - Không gửi thông báo cho sender vì sender chính là người tạo conversation
+        // Khi sender tạo xong, sẽ được redirect tới ConversationDetail ngay, không cần thông báo
         for (User recipient : recipients) {
             ConversationDTO recipientDTO = new ConversationDTO();
             recipientDTO.setId(conversation.getId());
@@ -185,7 +186,7 @@ public class ConversationService {
             pushToUser(recipient.getId(), recipientDTO);
         }
 
-        // Tạo senderDTO để trả về cho API response (không push WebSocket)
+        // Tạo senderDTO để trả về cho API response (không push WebSocket, không tạo notification)
         ConversationDTO senderDTO = new ConversationDTO();
         senderDTO.setId(conversation.getId());
         senderDTO.setTitle(conversation.getTitle());
@@ -195,7 +196,7 @@ public class ConversationService {
         senderDTO.setCreatorUsername(sender.getUsername());
         senderDTO.setCreatorDisplayName(sender.getDisplayName());
         senderDTO.setFirstMessageId(message.getId());
-        senderDTO.setRead(false);
+        senderDTO.setRead(true); // Sender sẽ được redirect tới ConversationDetail ngay, nên mark as read = true để frontend không tạo notification
 
         return ResponseDTO.success(senderDTO);
     }
@@ -302,6 +303,18 @@ public class ConversationService {
                 n.getConversation() != null && n.getConversation().getId().equals(dto.getId()) &&
                 n.getConversationMessage() != null && n.getConversationMessage().getId().equals(dto.getFirstMessageId())
             );
+            
+            // Kiểm tra nếu conversation có bất kỳ notification nào (mention, reply, quote, reaction)
+            boolean hasAnyConversationNotification = conversationNotifs.stream().anyMatch(n ->
+                n.getConversation() != null && n.getConversation().getId().equals(dto.getId())
+            );
+            
+            // Nếu conversation đã đọc (read=true) và không có notification nào → skip nó
+            // Đây là conversation vừa được tạo bởi sender, không cần hiển thị trong hộp thư
+            if (dto.isRead() && !hasAnyConversationNotification) {
+                continue;
+            }
+            
             if (!hasMentionOnFirstMsg) {
                 filteredDtos.add(dto);
             }
