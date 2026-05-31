@@ -141,7 +141,7 @@
                  </div>
               </div>
               <div class="post-main" style="padding: 0; border: 1px solid #e0e0e0;">
-                 <CustomEditor ref="replyEditor" v-model="replyForm.content" minHeight="150px" />
+                 <CustomEditor ref="replyEditor" v-model="replyForm.content" minHeight="150px" :allowedUsers="conversationParticipantsForTag" />
                  
                  <div class="editor-footer" style="padding: 15px; display: flex; justify-content: flex-end; background: #f8f9fa; border-top: 1px solid #eee;">
                    <button class="btn-post" :disabled="submittingReply" @click="submitReply">
@@ -303,6 +303,11 @@ export default {
       const start = (this.currentPage - 1) * this.itemsPerPage;
       const end = start + this.itemsPerPage;
       return this.conversation.messages.slice(start, end);
+    },
+    // Danh sách participants để giới hạn tag @ (loại trừ chính mình)
+    conversationParticipantsForTag() {
+      if (!this.conversation?.participants) return []
+      return this.conversation.participants.filter(p => String(p.id) !== String(this.currentUser?.id))
     }
   },
   async mounted() {

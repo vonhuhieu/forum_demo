@@ -27,7 +27,7 @@
       <div class="tagging-list">
         <div 
           v-for="(user, idx) in filteredUsers" 
-          :key="user.id" 
+          :key="user.id || user.username" 
           class="tagging-item"
           :class="{ 'active': idx === activeIndex }"
           @click="selectUser(user)"
@@ -118,6 +118,10 @@ export default {
     },
     minHeight: {
       default: '400px'
+    },
+    allowedUsers: {
+      type: Array,
+      default: null
     }
   },
   emits: ['update:modelValue', 'ready', 'image-uploaded'],
@@ -248,6 +252,7 @@ export default {
             }
           }
         },
+        placeholder: "Sử dụng '@' với keyword để tìm kiếm và tag người khác",
         language: 'vi',
         translations: [
           translations,
@@ -375,24 +380,43 @@ export default {
       }
     },
     async fetchUsers() {
+      // Nếu có allowedUsers (ví dụ: participants của cuộc đối thoại), filter local thay vì search API
+      if (this.allowedUsers !== null) {
+        const query = (this.searchQuery || '').toLowerCase().trim()
+        const filtered = query
+          ? this.allowedUsers.filter(u => {
+              const name = (u.displayName || u.username || '').toLowerCase()
+              const uname = (u.username || '').toLowerCase()
+              return name.includes(query) || uname.includes(query)
+            })
+          : this.allowedUsers
+        this.filteredUsers = filtered.slice(0, 10)
+        this.totalPages = 1
+        if (this.activeIndex >= this.filteredUsers.length) {
+          this.activeIndex = Math.max(0, this.filteredUsers.length - 1)
+        }
+        return
+      }
+
+      // Fallback: search API toàn bộ user
       try {
         const response = await userService.search({
           keyword: this.searchQuery,
           page: this.currentPage - 1, // backend is 0-indexed
           size: 10
-        });
+        })
         
         if (response.data) {
-          const pageData = response.data;
-          this.filteredUsers = pageData.content || [];
-          this.totalPages = pageData.totalPages || 1;
+          const pageData = response.data
+          this.filteredUsers = pageData.content || []
+          this.totalPages = pageData.totalPages || 1
           
           if (this.activeIndex >= this.filteredUsers.length) {
-            this.activeIndex = Math.max(0, this.filteredUsers.length - 1);
+            this.activeIndex = Math.max(0, this.filteredUsers.length - 1)
           }
         }
       } catch (error) {
-        console.error('Error fetching users for mention autocomplete:', error);
+        console.error('Error fetching users for mention autocomplete:', error)
       }
     },
     updatePopupPosition() {

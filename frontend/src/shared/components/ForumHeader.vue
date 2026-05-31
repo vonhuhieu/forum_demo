@@ -97,6 +97,10 @@
                                <strong>{{ convo.lastMessageSenderDisplayName || convo.lastMessageSenderUsername }}</strong> đã trích tin nhắn của bạn trong cuộc đối thoại 
                                <span class="convo-title-link" style="display: inline;">{{ convo.title }}</span>
                             </template>
+                            <template v-else-if="convo.isMention">
+                               <strong>{{ convo.lastMessageSenderDisplayName || convo.lastMessageSenderUsername }}</strong> đã tag bạn trong cuộc hội thoại 
+                               <span class="convo-title-link" style="display: inline;">{{ convo.title }}</span>
+                            </template>
                             <template v-else-if="currentUser && convo.creatorUsername === currentUser.username">
                                Bạn đã mở cuộc hội thoại 
                                <span class="convo-title-link" style="display: inline;">{{ convo.title }}</span>
@@ -364,10 +368,10 @@ export default {
       // Register callback for live conversations - USING NUMERICAL USER ID FOR TOPIC
       this.convoUnsubscribe = webSocketService.subscribe(`/topic/conversations/${this.currentUser.id}`, (newConvo) => {
         // Add to top of list and avoid duplicates for same convo
-        if (newConvo.isReaction || newConvo.isReply || newConvo.isQuote) {
+        if (newConvo.isReaction || newConvo.isReply || newConvo.isQuote || newConvo.isMention) {
           this.conversations.unshift(newConvo)
         } else {
-          this.conversations = this.conversations.filter(c => c.id !== newConvo.id || c.isReaction || c.isReply || c.isQuote)
+          this.conversations = this.conversations.filter(c => c.id !== newConvo.id || c.isReaction || c.isReply || c.isQuote || c.isMention)
           this.conversations.unshift(newConvo)
         }
         
@@ -501,7 +505,7 @@ export default {
         convo.isRead = true
         this.unreadMailCount = Math.max(0, this.unreadMailCount - 1)
         try {
-          if (convo.isReaction || convo.isReply || convo.isQuote) {
+          if (convo.isReaction || convo.isReply || convo.isQuote || convo.isMention) {
             await notificationService.markAsRead(convo.notificationId)
             await conversationService.markAsRead(convo.id)
           } else {
@@ -512,7 +516,7 @@ export default {
         }
       }
 
-      const targetMsgId = convo.isReaction ? convo.firstMessageId : ((convo.isReply || convo.isQuote) ? convo.lastMessageId : convo.firstMessageId)
+      const targetMsgId = convo.isReaction ? convo.firstMessageId : ((convo.isReply || convo.isQuote || convo.isMention) ? convo.lastMessageId : convo.firstMessageId)
 
       // Dispatch global custom event for ConversationDetail to react if we are already on this conversation detail page
       window.dispatchEvent(new CustomEvent('conversation-clicked', {
@@ -538,14 +542,14 @@ export default {
     },
     getConvoAvatarBg(convo) {
       if (convo.isReaction) return convo.creatorAvatar || '#3498db'
-      if (convo.isReply || convo.isQuote) return convo.lastMessageSenderAvatar || '#3498db'
+      if (convo.isReply || convo.isQuote || convo.isMention) return convo.lastMessageSenderAvatar || '#3498db'
       return convo.creatorAvatar || '#3498db'
     },
     getConvoAvatarText(convo) {
       let name = 'C'
       if (convo.isReaction) {
         name = convo.creatorDisplayName || convo.creatorUsername || 'C'
-      } else if (convo.isReply || convo.isQuote) {
+      } else if (convo.isReply || convo.isQuote || convo.isMention) {
         name = convo.lastMessageSenderDisplayName || convo.lastMessageSenderUsername || 'C'
       } else {
         name = convo.creatorDisplayName || convo.creatorUsername || 'C'

@@ -25,8 +25,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -124,6 +128,7 @@ public class ConversationService {
         }
 
         conversationParticipantRepository.saveAll(participantsToSave);
+        conversation.setParticipants(participantsToSave);
 
         // Tạo Message
         ConversationMessage message = new ConversationMessage();
@@ -131,6 +136,9 @@ public class ConversationService {
         message.setSender(sender);
         message.setContent(createDTO.getContent());
         conversationMessageRepository.save(message);
+
+        // Parse @mention từ nội dung HTML để tìm người bị tag
+        Set<Long> mentionedUserIds = extractMentionedParticipants(createDTO.getContent(), conversation, sender);
 
         // Chuẩn bị danh sách người tham gia hiển thị
         List<String> participantNames = new ArrayList<>();
@@ -144,7 +152,7 @@ public class ConversationService {
         senderDTO.setId(conversation.getId());
         senderDTO.setTitle(conversation.getTitle());
         senderDTO.setParticipants(participantNames);
-        senderDTO.setUpdatedAt(conversation.getUpdatedAt());
+        senderDTO.setUpdatedAt(conversation.getUpdatedAt() != null ? conversation.getUpdatedAt() : java.time.LocalDateTime.now());
         senderDTO.setCreatorAvatar(sender.getAvatar());
         senderDTO.setCreatorUsername(sender.getUsername());
         senderDTO.setCreatorDisplayName(sender.getDisplayName());
@@ -160,12 +168,34 @@ public class ConversationService {
             recipientDTO.setId(conversation.getId());
             recipientDTO.setTitle(conversation.getTitle());
             recipientDTO.setParticipants(participantNames);
-            recipientDTO.setUpdatedAt(conversation.getUpdatedAt());
+            recipientDTO.setUpdatedAt(conversation.getUpdatedAt() != null ? conversation.getUpdatedAt() : java.time.LocalDateTime.now());
             recipientDTO.setCreatorAvatar(sender.getAvatar());
             recipientDTO.setCreatorUsername(sender.getUsername());
             recipientDTO.setCreatorDisplayName(sender.getDisplayName());
             recipientDTO.setFirstMessageId(message.getId());
             recipientDTO.setRead(false);
+
+            boolean isMentioned = mentionedUserIds.contains(recipient.getId());
+            if (isMentioned) {
+                // Tạo Notification MENTION để lưu vào database
+                Notification notif = new Notification();
+                notif.setRecipient(recipient);
+                notif.setActor(sender);
+                notif.setType(NotificationType.CONVERSATION_MENTION);
+                notif.setConversation(conversation);
+                notif.setConversationMessage(message);
+                notif.setRead(false);
+                Notification savedNotif = notificationRepository.save(notif);
+
+                // Điền thông tin mention vào DTO để hiển thị trong hòm thư
+                recipientDTO.setMention(true);
+                recipientDTO.setNotificationId(savedNotif.getId());
+                recipientDTO.setLastMessageSenderUsername(sender.getUsername());
+                recipientDTO.setLastMessageSenderDisplayName(sender.getDisplayName());
+                recipientDTO.setLastMessageSenderAvatar(sender.getAvatar());
+                recipientDTO.setLastMessageId(message.getId());
+                recipientDTO.setUpdatedAt(savedNotif.getCreatedAt());
+            }
 
             pushToUser(recipient.getId(), recipientDTO);
         }
@@ -220,7 +250,7 @@ public class ConversationService {
 
         List<Notification> conversationNotifs = notificationRepository.findByRecipientUsernameAndTypeInOrderByCreatedAtDesc(
             currentUsername, 
-            List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY, NotificationType.CONVERSATION_QUOTE)
+            List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY, NotificationType.CONVERSATION_QUOTE, NotificationType.CONVERSATION_MENTION)
         );
         List<ConversationDTO> notifDtos = conversationNotifs.stream().map(n -> {
             ConversationDTO dto = new ConversationDTO();
@@ -257,6 +287,12 @@ public class ConversationService {
                 dto.setLastMessageSenderDisplayName(n.getActor() != null ? n.getActor().getDisplayName() : null);
                 dto.setLastMessageSenderAvatar(n.getActor() != null ? n.getActor().getAvatar() : null);
                 dto.setLastMessageId(n.getConversationMessage() != null ? n.getConversationMessage().getId() : null);
+            } else if (n.getType() == NotificationType.CONVERSATION_MENTION) {
+                dto.setMention(true);
+                dto.setLastMessageSenderUsername(n.getActor() != null ? n.getActor().getUsername() : null);
+                dto.setLastMessageSenderDisplayName(n.getActor() != null ? n.getActor().getDisplayName() : null);
+                dto.setLastMessageSenderAvatar(n.getActor() != null ? n.getActor().getAvatar() : null);
+                dto.setLastMessageId(n.getConversationMessage() != null ? n.getConversationMessage().getId() : null);
             }
             
             return dto;
@@ -274,7 +310,7 @@ public class ConversationService {
     public ResponseDTO<Long> getMyUnreadCount() {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         long unreadCount = conversationParticipantRepository.countByUserUsernameAndIsReadFalse(currentUsername);
-        long unreadNotifs = notificationRepository.countByRecipientUsernameAndTypeInAndIsReadFalse(currentUsername, List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY, NotificationType.CONVERSATION_QUOTE));
+        long unreadNotifs = notificationRepository.countByRecipientUsernameAndTypeInAndIsReadFalse(currentUsername, List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY, NotificationType.CONVERSATION_QUOTE, NotificationType.CONVERSATION_MENTION));
         return ResponseDTO.success(unreadCount + unreadNotifs);
     }
 
@@ -402,40 +438,49 @@ public class ConversationService {
                     .orElse(null);
         }
 
+        // Parse @mention từ nội dung HTML để tìm người bị tag
+        Set<Long> mentionedUserIds = extractMentionedParticipants(content, convo, currentUser);
+
         // Lưu thông báo phản hồi đối thoại cho tất cả người tham gia và push
         for (ConversationParticipant p : convo.getParticipants()) {
             Notification notif = new Notification();
             notif.setRecipient(p.getUser());
             notif.setActor(currentUser);
-            
-            boolean isQuoteNotif = quotedUser != null 
-                    && p.getUser().getId().equals(quotedUser.getId()) 
+
+            boolean isQuoteNotif = quotedUser != null
+                    && p.getUser().getId().equals(quotedUser.getId())
+                    && !p.getUser().getId().equals(currentUser.getId());
+            boolean isMentionNotif = mentionedUserIds.contains(p.getUser().getId())
                     && !p.getUser().getId().equals(currentUser.getId());
 
             if (isQuoteNotif) {
                 notif.setType(NotificationType.CONVERSATION_QUOTE);
+            } else if (isMentionNotif) {
+                notif.setType(NotificationType.CONVERSATION_MENTION);
             } else {
                 notif.setType(NotificationType.CONVERSATION_REPLY);
             }
-            
+
             notif.setConversation(convo);
             notif.setConversationMessage(savedMsg);
             notif.setRead(false);
-            
+
             Notification savedNotif = notificationRepository.save(notif);
 
             ConversationDTO replyDTO = new ConversationDTO();
             replyDTO.setId(convo.getId());
             replyDTO.setTitle(convo.getTitle());
-            replyDTO.setFirstMessageId(savedMsg.getId()); // ID tin nhắn phản hồi
+            replyDTO.setFirstMessageId(savedMsg.getId());
             replyDTO.setUpdatedAt(savedNotif.getCreatedAt());
             replyDTO.setCreatorAvatar(currentUser.getAvatar());
             replyDTO.setCreatorUsername(currentUser.getUsername());
             replyDTO.setCreatorDisplayName(currentUser.getDisplayName());
             replyDTO.setRead(false);
-            
+
             if (savedNotif.getType() == NotificationType.CONVERSATION_QUOTE) {
                 replyDTO.setQuote(true);
+            } else if (savedNotif.getType() == NotificationType.CONVERSATION_MENTION) {
+                replyDTO.setMention(true);
             } else {
                 replyDTO.setReply(true);
             }
@@ -476,5 +521,54 @@ public class ConversationService {
         dto.setCreatedAt(user.getCreatedAt());
         dto.setRoles(user.getRoles());
         return dto;
+    }
+
+    /**
+     * Parse nội dung HTML từ CKEditor để tìm các @mention.
+     * CKEditor insert tag @mention với format: text "@DisplayName" (bold, màu xanh).
+     * Chỉ trả về IDs của participants trong conversation, loại trừ người gửi hiện tại.
+     */
+    private Set<Long> extractMentionedParticipants(String htmlContent, Conversation convo, User sender) {
+        Set<Long> mentionedIds = new HashSet<>();
+        if (htmlContent == null || htmlContent.isBlank()) return mentionedIds;
+
+        // Lấy toàn bộ text plain từ HTML (loại bỏ tags)
+        String plainText = htmlContent.replaceAll("<[^>]+>", " ");
+
+        // Pattern: @[ký tự không phải khoảng trắng], có thể có dấu tiếng Việt
+        Pattern pattern = Pattern.compile("@([^\\s<&]+(?:\\s[^\\s<&]+)*)");
+        Matcher matcher = pattern.matcher(plainText);
+
+        Set<String> mentionTokens = new HashSet<>();
+        while (matcher.find()) {
+            mentionTokens.add(matcher.group(1).trim());
+        }
+
+        if (mentionTokens.isEmpty()) return mentionedIds;
+
+        // Đối chiếu với participants: match displayName trước, fallback username
+        for (ConversationParticipant p : convo.getParticipants()) {
+            User participantUser = p.getUser();
+            if (participantUser.getId().equals(sender.getId())) continue; // bỏ qua người gửi
+
+            String displayName = participantUser.getDisplayName();
+            String username = participantUser.getUsername();
+
+            boolean matched = false;
+            for (String token : mentionTokens) {
+                if (displayName != null && displayName.equalsIgnoreCase(token)) {
+                    matched = true;
+                    break;
+                }
+                if (username != null && username.equalsIgnoreCase(token)) {
+                    matched = true;
+                    break;
+                }
+            }
+            if (matched) {
+                mentionedIds.add(participantUser.getId());
+            }
+        }
+        return mentionedIds;
     }
 }

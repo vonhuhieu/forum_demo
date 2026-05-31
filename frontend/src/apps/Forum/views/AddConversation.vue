@@ -67,7 +67,7 @@
           <!-- Nội dung đối thoại -->
           <div class="editor-block" style="margin-bottom: 1.5rem; border: 1px solid #ddd; border-radius: 4px; overflow: hidden;">
             <div class="editor-container">
-              <CustomEditor ref="editor" v-model="form.content" />
+              <CustomEditor ref="editor" v-model="form.content" :allowedUsers="selectedRecipients" />
             </div>
           </div>
 
@@ -115,8 +115,24 @@ export default {
       }
     }
   },
-  mounted() {
+  async mounted() {
     document.addEventListener('click', this.handleClickOutside)
+    if (this.recipientName) {
+      try {
+        const response = await userService.getByName(this.recipientName)
+        if (response.data) {
+          const user = response.data
+          this.selectedRecipients = [{
+            id: user.id,
+            username: user.username,
+            displayName: user.displayName || user.username,
+            avatar: user.avatar
+          }]
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin người nhận:', error)
+      }
+    }
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside)
@@ -149,8 +165,10 @@ export default {
     selectRecipient(user) {
       if (!this.selectedRecipients.some(r => r.username === user.username)) {
         this.selectedRecipients.push({
+          id: user.id,
           username: user.username,
-          displayName: user.displayName || user.username
+          displayName: user.displayName || user.username,
+          avatar: user.avatar
         })
       }
       this.searchQuery = ''

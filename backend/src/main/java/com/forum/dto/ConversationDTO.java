@@ -32,6 +32,9 @@ public class ConversationDTO {
     @JsonProperty("isQuote")
     private boolean isQuote;
 
+    @JsonProperty("isMention")
+    private boolean isMention;
+
     private String lastMessageSenderUsername;
     private String lastMessageSenderDisplayName;
     private String lastMessageSenderAvatar;
