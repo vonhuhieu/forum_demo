@@ -116,7 +116,7 @@ public class ConversationService {
         ConversationParticipant senderPart = new ConversationParticipant();
         senderPart.setConversation(conversation);
         senderPart.setUser(sender);
-        senderPart.setRead(false); // Người gửi chưa đọc (hiển thị thông báo chưa đọc cho chính người tạo)
+        senderPart.setRead(true); // Người tạo conversation đã biết nội dung mình gửi → đánh dấu đã đọc
         participantsToSave.add(senderPart);
 
         for (User recipient : recipients) {
@@ -147,22 +147,7 @@ public class ConversationService {
             participantNames.add(recipient.getDisplayName() != null ? recipient.getDisplayName() : recipient.getUsername());
         }
 
-        // PUSH WebSocket: Tạo DTO tương ứng với trạng thái đọc của mỗi bên
-        ConversationDTO senderDTO = new ConversationDTO();
-        senderDTO.setId(conversation.getId());
-        senderDTO.setTitle(conversation.getTitle());
-        senderDTO.setParticipants(participantNames);
-        senderDTO.setUpdatedAt(conversation.getUpdatedAt() != null ? conversation.getUpdatedAt() : java.time.LocalDateTime.now());
-        senderDTO.setCreatorAvatar(sender.getAvatar());
-        senderDTO.setCreatorUsername(sender.getUsername());
-        senderDTO.setCreatorDisplayName(sender.getDisplayName());
-        senderDTO.setFirstMessageId(message.getId());
-        senderDTO.setRead(false);
-
-        // PUSH to sender
-        pushToUser(sender.getId(), senderDTO);
-
-        // PUSH to all recipients
+        // PUSH WebSocket: Chỉ gửi tới recipients (không gửi tới sender vì sender sẽ được redirect sang ConversationDetail ngay sau)
         for (User recipient : recipients) {
             ConversationDTO recipientDTO = new ConversationDTO();
             recipientDTO.setId(conversation.getId());
@@ -199,6 +184,18 @@ public class ConversationService {
 
             pushToUser(recipient.getId(), recipientDTO);
         }
+
+        // Tạo senderDTO để trả về cho API response (không push WebSocket)
+        ConversationDTO senderDTO = new ConversationDTO();
+        senderDTO.setId(conversation.getId());
+        senderDTO.setTitle(conversation.getTitle());
+        senderDTO.setParticipants(participantNames);
+        senderDTO.setUpdatedAt(conversation.getUpdatedAt() != null ? conversation.getUpdatedAt() : java.time.LocalDateTime.now());
+        senderDTO.setCreatorAvatar(sender.getAvatar());
+        senderDTO.setCreatorUsername(sender.getUsername());
+        senderDTO.setCreatorDisplayName(sender.getDisplayName());
+        senderDTO.setFirstMessageId(message.getId());
+        senderDTO.setRead(false);
 
         return ResponseDTO.success(senderDTO);
     }
@@ -298,8 +295,20 @@ public class ConversationService {
             return dto;
         }).collect(Collectors.toList());
 
+        List<ConversationDTO> filteredDtos = new java.util.ArrayList<>();
+        for (ConversationDTO dto : dtos) {
+            boolean hasMentionOnFirstMsg = conversationNotifs.stream().anyMatch(n -> 
+                n.getType() == NotificationType.CONVERSATION_MENTION &&
+                n.getConversation() != null && n.getConversation().getId().equals(dto.getId()) &&
+                n.getConversationMessage() != null && n.getConversationMessage().getId().equals(dto.getFirstMessageId())
+            );
+            if (!hasMentionOnFirstMsg) {
+                filteredDtos.add(dto);
+            }
+        }
+
         List<ConversationDTO> merged = new java.util.ArrayList<>();
-        merged.addAll(dtos);
+        merged.addAll(filteredDtos);
         merged.addAll(notifDtos);
         
         merged.sort((a, b) -> b.getUpdatedAt().compareTo(a.getUpdatedAt()));
@@ -309,9 +318,33 @@ public class ConversationService {
 
     public ResponseDTO<Long> getMyUnreadCount() {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        long unreadCount = conversationParticipantRepository.countByUserUsernameAndIsReadFalse(currentUsername);
-        long unreadNotifs = notificationRepository.countByRecipientUsernameAndTypeInAndIsReadFalse(currentUsername, List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY, NotificationType.CONVERSATION_QUOTE, NotificationType.CONVERSATION_MENTION));
-        return ResponseDTO.success(unreadCount + unreadNotifs);
+        
+        List<ConversationParticipant> unreadParticipants = conversationParticipantRepository.findByUserUsername(currentUsername)
+                .stream().filter(p -> !p.isRead()).collect(Collectors.toList());
+        
+        List<Notification> unreadNotifs = notificationRepository.findByRecipientUsernameAndTypeInOrderByCreatedAtDesc(
+            currentUsername, 
+            List.of(NotificationType.CONVERSATION_REACTION, NotificationType.CONVERSATION_REPLY, NotificationType.CONVERSATION_QUOTE, NotificationType.CONVERSATION_MENTION)
+        ).stream().filter(n -> !n.isRead()).collect(Collectors.toList());
+        
+        long count = unreadNotifs.size();
+        for (ConversationParticipant p : unreadParticipants) {
+            Long convoId = p.getConversation().getId();
+            Optional<ConversationMessage> firstMsgOpt = conversationMessageRepository.findFirstByConversationIdOrderByCreatedAtAsc(convoId);
+            boolean hasMentionOnFirstMsg = false;
+            if (firstMsgOpt.isPresent()) {
+                Long firstMsgId = firstMsgOpt.get().getId();
+                hasMentionOnFirstMsg = unreadNotifs.stream().anyMatch(n -> 
+                    n.getType() == NotificationType.CONVERSATION_MENTION &&
+                    n.getConversation() != null && n.getConversation().getId().equals(convoId) &&
+                    n.getConversationMessage() != null && n.getConversationMessage().getId().equals(firstMsgId)
+                );
+            }
+            if (!hasMentionOnFirstMsg) {
+                count++;
+            }
+        }
+        return ResponseDTO.success(count);
     }
 
     public ResponseDTO<Void> readAll() {
@@ -362,8 +395,8 @@ public class ConversationService {
         }
 
         ConversationParticipant currentPart = currentPartOpt.get();
-        // Chỉ tự động đánh dấu đã đọc nếu người đang xem KHÔNG phải là người tạo cuộc hội thoại
-        if (!currentPart.isRead() && !convo.getCreator().getUsername().equals(currentUsername)) {
+        // Đánh dấu đã đọc cho tất cả participants khi vào xem (bao gồm cả creator)
+        if (!currentPart.isRead()) {
             currentPart.setRead(true);
             conversationParticipantRepository.save(currentPart);
         }
@@ -441,17 +474,20 @@ public class ConversationService {
         // Parse @mention từ nội dung HTML để tìm người bị tag
         Set<Long> mentionedUserIds = extractMentionedParticipants(content, convo, currentUser);
 
-        // Lưu thông báo phản hồi đối thoại cho tất cả người tham gia và push
+        // Lưu thông báo phản hồi đối thoại cho tất cả người tham gia (trừ sender) và push
         for (ConversationParticipant p : convo.getParticipants()) {
+            // Bỏ qua sender - người gửi không cần nhận notification của chính mình
+            if (p.getUser().getId().equals(currentUser.getId())) {
+                continue;
+            }
+
             Notification notif = new Notification();
             notif.setRecipient(p.getUser());
             notif.setActor(currentUser);
 
             boolean isQuoteNotif = quotedUser != null
-                    && p.getUser().getId().equals(quotedUser.getId())
-                    && !p.getUser().getId().equals(currentUser.getId());
-            boolean isMentionNotif = mentionedUserIds.contains(p.getUser().getId())
-                    && !p.getUser().getId().equals(currentUser.getId());
+                    && p.getUser().getId().equals(quotedUser.getId());
+            boolean isMentionNotif = mentionedUserIds.contains(p.getUser().getId());
 
             if (isQuoteNotif) {
                 notif.setType(NotificationType.CONVERSATION_QUOTE);

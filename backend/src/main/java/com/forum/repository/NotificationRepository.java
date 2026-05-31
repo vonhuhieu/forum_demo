@@ -28,7 +28,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     void markConversationNotificationsAsRead(@org.springframework.data.repository.query.Param("username") String username, @org.springframework.data.repository.query.Param("conversationId") Long conversationId);
     
     @org.springframework.data.jpa.repository.Modifying
-    @org.springframework.data.jpa.repository.Query("UPDATE Notification n SET n.isRead = true WHERE n.recipient.username = :username AND n.type IN (com.forum.entity.NotificationType.CONVERSATION_REACTION, com.forum.entity.NotificationType.CONVERSATION_REPLY, com.forum.entity.NotificationType.CONVERSATION_QUOTE) AND n.isRead = false")
+    @org.springframework.data.jpa.repository.Query("UPDATE Notification n SET n.isRead = true WHERE n.recipient.username = :username AND n.type IN (com.forum.entity.NotificationType.CONVERSATION_REACTION, com.forum.entity.NotificationType.CONVERSATION_REPLY, com.forum.entity.NotificationType.CONVERSATION_QUOTE, com.forum.entity.NotificationType.CONVERSATION_MENTION) AND n.isRead = false")
     void markAllConversationNotificationsAsRead(@org.springframework.data.repository.query.Param("username") String username);
 
     @org.springframework.data.jpa.repository.Modifying
