@@ -308,10 +308,11 @@ public class ConversationService {
             boolean hasAnyConversationNotification = conversationNotifs.stream().anyMatch(n ->
                 n.getConversation() != null && n.getConversation().getId().equals(dto.getId())
             );
+            boolean isCurrentUserCreator = currentUsername.equals(dto.getCreatorUsername());
             
-            // Nếu conversation đã đọc (read=true) và không có notification nào → skip nó
-            // Đây là conversation vừa được tạo bởi sender, không cần hiển thị trong hộp thư
-            if (dto.isRead() && !hasAnyConversationNotification) {
+            // Chỉ skip conversation khi nó đã đọc và không có notification nào với chính người tạo (sender).
+            // Với recipient, conversation đã đọc vẫn nên xuất hiện trong tab Tất cả.
+            if (dto.isRead() && !hasAnyConversationNotification && isCurrentUserCreator) {
                 continue;
             }
             
