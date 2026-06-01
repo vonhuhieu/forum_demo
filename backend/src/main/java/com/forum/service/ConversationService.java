@@ -375,6 +375,15 @@ public class ConversationService {
         return ResponseDTO.success(null);
     }
 
+    public ResponseDTO<Void> clearAll() {
+        String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        // Delete conversation-related notifications for this user
+        notificationRepository.deleteAllConversationNotificationsForUser(currentUsername);
+
+        // Optionally, we could also clear any transient read markers, but keep conversation data intact
+        return ResponseDTO.success(null);
+    }
+
     public ResponseDTO<Void> markAsRead(Long id) {
         String currentUsername = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Conversation convo = conversationRepository.findById(id)

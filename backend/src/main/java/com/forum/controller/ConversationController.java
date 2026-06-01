@@ -44,6 +44,11 @@ public class ConversationController {
         return ResponseEntity.ok(conversationService.readAll());
     }
 
+    @DeleteMapping("/clear-all")
+    public ResponseEntity<ResponseDTO<Void>> clearAll() {
+        return ResponseEntity.ok(conversationService.clearAll());
+    }
+
     @PutMapping("/{id}/read")
     public ResponseEntity<ResponseDTO<Void>> markAsRead(@PathVariable Long id) {
         try {

@@ -28,6 +28,10 @@ class ConversationService {
   markAllAsRead() {
     return api.put('/conversations/read-all')
   }
+
+  clearAll() {
+    return api.delete('/conversations/clear-all')
+  }
 }
 
 export default new ConversationService()

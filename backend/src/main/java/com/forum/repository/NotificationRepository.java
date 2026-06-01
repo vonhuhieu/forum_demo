@@ -34,4 +34,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.data.jpa.repository.Query("DELETE FROM Notification n WHERE n.thread.id = :threadId")
     void deleteByThreadId(@org.springframework.data.repository.query.Param("threadId") Long threadId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("DELETE FROM Notification n WHERE n.recipient.username = :username AND n.type IN (com.forum.entity.NotificationType.CONVERSATION_REACTION, com.forum.entity.NotificationType.CONVERSATION_REPLY, com.forum.entity.NotificationType.CONVERSATION_QUOTE, com.forum.entity.NotificationType.CONVERSATION_MENTION)")
+    void deleteAllConversationNotificationsForUser(@org.springframework.data.repository.query.Param("username") String username);
+
 }

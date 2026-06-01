@@ -58,7 +58,10 @@
                        <button class="mail-tab-btn" :class="{ 'active': activeMailTab === 'all' }" @click="activeMailTab = 'all'">Tất cả</button>
                        <button class="mail-tab-btn" :class="{ 'active': activeMailTab === 'unread' }" @click="activeMailTab = 'unread'">Chưa đọc</button>
                     </div>
-                    <button class="btn-mark-mail-read-header" @click.stop="markAllMailRead">Đánh dấu đã xem</button>
+                    <div class="mail-tabs-actions">
+                      <button class="btn-mark-all-read" @click.stop="markAllMailRead">Đánh dấu đã xem</button>
+                      <button class="btn-mark-all-read btn-clear-mail-header" @click.stop="clearAllMail">Xóa</button>
+                    </div>
                  </div>
                 
                 <div class="notif-list" v-if="paginatedConversations.length > 0">
@@ -473,6 +476,16 @@ export default {
         console.error('Lỗi khi đánh dấu đã đọc tất cả tin nhắn đối thoại:', e)
       }
     },
+    async clearAllMail() {
+      try {
+        await conversationService.clearAll()
+        this.conversations = []
+        this.unreadMailCount = 0
+        alertSuccess('Đã xóa toàn bộ thông báo trong hộp thư.')
+      } catch (e) {
+        console.error('Lỗi khi xóa toàn bộ thông báo hộp thư:', e)
+      }
+    },
     triggerMailShake() {
        this.isMailShaking = false;
        this.$nextTick(() => {
@@ -744,6 +757,20 @@ export default {
   border-bottom: 1px solid #eee;
 }
 
+.mail-tabs {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 15px;
+}
+
+.mail-tabs-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .notif-title {
   color: #2c3e50;
   font-weight: bold;
@@ -917,6 +944,13 @@ export default {
 }
 
 .btn-mark-all-read:hover {
+  text-decoration: underline;
+}
+.btn-clear-mail-header {
+  margin-left: 10px;
+  color: #e74c3c;
+}
+.btn-clear-mail-header:hover {
   text-decoration: underline;
 }
 .user-info-header {
