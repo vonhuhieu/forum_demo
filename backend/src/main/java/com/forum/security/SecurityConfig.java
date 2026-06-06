@@ -69,18 +69,26 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        
+
         if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
             for (String origin : allowedOrigins.split(",")) {
-                config.addAllowedOrigin(origin.trim());
+                String trimmed = origin.trim();
+                if ("*".equals(trimmed)) {
+                    // Wildcard '*' không hoạt động với allowCredentials=true
+                    // Dùng allowedOriginPatterns thay thế
+                    config.addAllowedOriginPattern("*");
+                } else {
+                    config.addAllowedOrigin(trimmed);
+                }
             }
         } else {
             config.addAllowedOrigin("http://localhost:5173");
         }
-        
+
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
 }
+
