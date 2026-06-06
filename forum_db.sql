@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.3
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: May 29, 2026 at 01:55 AM
+-- Generation Time: Jun 06, 2026 at 08:12 AM
 -- Server version: 8.4.3
--- PHP Version: 8.3.26
+-- PHP Version: 8.3.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -133,18 +133,22 @@ INSERT INTO `conversations` (`id`, `created_at`, `title`, `updated_at`, `creator
 (28, '2026-05-28 18:47:03.754955', 'dsad', '2026-05-28 18:47:03.754955', NULL),
 (29, '2026-05-28 18:48:46.079345', 'sad', '2026-05-28 18:48:46.079345', NULL),
 (30, '2026-05-28 18:54:06.394452', 'dsad', '2026-05-28 18:54:06.394452', NULL),
-(31, '2026-05-28 18:55:14.718151', 'test', '2026-05-28 18:55:14.718151', 93),
-(32, '2026-05-28 19:01:41.732434', 'test 2', '2026-05-28 19:01:41.732434', 93),
-(33, '2026-05-28 19:02:33.764510', 'test 3', '2026-05-28 19:02:33.764510', 93),
-(34, '2026-05-28 19:03:19.443316', 'dsad', '2026-05-28 19:03:19.443316', 93),
-(35, '2026-05-28 19:03:40.757167', 'sda', '2026-05-28 19:03:40.757167', 93),
-(36, '2026-05-28 19:04:41.546025', 'đá', '2026-05-28 19:04:41.546025', 92),
-(37, '2026-05-28 19:06:55.043797', 'sdasdsadsad', '2026-05-28 19:06:55.043797', 93),
-(38, '2026-05-28 19:09:46.863252', 'test lại', '2026-05-28 19:09:46.863252', 93),
-(39, '2026-05-28 19:10:12.606567', 'test lkaij lần 2', '2026-05-28 19:10:12.606567', 93),
-(40, '2026-05-28 19:10:54.913640', 'đasa', '2026-05-28 19:10:54.913640', 92),
-(41, '2026-05-28 19:11:07.099974', 'đá', '2026-05-28 19:11:07.099974', 92),
-(42, '2026-05-28 23:26:27.226899', 'Hỏi về việc tách component trong VueJS', '2026-05-28 23:26:27.226899', 94);
+(31, '2026-05-28 18:55:14.718151', 'test', '2026-05-28 18:55:14.718151', NULL),
+(32, '2026-05-28 19:01:41.732434', 'test 2', '2026-05-28 19:01:41.732434', NULL),
+(33, '2026-05-28 19:02:33.764510', 'test 3', '2026-05-28 19:02:33.764510', NULL),
+(34, '2026-05-28 19:03:19.443316', 'dsad', '2026-05-28 19:03:19.443316', NULL),
+(35, '2026-05-28 19:03:40.757167', 'sda', '2026-05-28 19:03:40.757167', NULL),
+(36, '2026-05-28 19:04:41.546025', 'đá', '2026-05-28 19:04:41.546025', NULL),
+(37, '2026-05-28 19:06:55.043797', 'sdasdsadsad', '2026-05-28 19:06:55.043797', NULL),
+(38, '2026-05-28 19:09:46.863252', 'test lại', '2026-05-28 19:09:46.863252', NULL),
+(39, '2026-05-28 19:10:12.606567', 'test lkaij lần 2', '2026-05-28 19:10:12.606567', NULL),
+(40, '2026-05-28 19:10:54.913640', 'đasa', '2026-05-28 19:10:54.913640', NULL),
+(41, '2026-05-28 19:11:07.099974', 'đá', '2026-05-28 19:11:07.099974', NULL),
+(42, '2026-05-28 23:26:27.226899', 'Hỏi về việc tách component trong VueJS', '2026-05-28 23:26:27.226899', NULL),
+(43, '2026-06-01 03:02:03.779162', 'Test chức năng hội thoại lần I', '2026-06-01 03:02:03.824668', 96),
+(44, '2026-06-01 03:03:18.413093', 'Test chức năng hội thoại lần I', '2026-06-01 03:03:18.430279', 96),
+(45, '2026-06-01 03:11:37.174431', 'test chức năng đối thoại lần I', '2026-06-01 03:11:37.258537', 96),
+(46, '2026-06-01 03:14:32.208395', 'Review cách tổ chức source VueJS', '2026-06-01 03:20:14.483019', 96);
 
 -- --------------------------------------------------------
 
@@ -165,18 +169,21 @@ CREATE TABLE `conversation_messages` (
 --
 
 INSERT INTO `conversation_messages` (`id`, `content`, `created_at`, `conversation_id`, `sender_id`) VALUES
-(32, '<p>test</p>', '2026-05-28 18:55:14.720699', 31, 93),
-(33, '<p>test 2</p>', '2026-05-28 19:01:41.745006', 32, 93),
-(34, '<p>test 3</p>', '2026-05-28 19:02:33.777529', 33, 93),
-(35, '<p>dsa</p>', '2026-05-28 19:03:19.445820', 34, 93),
-(36, '<p>dsad</p>', '2026-05-28 19:03:40.760167', 35, 93),
-(37, '<p>dsada</p>', '2026-05-28 19:04:41.547618', 36, 92),
-(38, '<p>dsadasd</p>', '2026-05-28 19:06:55.044797', 37, 93),
-(39, '<p>test lại</p>', '2026-05-28 19:09:46.865484', 38, 93),
-(40, '<p>dsadsad</p>', '2026-05-28 19:10:12.607569', 39, 93),
-(41, '<p>đâsd</p>', '2026-05-28 19:10:54.915588', 40, 92),
-(42, '<p>dsada</p>', '2026-05-28 19:11:07.101755', 41, 92),
-(43, '<p>Chào bạn, mình đang chuyển một project từ React sang VueJS nhưng hơi rối phần chia component. Mình đang có một component khá lớn, gần 1500 dòng. Bạn có thể góp ý giúp mình được không?</p>', '2026-05-28 23:26:27.234231', 42, 94);
+(44, '<p>test chức năng đối thoại lần I</p>', '2026-06-01 03:02:03.797812', 43, 96),
+(45, '<h2 style=\"margin-left:0px;\">Test chức năng hội thoại lần I</h2>', '2026-06-01 03:03:18.425692', 44, 96),
+(46, '<p>test chức năng đối thoại lần I</p>', '2026-06-01 03:11:37.233356', 45, 96),
+(47, '<p>Mình đang refactor project VueJS nhưng càng tách component càng thấy rối. Muốn xin ý kiến mọi người về cách organize source code. Project mình hiện tại khoảng 40 component.</p>', '2026-06-01 03:14:32.215408', 46, 96),
+(48, '<p>40 component thì chưa nhiều lắm đâu 😄</p>', '2026-06-01 03:14:58.255568', 46, 97),
+(49, '<p>Nhưng mình thấy import rất mệt.</p>', '2026-06-01 03:15:11.509848', 46, 96),
+(50, '<p>Bạn đang organize theo kiểu nào?</p>', '2026-06-01 03:16:05.770415', 46, 97),
+(51, '<p>Theo pages với components thôi.</p>', '2026-06-01 03:16:27.834097', 46, 96),
+(52, '<p>Có tách feature module chưa?</p>', '2026-06-01 03:17:14.220680', 46, 97),
+(53, '<p>Chưa.</p>', '2026-06-01 03:17:20.115906', 46, 96),
+(54, '<p>Nên thử đó.</p>', '2026-06-01 03:17:27.447115', 46, 97),
+(55, '<p>Mình hơi sợ structure phức tạp quá.</p>', '2026-06-01 03:17:33.115936', 46, 96),
+(56, '<blockquote><p><strong>user01 đã viết:</strong></p><p>Mình hơi sợ structure phức tạp quá.</p></blockquote><p>Lúc đầu ai cũng vậy 😄</p>', '2026-06-01 03:17:46.631363', 46, 97),
+(57, '<p><span style=\"color:#2577b1;\"><strong>@user02</strong></span> Haha.</p>', '2026-06-01 03:18:45.872706', 46, 96),
+(58, '<blockquote><p><strong>user02 đã viết:</strong></p><p>Lúc đầu ai cũng vậy 😄</p></blockquote><p>Nhưng project lớn dần sẽ thấy lợi.</p>', '2026-06-01 03:20:14.478509', 46, 97);
 
 -- --------------------------------------------------------
 
@@ -196,30 +203,14 @@ CREATE TABLE `conversation_participants` (
 --
 
 INSERT INTO `conversation_participants` (`id`, `is_read`, `conversation_id`, `user_id`) VALUES
-(61, b'1', 31, 93),
-(62, b'1', 31, 92),
-(63, b'1', 32, 93),
-(64, b'1', 32, 92),
-(65, b'1', 33, 93),
-(66, b'1', 33, 92),
-(67, b'1', 34, 93),
-(68, b'1', 34, 92),
-(69, b'1', 35, 93),
-(70, b'1', 35, 92),
-(71, b'1', 36, 92),
-(72, b'1', 36, 93),
-(73, b'1', 37, 93),
-(74, b'1', 37, 92),
-(75, b'1', 38, 93),
-(76, b'1', 38, 92),
-(77, b'1', 39, 93),
-(78, b'1', 39, 92),
-(79, b'1', 40, 92),
-(80, b'1', 40, 93),
-(81, b'1', 41, 92),
-(82, b'1', 41, 93),
-(83, b'1', 42, 94),
-(84, b'1', 42, 95);
+(85, b'1', 43, 96),
+(86, b'1', 43, 97),
+(87, b'1', 44, 96),
+(88, b'1', 44, 97),
+(89, b'1', 45, 96),
+(90, b'1', 45, 97),
+(91, b'1', 46, 96),
+(92, b'1', 46, 97);
 
 -- --------------------------------------------------------
 
@@ -295,13 +286,6 @@ CREATE TABLE `notifications` (
   `conversation_id` bigint DEFAULT NULL,
   `conversation_message_id` bigint DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Dumping data for table `notifications`
---
-
-INSERT INTO `notifications` (`id`, `content`, `created_at`, `is_read`, `type`, `actor_id`, `post_id`, `recipient_id`, `thread_id`, `reaction_icon`, `reaction_name`, `reaction_color`, `conversation_id`, `conversation_message_id`) VALUES
-(90, NULL, '2026-05-28 23:36:24.957986', b'1', 'REACTION', 95, NULL, 94, 220, 'like', 'Like', '#2577b1', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -384,7 +368,9 @@ CREATE TABLE `reactions` (
 --
 
 INSERT INTO `reactions` (`id`, `created_at`, `updated_at`, `post_id`, `reaction_icon_id`, `thread_id`, `user_id`, `conversation_message_id`) VALUES
-(33, '2026-05-28 23:36:24.953950', '2026-05-28 23:36:24.953950', NULL, 1, 220, 95, NULL);
+(37, '2026-06-01 03:14:42.233359', '2026-06-01 03:14:42.233359', NULL, 2, NULL, 97, 47),
+(38, '2026-06-01 03:17:00.319925', '2026-06-01 03:17:00.319925', NULL, 1, NULL, 96, 50),
+(40, '2026-06-01 06:43:13.598539', '2026-06-01 06:43:13.598539', NULL, 1, NULL, 97, 57);
 
 -- --------------------------------------------------------
 
@@ -434,13 +420,6 @@ CREATE TABLE `threads` (
   `last_post_at` datetime(6) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
---
--- Dumping data for table `threads`
---
-
-INSERT INTO `threads` (`id`, `active`, `content`, `created_at`, `pinned`, `reply_count`, `title`, `view_count`, `author_id`, `category_id`, `label_id`, `attached_images`, `last_post_at`) VALUES
-(220, b'1', '<p>đây là nội dung test bài viết số 1</p>', '2026-05-28 23:36:11.050508', b'0', 0, 'test bài viết số 1', 7, 94, 7, 7, '[]', '2026-05-28 23:36:11.047402');
-
 -- --------------------------------------------------------
 
 --
@@ -479,10 +458,8 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `password`, `username`, `avatar`, `email`, `reset_code`, `reset_code_expiry`, `display_name`, `created_at`) VALUES
 (1, '$2a$10$9ijOKopSb6/uK3Z.ZGsrcuNOf4F16p8FDO0llFVLobiCOn5q9I2o.', 'admin', '#3f51b5', NULL, NULL, NULL, NULL, '2025-08-29 12:00:00.000000'),
 (65, '$2a$10$pEHY0q6kk0w1.2VFEI4s3u34Y5rXNdmukyrTnBXv0bZuz.jabwna6', 'superadmin', 'hsl(18, 70%, 45%)', NULL, NULL, NULL, NULL, '2026-05-27 14:31:01.860628'),
-(92, '$2a$10$ORRDXmQcqo0dTttFQ9JZWup0HiwmrNL4SQVECZA1DPKN962jsLh5e', 'user01', 'hsl(59, 70%, 45%)', NULL, NULL, NULL, NULL, '2026-05-28 18:54:38.421153'),
-(93, '$2a$10$haFXhZd2GBkGh2QBjCJDKOZh4P0OHBhQjFfd0SVtjyp78dmrCIi0a', 'user02', 'hsl(291, 70%, 45%)', NULL, NULL, NULL, NULL, '2026-05-28 18:54:45.466867'),
-(94, '$2a$10$ODEKTB5tRc9v83ZwREL51.6tuJQ5a.qBwsDo/o6h9LEeOHdcJg/Zy', 'userA', 'hsl(44, 70%, 45%)', NULL, NULL, NULL, 'user A', '2026-05-28 23:25:02.756643'),
-(95, '$2a$10$fP4sChBRkEbHO52m8CHWYekX8Ktvo8L0bFDC5W2For6FYBMtzVmKa', 'userB', 'hsl(282, 70%, 45%)', NULL, NULL, NULL, 'user B', '2026-05-28 23:25:14.916841');
+(96, '$2a$10$/SzErD.ONP/lSHoDhxfXCOxsS/qk95Rdu6UhURJjEdb3ei2533dq6', 'user01', 'hsl(104, 70%, 45%)', NULL, NULL, NULL, NULL, '2026-06-01 03:00:21.137354'),
+(97, '$2a$10$lp.kf15UfDuDNUciQqWzxOgWHTCjH6boeuk.u.Glp1a.gRAXmFNYG', 'user02', 'hsl(224, 70%, 45%)', NULL, NULL, NULL, NULL, '2026-06-01 03:00:30.336900');
 
 -- --------------------------------------------------------
 
@@ -502,10 +479,8 @@ CREATE TABLE `user_roles` (
 INSERT INTO `user_roles` (`user_id`, `role`) VALUES
 (1, 'ROLE_ADMIN'),
 (65, 'ROLE_SUPER_ADMIN'),
-(92, 'ROLE_USER'),
-(93, 'ROLE_USER'),
-(94, 'ROLE_USER'),
-(95, 'ROLE_USER');
+(96, 'ROLE_USER'),
+(97, 'ROLE_USER');
 
 --
 -- Indexes for dumped tables
@@ -673,19 +648,19 @@ ALTER TABLE `category_groups`
 -- AUTO_INCREMENT for table `conversations`
 --
 ALTER TABLE `conversations`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
 
 --
 -- AUTO_INCREMENT for table `conversation_messages`
 --
 ALTER TABLE `conversation_messages`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
 
 --
 -- AUTO_INCREMENT for table `conversation_participants`
 --
 ALTER TABLE `conversation_participants`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=93;
 
 --
 -- AUTO_INCREMENT for table `labels`
@@ -703,7 +678,7 @@ ALTER TABLE `menus`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=91;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
 
 --
 -- AUTO_INCREMENT for table `polls`
@@ -733,7 +708,7 @@ ALTER TABLE `posts`
 -- AUTO_INCREMENT for table `reactions`
 --
 ALTER TABLE `reactions`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT for table `reaction_icons`
@@ -757,7 +732,7 @@ ALTER TABLE `thread_subscriptions`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
+  MODIFY `id` bigint NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=98;
 
 --
 -- Constraints for dumped tables
