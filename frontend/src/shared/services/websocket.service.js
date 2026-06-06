@@ -17,7 +17,7 @@ class WebSocketService {
     this.username = username
 
     // Initialize STOMP client using SockJS fallback mechanism
-    const socket = new SockJS('http://localhost:8080/ws')
+    const socket = new SockJS(process.env.VUE_APP_WS_URL || 'http://localhost:8080/ws')
     this.client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,

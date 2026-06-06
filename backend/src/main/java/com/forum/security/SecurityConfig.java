@@ -10,11 +10,15 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${app.cors.allowed-origins}")
+    private String allowedOrigins;
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -65,7 +69,15 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://localhost:5173");
+        
+        if (allowedOrigins != null && !allowedOrigins.trim().isEmpty()) {
+            for (String origin : allowedOrigins.split(",")) {
+                config.addAllowedOrigin(origin.trim());
+            }
+        } else {
+            config.addAllowedOrigin("http://localhost:5173");
+        }
+        
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
         source.registerCorsConfiguration("/**", config);
