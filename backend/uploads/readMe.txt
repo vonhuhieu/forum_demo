@@ -1,1 +1,0 @@
-Đây là thư mục chứa các tệp

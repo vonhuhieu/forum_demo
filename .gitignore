@@ -1,0 +1,13 @@
+# Uploads directory (user uploaded files - not to be versioned)
+backend/uploads/
+
+# Frontend build output
+frontend/dist/
+frontend/node_modules/
+
+# Backend build output
+backend/target/
+
+# IDE files
+.idea/
+*.iml
