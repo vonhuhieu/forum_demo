@@ -1,6 +1,9 @@
 # Uploads directory (user uploaded files - not to be versioned)
 backend/uploads/
 
+# Sensitive notes file
+note
+
 # Frontend build output
 frontend/dist/
 frontend/node_modules/
