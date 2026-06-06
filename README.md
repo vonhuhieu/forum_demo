@@ -5,7 +5,7 @@ colorFrom: blue
 colorTo: indigo
 sdk: docker
 pinned: false
-app_port: 8080
+app_port: 7860
 ---
 
 # Forum Backend (Spring Boot)
