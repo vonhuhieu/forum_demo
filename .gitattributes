@@ -1,11 +1,18 @@
+# Treat image files as binary (no diff)
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.jpeg filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
 *.gif filter=lfs diff=lfs merge=lfs -text
-*.webp filter=lfs diff=lfs merge=lfs -text
+*.ico binary
 *.svg filter=lfs diff=lfs merge=lfs -text
+# Treat media files as binary
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.mp3 filter=lfs diff=lfs merge=lfs -text
+*.pdf binary
+*.docx binary
+*.zip binary
+*.rar binary
+*.webp filter=lfs diff=lfs merge=lfs -text
 frontend/public/*.png !text !filter !merge !diff
 frontend/public/*.jpg !text !filter !merge !diff
 frontend/public/*.jpeg !text !filter !merge !diff
