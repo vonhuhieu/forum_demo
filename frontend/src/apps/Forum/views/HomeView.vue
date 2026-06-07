@@ -1,5 +1,6 @@
 <template>
   <div class="app-wrapper">
+    <Loading :visible="isLoading" />
     <ForumHeader @logout="checkAuth" />
 
     <main class="container">
@@ -147,6 +148,7 @@
 <script>
 import ForumHeader from '@/shared/components/ForumHeader.vue'
 import ForumHome from '@/shared/components/ForumHome.vue'
+import Loading from '@/shared/components/Loading.vue'
 import threadService from '@/apps/Forum/services/thread.service'
 import categoryService from '@/apps/Forum/services/category.service'
 import statisticsService from '@/apps/Forum/services/statistics.service'
@@ -156,7 +158,8 @@ export default {
   name: 'HomeView',
   components: {
     ForumHeader,
-    ForumHome
+    ForumHome,
+    Loading
   },
   data() {
     return {
@@ -166,6 +169,7 @@ export default {
       showModal: false,
       latestThreads: [],
       loadingLatest: false,
+      isLoading: true,
       stats: {
         totalCategories: 0,
         totalThreads: 0,
@@ -183,8 +187,7 @@ export default {
   },
   mounted() {
     this.checkAuth()
-    this.fetchStatistics()
-    this.fetchLatestThreads()
+    this.loadAllData()
   },
   methods: {
     checkAuth() {
@@ -209,6 +212,17 @@ export default {
     selectCategory(catId) {
       this.showModal = false
       this.$router.push({ name: 'CreateThread', query: { catId } })
+    },
+    async loadAllData() {
+      this.isLoading = true
+      try {
+        await Promise.all([
+          this.fetchStatistics(),
+          this.fetchLatestThreads()
+        ])
+      } finally {
+        this.isLoading = false
+      }
     },
     async fetchStatistics() {
       try {
