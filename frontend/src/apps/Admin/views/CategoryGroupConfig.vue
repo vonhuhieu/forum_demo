@@ -1,5 +1,6 @@
 <template>
   <div class="page-content">
+    <Loading :visible="isSubmitting" />
     <DataTable
       title="Quản lý Nhóm chuyên mục"
       placeholder="Tìm kiếm tên nhóm..."
@@ -9,7 +10,7 @@
       :totalItems="filteredGroups.length"
       v-model:pageSize="pageSize"
       v-model:currentPage="currentPage"
-      :loading="loading"
+      :loading="isTableLoading"
       @search="handleSearch"
       @add="openAddModal"
       @edit="openEditModal"
@@ -62,15 +63,17 @@
 <script>
 import AdminService from '@/apps/Admin/services/admin.service'
 import DataTable from '@/shared/components/DataTable.vue'
+import Loading from '@/shared/components/Loading.vue'
 import { alertConfirm, toastSuccess, toastError } from '@/shared/utils/swal'
 
 export default {
   name: 'CategoryGroupConfig',
-  components: { DataTable },
+  components: { DataTable, Loading },
   data() {
     return {
       groups: [],
       loading: false,
+      isSubmitting: false,
       keyword: '',
       pageSize: 10,
       currentPage: 1,
@@ -90,6 +93,9 @@ export default {
     }
   },
   computed: {
+    isTableLoading() {
+      return this.loading || this.isSubmitting
+    },
     // Groups Logic
     filteredGroups() {
       let result = this.groups
@@ -132,8 +138,12 @@ export default {
       }
     },
     handleSearch(k) {
+      this.loading = true
       this.keyword = k
       this.currentPage = 1
+      this.$nextTick(() => {
+        this.loading = false
+      })
     },
     handleSort({ field, order }) {
       this.sortField = field
@@ -151,6 +161,7 @@ export default {
       this.showModal = true
     },
     async handleSubmit() {
+      this.isSubmitting = true
       try {
         if (this.isEditing) {
           await AdminService.updateCategoryGroup(this.form.id, this.form)
@@ -163,17 +174,22 @@ export default {
         this.fetchGroups()
       } catch (error) {
         toastError('Lỗi khi lưu dữ liệu')
+      } finally {
+        this.isSubmitting = false
       }
     },
     async deleteGroup(item) {
       const result = await alertConfirm('Xóa nhóm', `Bạn có chắc chắn muốn xóa nhóm "${item.name}"?`)
       if (result.isConfirmed) {
+        this.isSubmitting = true
         try {
           await AdminService.deleteCategoryGroup(item.id)
           toastSuccess('Đã xóa nhóm')
           this.fetchGroups()
         } catch (error) {
           toastError('Lỗi khi xóa nhóm')
+        } finally {
+          this.isSubmitting = false
         }
       }
     },
