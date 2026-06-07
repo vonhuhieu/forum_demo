@@ -1,63 +1,65 @@
 package com.forum.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
-import jakarta.annotation.PostConstruct;
-
+/**
+ * Handles file uploads by sending them to Cloudinary CDN.
+ *
+ * Why Cloudinary instead of local disk?
+ * - Hugging Face Spaces container filesystem is ephemeral:
+ *   files written to local disk are lost on every restart/redeploy.
+ * - Cloudinary stores files permanently and serves them via CDN.
+ * - Returns absolute HTTPS URLs, so frontend displays images correctly
+ *   regardless of which domain (Vercel vs HF Spaces) it is served from.
+ */
 @Service
 public class FileUploadService {
 
-    @Value("${app.upload.dir}")
-    private String uploadDir;
+    @Autowired
+    private Cloudinary cloudinary;
 
-    @PostConstruct
-    public void init() {
-        try {
-            Files.createDirectories(Paths.get(uploadDir));
-        } catch (IOException e) {
-            throw new RuntimeException("Could not initialize storage", e);
-        }
-    }
-
+    /**
+     * Upload a single file to Cloudinary.
+     * @return map with keys: url (absolute HTTPS), name, type
+     */
     public Map<String, String> uploadFile(MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
+        if (file == null || file.isEmpty()) {
             return null;
         }
 
-        String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
-        String extension = "";
-        int i = originalFilename.lastIndexOf('.');
-        if (i > 0) {
-            extension = originalFilename.substring(i);
-        }
+        // Upload raw bytes to Cloudinary (works for images, videos, etc.)
+        Map uploadResult = cloudinary.uploader().upload(
+            file.getBytes(),
+            ObjectUtils.asMap(
+                "folder",       "forum_uploads",   // organise in a subfolder on Cloudinary
+                "resource_type","auto"             // auto-detect image / video / raw
+            )
+        );
 
-        String fileName = UUID.randomUUID().toString() + extension;
-        Path targetLocation = Paths.get(uploadDir).resolve(fileName);
-        Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+        // secure_url is always HTTPS, works everywhere
+        String secureUrl = (String) uploadResult.get("secure_url");
 
-        String fileUrl = "/uploads/" + fileName;
         Map<String, String> data = new HashMap<>();
-        data.put("url", fileUrl);
-        data.put("name", originalFilename);
+        data.put("url",  secureUrl);
+        data.put("name", file.getOriginalFilename());
         data.put("type", file.getContentType());
 
         return data;
     }
 
+    /**
+     * Upload multiple files to Cloudinary.
+     */
     public List<Map<String, String>> uploadMultipleFiles(MultipartFile[] files) throws IOException {
         List<Map<String, String>> uploadedFiles = new ArrayList<>();
         for (MultipartFile file : files) {
