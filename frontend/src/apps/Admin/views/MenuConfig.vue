@@ -1,5 +1,6 @@
 <template>
   <div class="page-content">
+    <Loading :visible="isSubmitting" />
     <DataTable
       title="Danh sách Menu trên Header"
       placeholder="Tìm kiếm tiêu đề menu, URL..."
@@ -9,7 +10,7 @@
       :totalItems="filteredMenus.length"
       v-model:pageSize="pageSize"
       v-model:currentPage="currentPage"
-      :loading="loading"
+      :loading="isTableLoading"
       @search="handleSearch"
       @add="openAddModal"
       @edit="openEditModal"
@@ -66,15 +67,17 @@
 <script>
 import AdminService from '@/apps/Admin/services/admin.service'
 import DataTable from '@/shared/components/DataTable.vue'
+import Loading from '@/shared/components/Loading.vue'
 import { alertConfirm, toastSuccess, toastError } from '@/shared/utils/swal'
 
 export default {
   name: 'MenuConfig',
-  components: { DataTable },
+  components: { DataTable, Loading },
   data() {
     return {
       menus: [],
       loading: false,
+      isSubmitting: false,
       keyword: '',
       pageSize: 10,
       currentPage: 1,
@@ -92,6 +95,9 @@ export default {
     }
   },
   computed: {
+    isTableLoading() {
+      return this.loading || this.isSubmitting
+    },
     filteredMenus() {
       let result = this.menus
       if (this.keyword) {
@@ -126,13 +132,22 @@ export default {
   methods: {
     async fetchMenus() {
       this.loading = true
-      const response = await AdminService.getMenus()
-      this.menus = response.data
-      this.loading = false
+      try {
+        const response = await AdminService.getMenus()
+        this.menus = response.data
+      } catch (error) {
+        toastError('Không thể tải danh sách menu')
+      } finally {
+        this.loading = false
+      }
     },
     handleSearch(k) {
+      this.loading = true
       this.keyword = k
       this.currentPage = 1
+      this.$nextTick(() => {
+        this.loading = false
+      })
     },
     handleSort({ field, order }) {
       this.sortField = field
@@ -148,6 +163,7 @@ export default {
       this.showModal = true
     },
     async handleSubmit() {
+      this.isSubmitting = true
       try {
         if (this.isEditing) {
           await AdminService.updateMenu(this.form.id, this.form)
@@ -160,17 +176,22 @@ export default {
         this.fetchMenus()
       } catch (error) {
         toastError('Lỗi khi lưu dữ liệu')
+      } finally {
+        this.isSubmitting = false
       }
     },
     async deleteMenu(item) {
       const result = await alertConfirm('Xóa menu', `Bạn có chắc chắn muốn xóa menu "${item.title}"?`)
       if (result.isConfirmed) {
+        this.isSubmitting = true
         try {
           await AdminService.deleteMenu(item.id)
           toastSuccess('Đã xóa menu')
           this.fetchMenus()
         } catch (error) {
           toastError('Lỗi khi xóa menu')
+        } finally {
+          this.isSubmitting = false
         }
       }
     },
