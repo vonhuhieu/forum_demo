@@ -19,7 +19,7 @@
 
       <div class="main-wrapper">
         <div class="content-left">
-          <ForumHome />
+          <ForumHome @loaded="onForumHomeLoaded" />
         </div>
         
         <aside class="content-right">
@@ -169,7 +169,8 @@ export default {
       showModal: false,
       latestThreads: [],
       loadingLatest: false,
-      isLoading: true,
+      apiDataLoaded: false,
+      forumHomeLoaded: false,
       stats: {
         totalCategories: 0,
         totalThreads: 0,
@@ -180,6 +181,9 @@ export default {
     }
   },
   computed: {
+    isLoading() {
+      return !this.apiDataLoaded || !this.forumHomeLoaded
+    },
     activeModalGroups() {
       if (!this.categoryGroupsModal || !Array.isArray(this.categoryGroupsModal)) return []
       return this.categoryGroupsModal.filter(g => g.active && g.categories && g.categories.length > 0)
@@ -214,15 +218,18 @@ export default {
       this.$router.push({ name: 'CreateThread', query: { catId } })
     },
     async loadAllData() {
-      this.isLoading = true
+      this.apiDataLoaded = false
       try {
         await Promise.all([
           this.fetchStatistics(),
           this.fetchLatestThreads()
         ])
       } finally {
-        this.isLoading = false
+        this.apiDataLoaded = true
       }
+    },
+    onForumHomeLoaded() {
+      this.forumHomeLoaded = true
     },
     async fetchStatistics() {
       try {
