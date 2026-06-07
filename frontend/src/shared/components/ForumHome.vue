@@ -158,6 +158,7 @@ import UserProfilePopup from '@/shared/components/UserProfilePopup.vue'
 
 export default {
   name: 'ForumHome',
+  emits: ['loaded'],
   components: {
     UserProfilePopup
   },
@@ -212,6 +213,7 @@ export default {
         console.error('Lỗi khi tải dữ liệu trang chủ:', error)
       } finally {
         this.loading = false
+        this.$emit('loaded')
       }
     },
     async fetchLastThread(catId) {
