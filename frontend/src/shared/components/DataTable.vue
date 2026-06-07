@@ -35,7 +35,8 @@
     </div>
 
     <!-- Table Section -->
-    <div class="tablerounededCorner wrapper-scroll">
+    <div class="tablerounededCorner wrapper-scroll table-loading-wrapper">
+      <Loading :visible="loading" />
       <table class="customize-table table-striped">
         <thead>
           <tr>
@@ -63,7 +64,7 @@
         <tbody>
           <tr v-if="loading">
             <td :colspan="totalColumns" class="table-empty-no-data">
-              <div class="spinner">Đang tải dữ liệu...</div>
+              &nbsp;
             </td>
           </tr>
           <template v-else-if="items && items.length > 0">
@@ -107,10 +108,11 @@
 
 <script>
 import Pagination from './Pagination.vue'
+import Loading from './Loading.vue'
 
 export default {
   name: 'DataTable',
-  components: { Pagination },
+  components: { Pagination, Loading },
   props: {
     headers: { type: Array, required: true },
     items: { type: Array, default: () => [] },
@@ -191,6 +193,15 @@ export default {
 
 <style src="@/shared/assets/styles/table-light.css"></style>
 <style scoped>
+.table-loading-wrapper {
+  position: relative;
+}
+
+.table-loading-wrapper :deep(.loading-overlay) {
+  position: absolute;
+  border-radius: 8px;
+}
+
 .data-table-container {
   padding: 1.5rem 0;
   width: 100%;
