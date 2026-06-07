@@ -1,5 +1,6 @@
 <template>
   <div class="login-page">
+    <Loading :visible="isLoading" />
     <div class="card login-card">
       <div class="card-header">ĐĂNG NHẬP HỆ THỐNG</div>
       <form @submit.prevent="handleLogin" class="login-form">
@@ -34,16 +35,21 @@
 
 <script>
 import AuthService from '@/apps/Auth/services/auth.service'
+import Loading from '@/shared/components/Loading.vue'
 
 export default {
   name: 'Login',
+  components: {
+    Loading
+  },
   data() {
     return {
       username: '',
       password: '',
       showPassword: false,
       rememberMe: false,
-      error: ''
+      error: '',
+      isLoading: false
     }
   },
   mounted() {
@@ -57,6 +63,8 @@ export default {
   },
   methods: {
     async handleLogin() {
+      this.isLoading = true
+      this.error = ''
       try {
         const response = await AuthService.login({
           username: this.username,
@@ -81,6 +89,8 @@ export default {
         }
       } catch (err) {
         this.error = 'Tài khoản hoặc mật khẩu không chính xác'
+      } finally {
+        this.isLoading = false
       }
     }
   }
