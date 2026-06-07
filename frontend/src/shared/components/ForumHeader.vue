@@ -7,6 +7,18 @@
     </div>
     <div class="header-nav">
       <div class="container nav-container">
+        <!-- Mobile hamburger and logo -->
+        <div class="nav-left-mobile">
+          <button class="mobile-hamburger" @click="isSidebarOpen = true" aria-label="Menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="mobile-logo logo" @click="$router.push({ name: 'Home' })">HTXSL</div>
+        </div>
+
         <nav class="nav-links">
           <router-link
             v-for="menu in menus"
@@ -32,8 +44,8 @@
             </div>
           </div>
           <template v-else>
-            <router-link :to="{ name: 'Login' }" class="nav-group-user">Đăng nhập</router-link>
             <router-link :to="{ name: 'Register' }" class="nav-group-user">Đăng ký</router-link>
+            <router-link :to="{ name: 'Login' }" class="nav-group-user">Đăng nhập</router-link>
           </template>
 
           <!-- Mailbox Container -->
@@ -219,9 +231,36 @@
 
           <div class="btn-search">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <span>Tìm kiếm</span>
+            <span class="search-text">Tìm kiếm</span>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Mobile Sidebar -->
+    <div class="mobile-sidebar" :class="{ 'open': isSidebarOpen }">
+      <div class="sidebar-backdrop" @click="isSidebarOpen = false"></div>
+      <div class="sidebar-content">
+        <div class="sidebar-header">
+          <div class="sidebar-logo" @click="$router.push({ name: 'Home' }); isSidebarOpen = false">HTXSL</div>
+          <button class="btn-close-sidebar" @click="isSidebarOpen = false" aria-label="Đóng menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <nav class="sidebar-nav">
+          <router-link
+            v-for="menu in menus"
+            :key="menu.id"
+            :to="menu.url"
+            active-class="active"
+            @click="isSidebarOpen = false"
+          >
+            {{ menu.title }}
+          </router-link>
+        </nav>
       </div>
     </div>
   </header>
@@ -245,6 +284,7 @@ export default {
       showNotifDropdown: false,
       showUserDropdown: false,
       showMailDropdown: false,
+      isSidebarOpen: false,
       notifications: [],
       unreadCount: 0,
       isShaking: false,
@@ -1103,4 +1143,7 @@ export default {
 .notif-footer a.btn-load-more.disabled:hover {
   text-decoration: none;
 }
+
+/* Import mobile responsive styles */
+@import "@/shared/assets/styles/responsive/mobile/header_mobile.css";
 </style>
