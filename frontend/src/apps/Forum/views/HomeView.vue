@@ -8,7 +8,7 @@
         <img src="/675456323_122106804740812631_4737388993277477397_n.jpg" alt="HTXHS Banner">
       </div>
 
-      <div class="home-action-bar container" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0;">
+      <div class="home-action-bar container" style="display: flex; justify-content: space-between; align-items: center; padding: 0;">
         <div class="forum-slogan" style="font-weight: bold; color: #1a507a; font-size: 1.1rem;">
           HỢP TÁC XÃ SINH LÝ
         </div>
