@@ -7,7 +7,7 @@
       </div>
       
       <div class="thread-list">
-        <div v-for="thread in latestThreads" :key="thread.id" class="thread-row">
+        <div v-for="thread in latestThreads" :key="thread.id" class="thread-row pt-and-pb-10-and-pl-and-pr-8">
           <user-profile-popup :user="thread.author" v-if="thread.author">
             <div class="thread-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
               {{ (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() }}
@@ -24,12 +24,12 @@
                 {{ thread.title }}
               </router-link>
             </div>
-            <div class="thread-meta">
-              <span class="author-name">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
+            <div class="thread-meta desktop-only">
+              <span class="author-name white-space-nowrap">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
               <span class="dot-divider">•</span>
-              <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }" class="meta-link">{{ formatDate(thread.createdAt) }}</router-link>
+              <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }" class="meta-link white-space-nowrap">{{ formatDate(thread.createdAt) }}</router-link>
               <span v-if="thread.category" class="dot-divider">•</span>
-              <router-link v-if="thread.category" :to="{ name: 'CategoryDetail', params: { id: thread.category.id } }" class="meta-link meta-category">
+              <router-link v-if="thread.category" :to="{ name: 'CategoryDetail', params: { id: thread.category.id } }" class="meta-link meta-category white-space-nowrap">
                 {{ thread.category.name }}
               </router-link>
               
@@ -43,6 +43,20 @@
                   {{ p }}
                 </router-link>
               </span>
+            </div>
+            <div class="thread-meta-mobile mobile-only">
+              <div class="thread-meta-row-2">
+                <span class="author-name">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
+                <span v-if="thread.category" class="dot-divider">·</span>
+                <router-link v-if="thread.category" :to="{ name: 'CategoryDetail', params: { id: thread.category.id } }" class="meta-link meta-category">
+                  {{ thread.category.name }}
+                </router-link>
+              </div>
+              <div class="thread-meta-row-3">
+                <span>Trả lời: {{ formatNumber(thread.replyCount) }}</span>
+                <span class="dot-divider">·</span>
+                <span>{{ formatDate(thread.lastPostAt || thread.createdAt) }}</span>
+              </div>
             </div>
           </div>
           <div class="thread-stats">
@@ -662,4 +676,7 @@ export default {
   flex-shrink: 0;
   border: 1px solid #dee2e6;
 }
+
+@import "@/shared/assets/styles/custom.css";
+@import "@/shared/assets/styles/responsive/mobile/forum_home_mobile.css";
 </style>
