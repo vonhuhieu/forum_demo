@@ -1,0 +1,88 @@
+/* Navigation scroll wrapper */
+.nav-scroll-wrapper {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+}
+
+/* Scroll buttons (default hidden on desktop/mobile) */
+.nav-scroll-btn {
+  display: none;
+}
+
+/* Responsive styles for Tablet (768px -> 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .nav-scroll-wrapper {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+    align-items: stretch;
+  }
+
+  .nav-links {
+    display: flex !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    flex-wrap: nowrap !important;
+    flex: 1;
+    height: 100%;
+    align-items: stretch;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    
+    /* Hide scrollbars */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-links a {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 0 12px !important;
+    font-size: 15px !important;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-scroll-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    background: rgba(0, 0, 0, 0.15);
+    border: none;
+    color: #c9d6e0;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin: 0 4px;
+    transition: all 0.2s;
+    z-index: 10;
+    flex-shrink: 0;
+  }
+
+  .nav-scroll-btn:hover {
+    color: white;
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Hide Search text, keep only icon */
+  .btn-search .search-text {
+    display: none !important;
+  }
+  
+  .btn-search {
+    padding: 0 14px !important;
+  }
+
+  /* Hide greeting to save space for user block */
+  .user-greeting {
+    display: none !important;
+  }
+}

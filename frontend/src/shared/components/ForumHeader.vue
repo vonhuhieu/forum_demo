@@ -19,16 +19,40 @@
           <div class="mobile-logo logo" @click="$router.push({ name: 'Home' })">HTXSL</div>
         </div>
 
-        <nav class="nav-links">
-          <router-link
-            v-for="menu in menus"
-            :key="menu.id"
-            :to="menu.url"
-            active-class="active"
+        <div class="nav-scroll-wrapper">
+          <button 
+            class="nav-scroll-btn btn-left" 
+            v-show="canScrollLeft" 
+            @click="scrollNav('left')" 
+            aria-label="Cuộn sang trái"
           >
-            {{ menu.title }}
-          </router-link>
-        </nav>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+
+          <nav class="nav-links" ref="navLinks">
+            <router-link
+              v-for="menu in menus"
+              :key="menu.id"
+              :to="menu.url"
+              active-class="active"
+            >
+              {{ menu.title }}
+            </router-link>
+          </nav>
+
+          <button 
+            class="nav-scroll-btn btn-right" 
+            v-show="canScrollRight" 
+            @click="scrollNav('right')" 
+            aria-label="Cuộn sang phải"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
         <div class="nav-right">
           <div class="nav-group-user" :class="{ 'active': showUserDropdown }" v-if="isLoggedIn" ref="userContainer" @click="toggleUserDropdown" style="cursor: pointer;">
             <div class="user-info-header">
@@ -296,7 +320,9 @@ export default {
       mailLimitUnread: 10,
       activeNotifTab: 'all',
       notifLimitAll: 10,
-      notifLimitUnread: 10
+      notifLimitUnread: 10,
+      canScrollLeft: false,
+      canScrollRight: false
     }
   },
   computed: {
@@ -329,6 +355,13 @@ export default {
       return this.filteredNotifications.length > limit
     }
   },
+  watch: {
+    menus() {
+      this.$nextTick(() => {
+        setTimeout(this.updateScrollArrows, 300)
+      })
+    }
+  },
   async mounted() {
     this.checkAuth()
     
@@ -340,6 +373,12 @@ export default {
     
     document.addEventListener('click', this.handleClickOutside)
 
+    const nav = this.$refs.navLinks
+    if (nav) {
+      nav.addEventListener('scroll', this.updateScrollArrows)
+    }
+    window.addEventListener('resize', this.updateScrollArrows)
+
     try {
       const response = await menuService.getAll()
       this.menus = response.data
@@ -349,6 +388,10 @@ export default {
         { id: 1, title: 'Trang nhất', url: '/' }
       ]
     }
+
+    this.$nextTick(() => {
+      setTimeout(this.updateScrollArrows, 500)
+    })
   },
   beforeUnmount() {
     document.removeEventListener('click', this.handleClickOutside)
@@ -358,8 +401,32 @@ export default {
     if (this.convoUnsubscribe) {
       this.convoUnsubscribe()
     }
+    const nav = this.$refs.navLinks
+    if (nav) {
+      nav.removeEventListener('scroll', this.updateScrollArrows)
+    }
+    window.removeEventListener('resize', this.updateScrollArrows)
   },
   methods: {
+    scrollNav(direction) {
+      const nav = this.$refs.navLinks
+      if (!nav) return
+      const scrollAmount = 150
+      const newScrollLeft = direction === 'left' 
+        ? nav.scrollLeft - scrollAmount 
+        : nav.scrollLeft + scrollAmount
+      
+      nav.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
+      })
+    },
+    updateScrollArrows() {
+      const nav = this.$refs.navLinks
+      if (!nav) return
+      this.canScrollLeft = nav.scrollLeft > 5
+      this.canScrollRight = nav.scrollLeft < (nav.scrollWidth - nav.clientWidth - 5)
+    },
     checkAuth() {
       const user = localStorage.getItem('user')
       if (user) {
@@ -1146,4 +1213,5 @@ export default {
 
 /* Import mobile responsive styles */
 @import "@/shared/assets/styles/responsive/mobile/header_mobile.css";
+@import "@/shared/assets/styles/responsive/tablet/header_tablet.css";
 </style>
