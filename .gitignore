@@ -14,3 +14,13 @@ backend/target/
 # IDE files
 .idea/
 *.iml
+
+# Database Dumps and Scraping Files
+*.sql
+*.json
+
+# Root Node scripts and node modules
+/*.js
+/node_modules/
+/package.json
+/package-lock.json

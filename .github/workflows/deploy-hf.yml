@@ -23,8 +23,8 @@ jobs:
           # Create a clean orphan branch to wipe out history containing binary files
           git checkout --orphan hf-deploy
           
-          # Remove frontend folder from the index
-          git rm -rf frontend --ignore-unmatch
+          # Remove frontend folder and database dumps from the index
+          git rm -rf frontend forum_db.sql forum_db_aiven.sql --ignore-unmatch
           
           # Commit the clean backend-only state
           git commit -m "deploy: clean backend build from GitHub commit ${{ github.sha }}"
