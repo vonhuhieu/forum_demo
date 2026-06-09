@@ -7,7 +7,7 @@
       </div>
       
       <div class="thread-list">
-        <div v-for="thread in latestThreads" :key="thread.id" class="thread-row pt-and-pb-10-and-pl-and-pr-8">
+        <div v-for="thread in latestThreads" :key="thread.id" class="thread-row home-thread-row pt-and-pb-10-and-pl-and-pr-8">
           <user-profile-popup :user="thread.author" v-if="thread.author">
             <div class="thread-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
               {{ (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() }}
@@ -32,8 +32,10 @@
               <router-link v-if="thread.category" :to="{ name: 'CategoryDetail', params: { id: thread.category.id } }" class="meta-link meta-category white-space-nowrap">
                 {{ thread.category.name }}
               </router-link>
-              
-              <span class="quick-pages" v-if="getThreadPages(thread.replyCount).length > 0">
+            </div>
+            
+            <div class="home-quick-pages-wrapper desktop-only" v-if="getThreadPages(thread.replyCount).length > 0">
+              <span class="home-quick-pages">
                 <router-link 
                   v-for="p in getThreadPages(thread.replyCount)" 
                   :key="p" 
@@ -599,6 +601,19 @@ export default {
 
 .meta-category {
   color: #666;
+}
+
+.home-thread-row {
+  align-items: flex-start;
+}
+
+.home-quick-pages-wrapper {
+  margin-top: 4px;
+}
+
+.home-quick-pages {
+  display: inline-flex;
+  gap: 4px;
 }
 
 .quick-pages {
