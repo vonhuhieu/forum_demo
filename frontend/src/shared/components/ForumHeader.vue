@@ -59,7 +59,7 @@
               <span class="user-avatar-small" :style="{ backgroundColor: currentUser.avatar || '#fff', color: currentUser.avatar ? '#fff' : '#1a507a' }">
                 {{ (currentUser.displayName || currentUser.username).charAt(0).toUpperCase() }}
               </span>
-              <span class="user-greeting fs-18">Chào, {{ currentUser.displayName || currentUser.username }}</span>
+              <span class="user-greeting fs-18 color-c9d6e0">{{ currentUser.displayName || currentUser.username }}</span>
               
               <!-- User Dropdown Menu -->
               <div class="user-dropdown" v-show="showUserDropdown">

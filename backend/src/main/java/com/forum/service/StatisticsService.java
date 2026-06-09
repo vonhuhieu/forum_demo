@@ -5,6 +5,7 @@ import com.forum.entity.User;
 import com.forum.repository.CategoryRepository;
 import com.forum.repository.ThreadRepository;
 import com.forum.repository.UserRepository;
+import com.forum.utils.Constants;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,12 +34,19 @@ public class StatisticsService {
                 .map(u -> org.springframework.util.StringUtils.hasText(u.getDisplayName()) ? u.getDisplayName() : u.getUsername())
                 .orElse("Chưa có");
 
+        long officialMembers = userRepository.countByRole(Constants.ROLE_USER);
+        long unofficialMembers = userRepository.countByRole(Constants.ROLE_NON_OFFICIAL_USER);
+        long totalOfficialAndUnofficial = officialMembers + unofficialMembers;
+
         return StatisticsDTO.builder()
                 .totalCategories(totalCategories)
                 .totalThreads(totalThreads)
                 .totalPosts(totalPosts)
                 .totalMembers(totalMembers)
                 .latestMember(latestMember)
+                .officialMembers(officialMembers)
+                .unofficialMembers(unofficialMembers)
+                .totalOfficialAndUnofficial(totalOfficialAndUnofficial)
                 .build();
     }
 }
