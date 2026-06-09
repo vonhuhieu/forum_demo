@@ -32,7 +32,7 @@
           </button>
 
           <nav class="nav-links" ref="navLinks">
-            <router-link
+            <router-link class="fs-18"
               v-for="menu in menus"
               :key="menu.id"
               :to="menu.url"
@@ -59,7 +59,7 @@
               <span class="user-avatar-small" :style="{ backgroundColor: currentUser.avatar || '#fff', color: currentUser.avatar ? '#fff' : '#1a507a' }">
                 {{ (currentUser.displayName || currentUser.username).charAt(0).toUpperCase() }}
               </span>
-              <span class="user-greeting">Chào, {{ currentUser.displayName || currentUser.username }}</span>
+              <span class="user-greeting fs-18">Chào, {{ currentUser.displayName || currentUser.username }}</span>
               
               <!-- User Dropdown Menu -->
               <div class="user-dropdown" v-show="showUserDropdown">
@@ -68,8 +68,8 @@
             </div>
           </div>
           <template v-else>
-            <router-link :to="{ name: 'Register' }" class="nav-group-user">Đăng ký</router-link>
-            <router-link :to="{ name: 'Login' }" class="nav-group-user">Đăng nhập</router-link>
+            <router-link :to="{ name: 'Register' }" class="nav-group-user fs-18">Đăng ký</router-link>
+            <router-link :to="{ name: 'Login' }" class="nav-group-user fs-18">Đăng nhập</router-link>
           </template>
 
           <!-- Mailbox Container -->
@@ -254,8 +254,8 @@
           </div>
 
           <div class="btn-search">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <span class="search-text">Tìm kiếm</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <span class="search-text color-c9d6e0">Tìm kiếm</span>
           </div>
         </div>
       </div>
@@ -1211,6 +1211,7 @@ export default {
   text-decoration: none;
 }
 
+@import "@/shared/assets/styles/custom.css";
 /* Import mobile responsive styles */
 @import "@/shared/assets/styles/responsive/mobile/header/header_mobile.css";
 @import "@/shared/assets/styles/responsive/tablet/header/header_tablet.css";

@@ -97,7 +97,7 @@
 
     <!-- Grouped Sections -->
     <section v-for="group in activeGroups" :key="group.id" :id="'group-' + group.id" class="forum-section card">
-      <div class="card-header section-header group-header">
+      <div class="card-header section-header group-header background-f8f9fa">
         <a :href="'#group-' + group.id" class="header-link">{{ group.name }}</a>
       </div>
       
@@ -163,6 +163,44 @@
         </div>
       </div>
     </section>
+
+    <!-- Block "Con sò mới" cho Mobile (width < 768px) -->
+    <div class="card mobile-con-so-block">
+      <div class="card-header section-header">
+        <a @click="$router.push({ name: 'LatestThreads' })" class="header-link">Con sò mới</a>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        <div v-if="loading" style="padding: 1rem; text-align: center; color: #666; font-size: 0.9rem;">
+          Đang tải...
+        </div>
+        <div v-else class="latest-threads-list">
+          <div v-for="thread in latestThreads.slice(0, 15)" :key="thread.id" class="latest-thread-item">
+            <div class="lt-avatar" :style="{ backgroundColor: (thread.lastPostAuthor || thread.author)?.avatar || '#e0e0e0', color: '#fff' }">
+              {{ ((thread.lastPostAuthor || thread.author)?.displayName || (thread.lastPostAuthor || thread.author)?.username || 'A').charAt(0).toUpperCase() }}
+            </div>
+            <div class="lt-content">
+              <div class="lt-title">
+                <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }" :title="thread.title">
+                  <span v-if="thread.label" class="label-tag-mini" :style="{ backgroundColor: thread.label.colorCode, color: thread.label.textColor, borderColor: thread.label.borderColor || 'transparent' }">
+                    {{ thread.label.name }}
+                  </span>
+                  <span class="lt-title-text">{{ thread.title }}</span>
+                </router-link>
+              </div>
+              <div class="lt-meta">
+                Mới nhất: {{ (thread.lastPostAuthor || thread.author)?.displayName || (thread.lastPostAuthor || thread.author)?.username || 'Ẩn danh' }} &middot; {{ formatDate(thread.lastPostAt || thread.createdAt) }}
+              </div>
+              <div class="lt-category">
+                <router-link :to="{ name: 'CategoryDetail', params: { id: thread.category?.id } }">{{ thread.category?.name || 'Không rõ' }}</router-link>
+              </div>
+            </div>
+          </div>
+          <div v-if="latestThreads.length === 0" style="padding: 1rem; text-align: center; color: #999; font-size: 0.9rem;">
+            Chưa có bài viết nào.
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -695,4 +733,5 @@ export default {
 @import "@/shared/assets/styles/custom.css";
 @import "@/shared/assets/styles/responsive/mobile/forum_home/block_moi_ra_lo.css";
 @import "@/shared/assets/styles/responsive/mobile/forum_home/block_nhom_chuyen_muc.css";
+@import "@/shared/assets/styles/responsive/mobile/forum_home/block_con_so_moi.css";
 </style>
