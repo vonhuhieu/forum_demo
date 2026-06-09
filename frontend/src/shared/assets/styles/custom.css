@@ -5,3 +5,28 @@
 .pt-and-pb-10-and-pl-and-pr-8 {
     padding: 10px 8px !important;
 }
+
+.text-transform-uppercase {
+    text-transform: uppercase !important;
+}
+
+.color-1a507a {
+    color: #1a507a !important;
+}
+
+.background-f8f9fa {
+    background-color: #f8f9fa !important;
+}
+
+.pl-and-pr-16 {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+}
+
+.fs-18 {
+    font-size: 18px !important;
+}
+
+.color-c9d6e0 {
+    color: #c9d6e0 !important;
+}

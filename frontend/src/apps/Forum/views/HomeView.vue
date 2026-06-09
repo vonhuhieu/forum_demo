@@ -24,8 +24,8 @@
         
         <aside class="content-right">
           <div class="card">
-            <div class="card-header section-header">
-              <a @click="$router.push({ name: 'LatestThreads' })" class="header-link">Con sò mới</a>
+            <div class="card-header section-header background-f8f9fa pl-and-pr-16">
+              <a @click="$router.push({ name: 'LatestThreads' })" class="header-link text-transform-uppercase color-1a507a">Con sò mới</a>
             </div>
             <div class="card-body" style="padding: 0;">
               <div v-if="loadingLatest" style="padding: 1rem; text-align: center; color: #666; font-size: 0.9rem;">
@@ -60,7 +60,7 @@
             </div>
           </div>
           <div class="card">
-            <div class="card-header">Thống kê diễn đàn</div>
+            <div class="card-header background-f8f9fa text-transform-uppercase color-1a507a pl-and-pr-16">Thống kê diễn đàn</div>
             <div class="card-body" style="padding: 1rem;">
               <div class="stat-item" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                 <span>Chuyên mục:</span>
@@ -455,4 +455,6 @@ export default {
   font-weight: 500;
   margin-top: 2px;
 }
+
+@import "@/shared/assets/styles/custom.css";
 </style>
