@@ -102,11 +102,11 @@
       </div>
       
       <div class="category-list">
-        <div v-for="cat in group.categories.filter(c => !c.parentCategoryId)" :key="cat.id" class="category-row">
-          <div class="category-icon">
+        <div v-for="cat in group.categories.filter(c => !c.parentCategoryId)" :key="cat.id" class="category-row home-category-row">
+          <div class="category-icon home-category-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-msg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
           </div>
-          <div class="category-info">
+          <div class="category-info home-category-info">
             <div class="cat-name-row">
               <router-link :to="{ name: 'CategoryDetail', params: { id: cat.id } }" class="category-name">
                 {{ cat.name }}
@@ -129,7 +129,7 @@
               </div>
             </div>
           </div>
-          <div class="category-stats">
+          <div class="category-stats home-category-stats">
             <div class="stat-item">
               <span class="stat-label">Chủ đề</span>
               <span class="stat-value">{{ formatNumber(cat.threadCount || 0) }}</span>
@@ -139,26 +139,26 @@
               <span class="stat-value">{{ formatNumber(cat.postCount || 0) }}</span>
             </div>
           </div>
-          <div class="category-last-thread">
-            <div v-if="lastThreadByCat[cat.id]" class="last-thread-box">
+          <div class="category-last-thread home-category-last-thread">
+            <div v-if="lastThreadByCat[cat.id]" class="last-thread-box home-last-thread-box">
               <div class="last-thread-avatar" :style="{ backgroundColor: (lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.avatar || '#ccc', color: '#fff' }">
                 {{ ((lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.displayName || (lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.username || 'A').charAt(0).toUpperCase() }}
               </div>
-              <div class="last-thread-info">
-                <router-link :to="{ name: 'ThreadDetail', params: { id: lastThreadByCat[cat.id].id } }" class="last-thread-title">
+              <div class="last-thread-info home-last-thread-info">
+                <router-link :to="{ name: 'ThreadDetail', params: { id: lastThreadByCat[cat.id].id } }" class="last-thread-title home-last-thread-title">
                   <span v-if="lastThreadByCat[cat.id].label" class="label-tag-mini" :style="{ backgroundColor: lastThreadByCat[cat.id].label.colorCode, color: lastThreadByCat[cat.id].label.textColor, borderColor: lastThreadByCat[cat.id].label.borderColor || 'transparent' }">
                     {{ lastThreadByCat[cat.id].label.name }}
                   </span>
-                  <span class="title-txt">{{ lastThreadByCat[cat.id].title }}</span>
+                  <span class="title-txt home-last-thread-title-txt">{{ lastThreadByCat[cat.id].title }}</span>
                 </router-link>
-                <div class="last-thread-meta">
-                  <span>{{ formatDate(lastThreadByCat[cat.id].lastPostAt || lastThreadByCat[cat.id].createdAt) }}</span>
-                  <span class="dot">•</span>
-                  <span class="author">{{ (lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.displayName || (lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.username || 'Ẩn danh' }}</span>
+                <div class="last-thread-meta home-last-thread-meta">
+                  <span class="last-post-time">{{ formatDate(lastThreadByCat[cat.id].lastPostAt || lastThreadByCat[cat.id].createdAt) }}</span>
+                  <span class="dot home-last-post-dot">•</span>
+                  <span class="author home-last-post-author">{{ (lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.displayName || (lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.username || 'Ẩn danh' }}</span>
                 </div>
               </div>
             </div>
-            <div v-else class="no-thread">Chưa có bài viết</div>
+            <div v-else class="no-thread home-no-thread">Chưa có bài viết</div>
           </div>
         </div>
       </div>
@@ -693,5 +693,6 @@ export default {
 }
 
 @import "@/shared/assets/styles/custom.css";
-@import "@/shared/assets/styles/responsive/mobile/forum_home_mobile.css";
+@import "@/shared/assets/styles/responsive/mobile/forum_home/block_moi_ra_lo.css";
+@import "@/shared/assets/styles/responsive/mobile/forum_home/block_nhom_chuyen_muc.css";
 </style>

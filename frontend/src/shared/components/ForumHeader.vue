@@ -1212,6 +1212,6 @@ export default {
 }
 
 /* Import mobile responsive styles */
-@import "@/shared/assets/styles/responsive/mobile/header_mobile.css";
-@import "@/shared/assets/styles/responsive/tablet/header_tablet.css";
+@import "@/shared/assets/styles/responsive/mobile/header/header_mobile.css";
+@import "@/shared/assets/styles/responsive/tablet/header/header_tablet.css";
 </style>
