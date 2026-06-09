@@ -15,4 +15,7 @@ public class StatisticsDTO {
     private long totalPosts;
     private long totalMembers;
     private String latestMember;
+    private long officialMembers;
+    private long unofficialMembers;
+    private long totalOfficialAndUnofficial;
 }

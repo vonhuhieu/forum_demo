@@ -60,6 +60,23 @@
             </div>
           </div>
           <div class="card">
+            <div class="card-header background-f8f9fa text-transform-uppercase color-1a507a pl-and-pr-16">Vô công rỗi nghề</div>
+            <div class="card-body" style="padding: 1rem;">
+              <div class="stat-item" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>Người có học:</span>
+                <strong>{{ formatNumber(stats.officialMembers) }} thằng</strong>
+              </div>
+              <div class="stat-item" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>Bọn ất ơ:</span>
+                <strong>{{ formatNumber(stats.unofficialMembers) }} thằng</strong>
+              </div>
+              <div class="stat-item" style="display: flex; justify-content: space-between;">
+                <span>Tổng cộng:</span>
+                <strong>{{ formatNumber(stats.totalOfficialAndUnofficial) }} thằng</strong>
+              </div>
+            </div>
+          </div>
+          <div class="card">
             <div class="card-header background-f8f9fa text-transform-uppercase color-1a507a pl-and-pr-16">Thống kê diễn đàn</div>
             <div class="card-body" style="padding: 1rem;">
               <div class="stat-item" style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
@@ -179,7 +196,10 @@ export default {
         totalThreads: 0,
         totalPosts: 0,
         totalMembers: 0,
-        latestMember: ''
+        latestMember: '',
+        officialMembers: 0,
+        unofficialMembers: 0,
+        totalOfficialAndUnofficial: 0
       }
     }
   },
