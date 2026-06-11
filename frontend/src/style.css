@@ -273,7 +273,7 @@ body {
   display: flex;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid #f0f2f5;
-  align-items: center;
+  align-items: flex-start;
   transition: background 0.2s;
   background-color: white;
 }
@@ -296,6 +296,7 @@ body {
   font-size: 1.3rem;
   margin-right: 15px;
   border: 1px solid #dee2e6;
+  margin-top: 4px;
 }
 
 .thread-main {
@@ -337,6 +338,7 @@ body {
   text-align: center;
   font-size: 0.9rem;
   color: #666;
+  margin-top: 4px;
 }
 
 .stat-block {
@@ -533,5 +535,36 @@ body {
   max-width: 100%;
   height: auto;
   object-fit: contain;
+}
+
+.thread-author-mobile,
+.thread-stats-mobile {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .thread-stats,
+  .thread-last-post,
+  .thread-meta {
+    display: none !important;
+  }
+  
+  .thread-author-mobile,
+  .thread-stats-mobile {
+    display: block !important;
+  }
+  
+  .thread-author-mobile {
+    font-size: 0.85rem;
+    color: #8c8c8c;
+    margin-top: 2px;
+    margin-bottom: 2px;
+  }
+  
+  .thread-stats-mobile {
+    font-size: 0.85rem;
+    color: #8c8c8c;
+    white-space: nowrap;
+  }
 }
 

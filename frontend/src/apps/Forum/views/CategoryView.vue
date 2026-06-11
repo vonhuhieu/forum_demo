@@ -91,7 +91,7 @@
                   <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }">{{ thread.title }}</router-link>
                 </div>
                 <div class="thread-meta">
-                  <span class="author-name">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
+                  <span class="author-name white-space-nowrap">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
                   <span class="dot-divider">•</span>
                   <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }" class="meta-link">{{ formatDate(thread.createdAt) }}</router-link>
                   
@@ -105,6 +105,12 @@
                       {{ p }}
                     </router-link>
                   </span>
+                </div>
+                <div class="thread-author-mobile">
+                  {{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}
+                </div>
+                <div class="thread-stats-mobile">
+                  Trả lời: {{ thread.replyCount || 0 }} <span class="dot-divider">•</span> {{ formatDate(thread.lastPostAt || thread.createdAt) }}
                 </div>
               </div>
               <div class="thread-stats">
@@ -559,7 +565,7 @@ export default {
 .thread-last-post {
   width: 180px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-end;
   gap: 10px;
   text-align: right;
@@ -599,5 +605,8 @@ export default {
   font-size: 0.85rem;
   flex-shrink: 0;
   border: 1px solid #dee2e6;
+  margin-top: 3px;
 }
+
+@import "@/shared/assets/styles/custom.css";
 </style>

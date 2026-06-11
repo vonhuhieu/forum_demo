@@ -1,23 +1,91 @@
 <template>
   <div class="xf-pagination" v-if="totalPages > 1">
-    <button 
-      class="page-btn page-prev" 
-      :disabled="currentPage === 1" 
-      @click="changePage(currentPage - 1)"
-    >
-      <span class="icon">◂</span> Trước
-    </button>
-    
-    <template v-for="(page, index) in pages" :key="index">
-      <div v-if="page === '...'" class="jump-wrapper" v-click-outside="closeJump">
+    <!-- Desktop Layout -->
+    <div class="pagination-desktop">
+      <button 
+        class="page-btn page-prev" 
+        :disabled="currentPage === 1" 
+        @click="changePage(currentPage - 1)"
+      >
+        <span class="icon">◂</span> Trước
+      </button>
+      
+      <template v-for="(page, index) in pages" :key="index">
+        <div v-if="page === '...'" class="jump-wrapper" v-click-outside="closeJump">
+          <button 
+            class="page-btn page-ellipsis" 
+            @click="toggleJump(index)"
+          >
+            ...
+          </button>
+          
+          <div v-if="activeJumpIndex === index" class="jump-dropdown">
+            <div class="jump-header">Đi tới trang</div>
+            <div class="jump-body">
+              <div class="jump-controls">
+                <input 
+                  type="number" 
+                  v-model.number="jumpPageInput" 
+                  min="1" 
+                  :max="totalPages" 
+                  class="jump-input" 
+                  @keyup.enter="submitJump"
+                />
+                <button class="btn-step" @click="stepJump(1)">+</button>
+                <button class="btn-step" @click="stepJump(-1)">-</button>
+              </div>
+              <button class="btn-submit" @click="submitJump">Tới</button>
+            </div>
+          </div>
+        </div>
+        
         <button 
-          class="page-btn page-ellipsis" 
-          @click="toggleJump(index)"
+          v-else 
+          class="page-btn" 
+          :class="{ active: page === currentPage }" 
+          @click="changePage(page)"
         >
-          ...
+          {{ page }}
+        </button>
+      </template>
+      
+      <button 
+        class="page-btn page-next" 
+        :disabled="currentPage === totalPages" 
+        @click="changePage(currentPage + 1)"
+      >
+        Tiếp <span class="icon">▸</span>
+      </button>
+    </div>
+
+    <!-- Mobile Layout -->
+    <div class="pagination-mobile">
+      <button 
+        v-if="currentPage > 1" 
+        class="page-btn page-double-arrow" 
+        @click="changePage(1)"
+        title="Trang đầu"
+      >
+        <span class="icon">«</span>
+      </button>
+      
+      <button 
+        v-if="currentPage > 1" 
+        class="page-btn page-prev" 
+        @click="changePage(currentPage - 1)"
+      >
+        <span class="icon">◂</span> Trước
+      </button>
+
+      <div class="jump-wrapper" v-click-outside="closeMobileJump">
+        <button 
+          class="page-btn page-of" 
+          @click="toggleMobileJump"
+        >
+          {{ currentPage }} of {{ totalPages }}
         </button>
         
-        <div v-if="activeJumpIndex === index" class="jump-dropdown">
+        <div v-if="showMobileJump" class="jump-dropdown">
           <div class="jump-header">Đi tới trang</div>
           <div class="jump-body">
             <div class="jump-controls">
@@ -27,33 +95,33 @@
                 min="1" 
                 :max="totalPages" 
                 class="jump-input" 
-                @keyup.enter="submitJump"
+                @keyup.enter="submitMobileJump"
               />
-              <button class="btn-step" @click="stepJump(1)">+</button>
-              <button class="btn-step" @click="stepJump(-1)">-</button>
+              <button class="btn-step" @click="stepMobileJump(1)">+</button>
+              <button class="btn-step" @click="stepMobileJump(-1)">-</button>
             </div>
-            <button class="btn-submit" @click="submitJump">Tới</button>
+            <button class="btn-submit" @click="submitMobileJump">Tới</button>
           </div>
         </div>
       </div>
-      
+
       <button 
-        v-else 
-        class="page-btn" 
-        :class="{ active: page === currentPage }" 
-        @click="changePage(page)"
+        v-if="currentPage < totalPages" 
+        class="page-btn page-next" 
+        @click="changePage(currentPage + 1)"
       >
-        {{ page }}
+        Tiếp <span class="icon">▸</span>
       </button>
-    </template>
-    
-    <button 
-      class="page-btn page-next" 
-      :disabled="currentPage === totalPages" 
-      @click="changePage(currentPage + 1)"
-    >
-      Tiếp <span class="icon">▸</span>
-    </button>
+
+      <button 
+        v-if="currentPage < totalPages" 
+        class="page-btn page-double-arrow" 
+        @click="changePage(totalPages)"
+        title="Trang cuối"
+      >
+        <span class="icon">»</span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -71,7 +139,8 @@ export default {
   data() {
     return {
       activeJumpIndex: null,
-      jumpPageInput: 1
+      jumpPageInput: 1,
+      showMobileJump: false
     }
   },
   computed: {
@@ -112,6 +181,7 @@ export default {
     changePage(page) {
       if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
         this.closeJump();
+        this.closeMobileJump();
         this.$emit('page-changed', page);
       }
     },
@@ -138,6 +208,31 @@ export default {
       } else {
         this.jumpPageInput = this.currentPage;
       }
+    },
+    toggleMobileJump() {
+      if (this.showMobileJump) {
+        this.closeMobileJump();
+      } else {
+        this.showMobileJump = true;
+        this.jumpPageInput = this.currentPage;
+      }
+    },
+    closeMobileJump() {
+      this.showMobileJump = false;
+    },
+    stepMobileJump(step) {
+      let newVal = (this.jumpPageInput || this.currentPage) + step;
+      if (newVal >= 1 && newVal <= this.totalPages) {
+        this.jumpPageInput = newVal;
+      }
+    },
+    submitMobileJump() {
+      if (this.jumpPageInput >= 1 && this.jumpPageInput <= this.totalPages) {
+        this.changePage(this.jumpPageInput);
+        this.closeMobileJump();
+      } else {
+        this.jumpPageInput = this.currentPage;
+      }
     }
   },
   directives: {
@@ -160,11 +255,18 @@ export default {
 
 <style scoped>
 .xf-pagination {
+  font-family: Arial, sans-serif;
+  user-select: none;
+}
+
+.pagination-desktop {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-family: Arial, sans-serif;
-  user-select: none;
+}
+
+.pagination-mobile {
+  display: none;
 }
 
 .page-btn {
@@ -202,6 +304,19 @@ export default {
   border-color: #eee;
   background: #fafafa;
   cursor: not-allowed;
+}
+
+.page-of {
+  background: #fdf5ec;
+  border-color: #fbe1c3;
+  color: #e28a2a;
+  font-weight: 500;
+}
+
+.page-of:hover {
+  background: #fdf0e0 !important;
+  border-color: #f7d4ae !important;
+  color: #c46d16 !important;
 }
 
 .icon {
@@ -318,5 +433,43 @@ export default {
 
 .btn-submit:hover {
   background: #144970;
+}
+
+@media (max-width: 767px) {
+  .xf-pagination {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .pagination-desktop {
+    display: none;
+  }
+  
+  .pagination-mobile {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    justify-content: center;
+  }
+  
+  .pagination-mobile .jump-dropdown {
+    top: 100%;
+    bottom: auto;
+    margin-top: 8px;
+    margin-bottom: 0;
+  }
+  
+  .pagination-mobile .jump-dropdown::before {
+    top: auto;
+    bottom: 100%;
+    border-color: transparent transparent #b7cde1 transparent;
+  }
+  
+  .pagination-mobile .jump-dropdown::after {
+    top: auto;
+    bottom: 100%;
+    border-color: transparent transparent white transparent;
+  }
 }
 </style>
