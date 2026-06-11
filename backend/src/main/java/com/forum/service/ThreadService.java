@@ -51,8 +51,30 @@ public class ThreadService {
         return ResponseDTO.success(dtos);
     }
 
+    public ResponseDTO<com.forum.dto.PageResponseDTO<ThreadDTO>> getAllThreadsPaged(Long categoryId, int page, int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<Thread> threadPage;
+        if (categoryId != null) {
+            threadPage = threadRepository.findAllByCategoryIdOrderByPinnedDescLastPostAtDesc(categoryId, pageable);
+        } else {
+            threadPage = threadRepository.findAllByOrderByLastPostAtDesc(pageable);
+        }
+        List<ThreadDTO> dtos = threadMapper.toDTOList(threadPage.getContent());
+        enrichThreads(dtos);
+        
+        com.forum.dto.PageResponseDTO<ThreadDTO> pageResponse = new com.forum.dto.PageResponseDTO<>(
+            dtos,
+            threadPage.getTotalPages(),
+            threadPage.getTotalElements(),
+            threadPage.getNumber(),
+            threadPage.getSize()
+        );
+        return ResponseDTO.success(pageResponse);
+    }
+
+
     public ResponseDTO<List<ThreadDTO>> getLatestThreads() {
-        List<ThreadDTO> dtos = threadMapper.toDTOList(threadRepository.findTop10ByOrderByLastPostAtDesc());
+        List<ThreadDTO> dtos = threadMapper.toDTOList(threadRepository.findTop20ByOrderByLastPostAtDesc());
         enrichThreads(dtos);
         return ResponseDTO.success(dtos);
     }

@@ -172,7 +172,23 @@ export default {
       itemsPerPage: 10,
       isLoggedIn: false,
       showModal: false,
-      categoryGroupsModal: []
+      categoryGroupsModal: [],
+      totalPagesCount: 1,
+      totalElements: 0
+    }
+  },
+  watch: {
+    currentPage: {
+      async handler(newPage, oldPage) {
+        if (newPage !== oldPage) {
+          this.loading = true
+          try {
+            await this.fetchThreadsPaged()
+          } finally {
+            this.loading = false
+          }
+        }
+      }
     }
   },
   computed: {
@@ -183,12 +199,10 @@ export default {
       ]
     },
     totalPages() {
-      return Math.ceil(this.threads.length / this.itemsPerPage) || 1
+      return this.totalPagesCount
     },
     paginatedThreads() {
-      const start = (this.currentPage - 1) * this.itemsPerPage
-      const end = start + this.itemsPerPage
-      return this.threads.slice(start, end)
+      return this.threads
     },
     activeModalGroups() {
       if (!this.categoryGroupsModal || !Array.isArray(this.categoryGroupsModal)) return []
@@ -224,12 +238,25 @@ export default {
     async fetchData() {
       this.loading = true
       try {
-        const res = await threadService.getAll() // Fetch all threads ordered by date
-        this.threads = res.data || []
+        await this.fetchThreadsPaged()
       } catch (error) {
         console.error('Lỗi khi tải dữ liệu bài viết mới nhất:', error)
       } finally {
         this.loading = false
+      }
+    },
+    async fetchThreadsPaged() {
+      const page = this.currentPage - 1
+      const size = this.itemsPerPage
+      const res = await threadService.getAll({ page, size })
+      if (res.data && res.data.content) {
+        this.threads = res.data.content
+        this.totalPagesCount = res.data.totalPages || 1
+        this.totalElements = res.data.totalElements || 0
+      } else {
+        this.threads = []
+        this.totalPagesCount = 1
+        this.totalElements = 0
       }
     },
     formatDate(dateStr) {

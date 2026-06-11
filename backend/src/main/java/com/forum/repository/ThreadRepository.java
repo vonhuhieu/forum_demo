@@ -18,6 +18,9 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
 
     List<Thread> findAllByCategoryIdOrderByPinnedDescLastPostAtDesc(Long categoryId);
     List<Thread> findAllByOrderByLastPostAtDesc();
-    List<Thread> findTop10ByOrderByLastPostAtDesc();
+    List<Thread> findTop20ByOrderByLastPostAtDesc();
     java.util.Optional<Thread> findFirstByCategoryIdOrderByLastPostAtDesc(Long categoryId);
+    org.springframework.data.domain.Page<Thread> findAllByCategoryIdOrderByPinnedDescLastPostAtDesc(Long categoryId, org.springframework.data.domain.Pageable pageable);
+    org.springframework.data.domain.Page<Thread> findAllByOrderByLastPostAtDesc(org.springframework.data.domain.Pageable pageable);
 }
+

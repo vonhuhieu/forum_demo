@@ -185,14 +185,33 @@ export default {
       loading: true,
       currentPage: 1,
       itemsPerPage: 10,
-      isLoggedIn: false
+      isLoggedIn: false,
+      totalPagesCount: 1,
+      totalElements: 0,
+      isChangingCategory: false
     }
   },
   watch: {
     '$route.params.id': {
-      handler(newId, oldId) {
+      async handler(newId, oldId) {
         if (newId && newId !== oldId) {
-          this.fetchData()
+          this.isChangingCategory = true
+          this.currentPage = 1
+          await this.fetchData()
+          this.isChangingCategory = false
+        }
+      }
+    },
+    currentPage: {
+      async handler(newPage, oldPage) {
+        if (this.isChangingCategory) return
+        if (newPage !== oldPage) {
+          this.loading = true
+          try {
+            await this.fetchThreadsPaged()
+          } finally {
+            this.loading = false
+          }
         }
       }
     }
@@ -232,12 +251,10 @@ export default {
       return items
     },
     totalPages() {
-      return Math.ceil(this.threads.length / this.itemsPerPage) || 1
+      return this.totalPagesCount
     },
     paginatedThreads() {
-      const start = (this.currentPage - 1) * this.itemsPerPage
-      const end = start + this.itemsPerPage
-      return this.threads.slice(start, end)
+      return this.threads
     }
   },
   async mounted() {
@@ -272,9 +289,8 @@ export default {
           this.categoryGroup = groupRes.data.find(g => g.id === this.category.categoryGroupId)
         }
 
-        // Fetch danh sách bài viết
-        const threadRes = await threadService.getAll({ categoryId })
-        this.threads = threadRes.data
+        // Fetch danh sách bài viết trang hiện tại
+        await this.fetchThreadsPaged()
 
         // Fetch last thread for subcategories
         if (this.category && this.category.subCategories) {
@@ -288,6 +304,22 @@ export default {
         this.loading = false
       }
     },
+    async fetchThreadsPaged() {
+      const categoryId = this.$route.params.id
+      const page = this.currentPage - 1
+      const size = this.itemsPerPage
+      
+      const threadRes = await threadService.getAll({ categoryId, page, size })
+      if (threadRes.data && threadRes.data.content) {
+        this.threads = threadRes.data.content
+        this.totalPagesCount = threadRes.data.totalPages || 1
+        this.totalElements = threadRes.data.totalElements || 0
+      } else {
+        this.threads = []
+        this.totalPagesCount = 1
+        this.totalElements = 0
+      }
+    },
     async fetchLastThread(catId) {
       try {
         const res = await threadService.getAll({ categoryId: catId, limit: 1 })
@@ -298,6 +330,7 @@ export default {
         console.error(e)
       }
     },
+
     formatDate(dateStr) {
       return formatForumDate(dateStr)
     },
