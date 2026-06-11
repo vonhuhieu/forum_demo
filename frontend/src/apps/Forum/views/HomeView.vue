@@ -271,7 +271,7 @@ export default {
     async fetchLatestThreads() {
       this.loadingLatest = true
       try {
-        const response = await threadService.getAll()
+        const response = await threadService.getLatest()
         if (response.data) {
           this.latestThreads = response.data.slice(0, 15)
         }
