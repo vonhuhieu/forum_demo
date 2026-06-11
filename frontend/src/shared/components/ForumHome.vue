@@ -201,6 +201,51 @@
         </div>
       </div>
     </div>
+
+    <!-- Responsive blocks for mobile and tablet -->
+    <div class="responsive-stats-blocks">
+      <!-- Vô công rỗi nghề -->
+      <div class="card responsive-vo-cong-block">
+        <div class="card-header background-f8f9fa text-transform-uppercase color-1a507a pl-and-pr-16">Vô công rỗi nghề</div>
+        <div class="card-body" style="padding: 1rem;">
+          <div class="stats-row">
+            <span>Người có học:</span>
+            <strong>{{ formatCommaNumber(stats.officialMembers) }} thằng</strong>
+          </div>
+          <div class="stats-row">
+            <span>Bọn ất ơ:</span>
+            <strong>{{ formatCommaNumber(stats.unofficialMembers) }} thằng</strong>
+          </div>
+          <div class="stats-row">
+            <span>Tổng cộng:</span>
+            <strong>{{ formatCommaNumber(stats.totalOfficialAndUnofficial) }} thằng</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Thống kê diễn đàn -->
+      <div class="card responsive-thong-ke-block">
+        <div class="card-header background-f8f9fa text-transform-uppercase color-1a507a pl-and-pr-16">Thống kê diễn đàn</div>
+        <div class="card-body" style="padding: 1rem;">
+          <div class="stats-row">
+            <span>Chuyên mục:</span>
+            <strong>{{ formatCommaNumber(stats.totalCategories) }}</strong>
+          </div>
+          <div class="stats-row">
+            <span>Bài viết:</span>
+            <strong>{{ formatCommaNumber(stats.totalPosts) }}</strong>
+          </div>
+          <div class="stats-row">
+            <span>Thành viên:</span>
+            <strong>{{ formatCommaNumber(stats.totalMembers) }}</strong>
+          </div>
+          <div class="stats-row">
+            <span>Thành viên mới nhất:</span>
+            <strong style="color: #1a507a;">{{ stats.latestMember }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -213,6 +258,21 @@ import UserProfilePopup from '@/shared/components/UserProfilePopup.vue'
 export default {
   name: 'ForumHome',
   emits: ['loaded'],
+  props: {
+    stats: {
+      type: Object,
+      default: () => ({
+        totalCategories: 0,
+        totalThreads: 0,
+        totalPosts: 0,
+        totalMembers: 0,
+        latestMember: '',
+        officialMembers: 0,
+        unofficialMembers: 0,
+        totalOfficialAndUnofficial: 0
+      })
+    }
+  },
   components: {
     UserProfilePopup
   },
@@ -289,6 +349,10 @@ export default {
       if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
       return num
     },
+    formatCommaNumber(num) {
+      if (!num) return 0
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    },
     scrollToHash(hash) {
       this.$nextTick(() => {
         const id = hash.replace('#', '')
@@ -315,6 +379,24 @@ export default {
 </script>
 
 <style scoped>
+@media (min-width: 1025px) {
+  .responsive-stats-blocks {
+    display: none;
+  }
+}
+
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+  margin-bottom: 0.5rem;
+}
+
+.stats-row:last-child {
+  margin-bottom: 0;
+}
+
 .header-link {
   font-size: 1.1rem;
   font-weight: 700;
@@ -734,4 +816,9 @@ export default {
 @import "@/shared/assets/styles/responsive/mobile/forum_home/block_moi_ra_lo.css";
 @import "@/shared/assets/styles/responsive/mobile/forum_home/block_nhom_chuyen_muc.css";
 @import "@/shared/assets/styles/responsive/mobile/forum_home/block_con_so_moi.css";
+@import "@/shared/assets/styles/responsive/tablet/forum_home/block_con_so_moi.css";
+@import "@/shared/assets/styles/responsive/mobile/forum_home/block_vo_cong_roi_nghe.css";
+@import "@/shared/assets/styles/responsive/mobile/forum_home/block_thong_ke_dien_dan.css";
+@import "@/shared/assets/styles/responsive/tablet/forum_home/block_vo_cong_roi_nghe.css";
+@import "@/shared/assets/styles/responsive/tablet/forum_home/block_thong_ke_dien_dan.css";
 </style>

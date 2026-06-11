@@ -1,0 +1,12 @@
+@media (min-width: 768px) and (max-width: 1024px) {
+  .responsive-stats-blocks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .responsive-vo-cong-block {
+    display: block;
+    margin-bottom: 0;
+  }
+}
