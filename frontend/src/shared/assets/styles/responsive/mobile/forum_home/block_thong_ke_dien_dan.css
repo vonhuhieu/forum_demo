@@ -1,0 +1,6 @@
+@media (max-width: 767px) {
+  .responsive-thong-ke-block {
+    display: block;
+    margin-bottom: 0;
+  }
+}

@@ -1,0 +1,12 @@
+@media (max-width: 767px) {
+  .responsive-stats-blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .responsive-vo-cong-block {
+    display: block;
+    margin-bottom: 0;
+  }
+}

@@ -19,7 +19,7 @@
 
       <div class="main-wrapper">
         <div class="content-left">
-          <ForumHome @loaded="onForumHomeLoaded" />
+          <ForumHome :stats="stats" @loaded="onForumHomeLoaded" />
         </div>
         
         <aside class="content-right">
@@ -97,7 +97,7 @@
               </div>
             </div>
           </div>
-          <div class="banner-right" style="margin-top: 1rem;">
+          <!-- <div class="banner-right" style="margin-top: 1rem;">
             <img src="/banner_block_phai.jpg" alt="Banner" style="width: 100%; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" />
           </div>
           <div class="banner-right" style="margin-top: 1rem;">
@@ -105,7 +105,7 @@
           </div>
           <div class="banner-right" style="margin-top: 1rem;">
             <img src="/gop-y-phan-anh.png" alt="Banner" style="width: 100%; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);" />
-          </div>
+          </div> -->
         </aside>
       </div>
     </main>
