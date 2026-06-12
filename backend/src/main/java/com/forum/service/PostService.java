@@ -37,11 +37,100 @@ public class PostService {
     private final ReactionService reactionService;
     private final ThreadSubscriptionRepository threadSubscriptionRepository;
 
-    public ResponseDTO<List<PostDTO>> getPostsByThread(Long threadId) {
-        List<Post> posts = postRepository.findByThreadIdOrderByCreatedAtAsc(threadId);
-        List<PostDTO> dtos = postMapper.toDTOList(posts);
-        enrichPosts(dtos);
-        return ResponseDTO.success(dtos);
+    public static class OffsetLimitPageable implements org.springframework.data.domain.Pageable {
+        private final int limit;
+        private final long offset;
+        private final org.springframework.data.domain.Sort sort;
+
+        public OffsetLimitPageable(long offset, int limit) {
+            this.offset = offset;
+            this.limit = limit;
+            this.sort = org.springframework.data.domain.Sort.unsorted();
+        }
+
+        @Override
+        public int getPageNumber() { return (int) (offset / limit); }
+        @Override
+        public int getPageSize() { return limit; }
+        @Override
+        public long getOffset() { return offset; }
+        @Override
+        public org.springframework.data.domain.Sort getSort() { return sort; }
+        @Override
+        public org.springframework.data.domain.Pageable next() { return new OffsetLimitPageable(offset + limit, limit); }
+        @Override
+        public org.springframework.data.domain.Pageable previousOrFirst() { return new OffsetLimitPageable(Math.max(0, offset - limit), limit); }
+        @Override
+        public org.springframework.data.domain.Pageable first() { return new OffsetLimitPageable(0, limit); }
+        @Override
+        public org.springframework.data.domain.Pageable withPage(int pageNumber) { return new OffsetLimitPageable((long) pageNumber * limit, limit); }
+        @Override
+        public boolean hasPrevious() { return offset > 0; }
+    }
+
+    public void evictCache(Long threadId) {
+        // Cache disabled because comments are paginated at DB level
+    }
+
+    public ResponseDTO<com.forum.dto.PageResponseDTO<PostDTO>> getPostsByThread(Long threadId, int page, int size) {
+        long offset;
+        int limit;
+        if (page == 0) {
+            offset = 0;
+            limit = size - 1;
+        } else {
+            offset = (long) page * size - 1;
+            limit = size;
+        }
+
+        if (limit <= 0) {
+            limit = 1;
+        }
+
+        org.springframework.data.domain.Page<Post> postPage = postRepository.findByThreadIdOrderByCreatedAtAsc(
+                threadId, new OffsetLimitPageable(offset, limit));
+
+        List<PostDTO> dtos = postMapper.toDTOList(postPage.getContent());
+        reactionService.enrichPostsWithReactions(dtos, threadId);
+
+        // Populate user-specific data (currentUserReaction) dynamically
+        String username = null;
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof String && !principal.equals("anonymousUser")) {
+            username = (String) principal;
+        }
+
+        if (username != null && !dtos.isEmpty()) {
+            List<com.forum.entity.Reaction> userReactions = reactionService.getUserReactionsInThread(username, threadId);
+            java.util.Map<Long, com.forum.dto.ReactionIconDTO> reactionMap = new java.util.HashMap<>();
+            for (com.forum.entity.Reaction r : userReactions) {
+                if (r.getPost() != null && r.getPost().getId() != null && r.getReactionIcon() != null) {
+                    reactionMap.put(r.getPost().getId(), reactionService.convertToIconDTO(r.getReactionIcon()));
+                }
+            }
+            for (PostDTO dto : dtos) {
+                dto.setCurrentUserReaction(reactionMap.get(dto.getId()));
+            }
+        }
+
+        com.forum.dto.PageResponseDTO<PostDTO> pageResponse = new com.forum.dto.PageResponseDTO<>(
+            dtos,
+            (int) Math.ceil((double) (1 + postPage.getTotalElements()) / size),
+            postPage.getTotalElements(),
+            page,
+            size
+        );
+
+        return ResponseDTO.success(pageResponse);
+    }
+
+    public ResponseDTO<Integer> getPostPageNumber(Long postId, int size) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+        long count = postRepository.countBeforePost(post.getThread().getId(), post.getCreatedAt(), post.getId());
+        long seqNum = count + 2; // +1 for 1-based, +1 for main post
+        int page = (int) Math.ceil((double) seqNum / size);
+        return ResponseDTO.success(page);
     }
 
     private void enrichPosts(List<PostDTO> dtos) {
@@ -73,6 +162,7 @@ public class PostService {
         userRepository.findByUsername(username).ifPresent(post::setAuthor);
 
         Post saved = postRepository.save(post);
+        evictCache(postDTO.getThreadId());
 
         // Update thread statistics
         thread.setReplyCount(thread.getReplyCount() + 1);
@@ -217,6 +307,9 @@ public class PostService {
         post.setAttachedImages(postDTO.getAttachedImages());
 
         Post saved = postRepository.save(post);
+        if (saved.getThread() != null) {
+            evictCache(saved.getThread().getId());
+        }
         PostDTO resultDto = postMapper.toDTO(saved);
         enrichPost(resultDto);
         return ResponseDTO.success(resultDto);

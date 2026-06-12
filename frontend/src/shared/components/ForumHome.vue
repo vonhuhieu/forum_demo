@@ -7,7 +7,7 @@
       </div>
       
       <div class="thread-list">
-        <div v-for="thread in latestThreads" :key="thread.id" class="thread-row home-thread-row pt-and-pb-10-and-pl-and-pr-8">
+        <div v-for="thread in latestThreads" :key="thread.id" class="thread-row home-thread-row thread-row-center pt-and-pb-10-and-pl-and-pr-8">
           <user-profile-popup :user="thread.author" v-if="thread.author">
             <div class="thread-avatar" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
               {{ (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() }}
@@ -28,8 +28,8 @@
               <span class="author-name white-space-nowrap">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</span>
               <span class="dot-divider">•</span>
               <router-link :to="{ name: 'ThreadDetail', params: { id: thread.id } }" class="meta-link white-space-nowrap">{{ formatDate(thread.createdAt) }}</router-link>
-              <span v-if="thread.category" class="dot-divider">•</span>
-              <router-link v-if="thread.category" :to="{ name: 'CategoryDetail', params: { id: thread.category.id } }" class="meta-link meta-category white-space-nowrap">
+              <span v-if="thread.category" class="dot-divider home-category-dot">•</span>
+              <router-link v-if="thread.category" :to="{ name: 'CategoryDetail', params: { id: thread.category.id } }" class="meta-link meta-category home-category-link white-space-nowrap">
                 {{ thread.category.name }}
               </router-link>
             </div>

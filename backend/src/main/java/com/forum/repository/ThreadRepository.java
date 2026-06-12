@@ -16,6 +16,13 @@ public interface ThreadRepository extends JpaRepository<Thread, Long> {
     @Query("UPDATE Thread t SET t.label = null WHERE t.label.id = :labelId")
     void removeLabelFromThreads(@org.springframework.data.repository.query.Param("labelId") Long labelId);
 
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Thread t SET t.viewCount = t.viewCount + 1 WHERE t.id = :threadId")
+    void incrementViewCount(@org.springframework.data.repository.query.Param("threadId") Long threadId);
+
+    @Query("SELECT t FROM Thread t LEFT JOIN FETCH t.author LEFT JOIN FETCH t.author.roles LEFT JOIN FETCH t.category LEFT JOIN FETCH t.label WHERE t.id = :id")
+    java.util.Optional<Thread> findByIdEager(@org.springframework.data.repository.query.Param("id") Long id);
+
     List<Thread> findAllByCategoryIdOrderByPinnedDescLastPostAtDesc(Long categoryId);
     List<Thread> findAllByOrderByLastPostAtDesc();
     List<Thread> findTop20ByOrderByLastPostAtDesc();

@@ -1,5 +1,6 @@
 package com.forum.service;
 
+import com.forum.dto.PostDTO;
 import com.forum.dto.ReactionIconDTO;
 import com.forum.dto.ReactionSummaryDTO;
 import com.forum.entity.*;
@@ -27,6 +28,14 @@ public class ReactionService {
     private final ReactionIconService reactionIconService;
     private final NotificationService notificationService;
     private final ConversationMessageRepository conversationMessageRepository;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private PostService postService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private ThreadService threadService;
 
     private Optional<User> getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -62,6 +71,8 @@ public class ReactionService {
             reactionRepository.save(newReaction);
         }
 
+        threadService.evictCache(threadId);
+
         // Gửi thông báo cho chủ bài viết
         try {
             notificationService.sendReactionNotification(currentUser, thread.getAuthor(), thread, null, icon);
@@ -96,6 +107,10 @@ public class ReactionService {
             reactionRepository.save(newReaction);
         }
 
+        if (post.getThread() != null) {
+            postService.evictCache(post.getThread().getId());
+        }
+
         // Gửi thông báo cho chủ bình luận
         try {
             notificationService.sendReactionNotification(currentUser, post.getAuthor(), post.getThread(), post, icon);
@@ -107,10 +122,16 @@ public class ReactionService {
     public void removeReactionFromThread(Long threadId) {
         User currentUser = getCurrentUser().orElseThrow(() -> new RuntimeException("Authentication required"));
         reactionRepository.deleteByUserIdAndThreadId(currentUser.getId(), threadId);
+        threadService.evictCache(threadId);
     }
 
     public void removeReactionFromPost(Long postId) {
         User currentUser = getCurrentUser().orElseThrow(() -> new RuntimeException("Authentication required"));
+        postRepository.findById(postId).ifPresent(post -> {
+            if (post.getThread() != null) {
+                postService.evictCache(post.getThread().getId());
+            }
+        });
         reactionRepository.deleteByUserIdAndPostId(currentUser.getId(), postId);
     }
 
@@ -153,6 +174,74 @@ public class ReactionService {
             }
         }
         return summaries;
+    }
+
+    public void enrichPostsWithReactions(List<PostDTO> dtos, Long threadId) {
+        if (dtos == null || dtos.isEmpty()) return;
+
+        List<Reaction> allReactions = reactionRepository.findAllByPostThreadId(threadId);
+
+        java.util.Map<Long, List<Reaction>> reactionsByPostId = allReactions.stream()
+                .filter(r -> r.getPost() != null && r.getPost().getId() != null)
+                .collect(java.util.stream.Collectors.groupingBy(r -> r.getPost().getId()));
+
+        User currentUser = getCurrentUser().orElse(null);
+
+        for (PostDTO dto : dtos) {
+            List<Reaction> postReactions = reactionsByPostId.get(dto.getId());
+
+            if (postReactions == null || postReactions.isEmpty()) {
+                dto.setReactionSummary(new ArrayList<>());
+                dto.setCurrentUserReaction(null);
+                dto.setRecentReactors(new ArrayList<>());
+                continue;
+            }
+
+            java.util.Map<ReactionIcon, List<Reaction>> groupedByIcon = postReactions.stream()
+                    .filter(r -> r.getReactionIcon() != null)
+                    .collect(java.util.stream.Collectors.groupingBy(Reaction::getReactionIcon));
+
+            List<ReactionSummaryDTO> summary = new ArrayList<>();
+            for (java.util.Map.Entry<ReactionIcon, List<Reaction>> entry : groupedByIcon.entrySet()) {
+                ReactionIcon icon = entry.getKey();
+                List<Reaction> iconReactions = entry.getValue();
+                long count = iconReactions.size();
+                java.time.LocalDateTime latestTime = iconReactions.stream()
+                        .map(r -> r.getUpdatedAt() != null ? r.getUpdatedAt() : r.getCreatedAt())
+                        .filter(java.util.Objects::nonNull)
+                        .max(java.time.LocalDateTime::compareTo)
+                        .orElse(null);
+                summary.add(new ReactionSummaryDTO(reactionIconService.convertToDTO(icon), count, latestTime));
+            }
+            summary.sort((s1, s2) -> Long.compare(s2.getCount(), s1.getCount()));
+            dto.setReactionSummary(summary);
+
+            ReactionIconDTO userReaction = null;
+            if (currentUser != null) {
+                userReaction = postReactions.stream()
+                        .filter(r -> r.getUser() != null && r.getUser().getId().equals(currentUser.getId()))
+                        .findFirst()
+                        .map(Reaction::getReactionIcon)
+                        .map(reactionIconService::convertToDTO)
+                        .orElse(null);
+            }
+            dto.setCurrentUserReaction(userReaction);
+
+            List<com.forum.dto.UserDTO> recentReactors = postReactions.stream()
+                    .sorted((r1, r2) -> {
+                        java.time.LocalDateTime t1 = r1.getUpdatedAt() != null ? r1.getUpdatedAt() : r1.getCreatedAt();
+                        java.time.LocalDateTime t2 = r2.getUpdatedAt() != null ? r2.getUpdatedAt() : r2.getCreatedAt();
+                        if (t1 == null) return 1;
+                        if (t2 == null) return -1;
+                        return t2.compareTo(t1);
+                    })
+                    .limit(3)
+                    .map(Reaction::getUser)
+                    .filter(java.util.Objects::nonNull)
+                    .map(this::mapUserToDTO)
+                    .collect(java.util.stream.Collectors.toList());
+            dto.setRecentReactors(recentReactors);
+        }
     }
 
     private com.forum.dto.UserDTO mapUserToDTO(User user) {
@@ -279,5 +368,13 @@ public class ReactionService {
             reactions = reactionRepository.findByConversationMessageId(messageId, pageable);
         }
         return reactions.map(this::mapToParticipantDTO);
+    }
+
+    public List<Reaction> getUserReactionsInThread(String username, Long threadId) {
+        return reactionRepository.findAllByUsernameAndThreadId(username, threadId);
+    }
+
+    public ReactionIconDTO convertToIconDTO(ReactionIcon icon) {
+        return reactionIconService.convertToDTO(icon);
     }
 }

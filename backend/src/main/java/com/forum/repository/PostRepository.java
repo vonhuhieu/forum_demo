@@ -10,7 +10,17 @@ import java.util.List;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
-    List<Post> findByThreadIdOrderByCreatedAtAsc(Long threadId);
+    @org.springframework.data.jpa.repository.Query(
+        value = "SELECT p FROM Post p LEFT JOIN FETCH p.author LEFT JOIN FETCH p.author.roles WHERE p.thread.id = :threadId ORDER BY p.createdAt ASC",
+        countQuery = "SELECT COUNT(p) FROM Post p WHERE p.thread.id = :threadId"
+    )
+    org.springframework.data.domain.Page<Post> findByThreadIdOrderByCreatedAtAsc(@org.springframework.data.repository.query.Param("threadId") Long threadId, org.springframework.data.domain.Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(p) FROM Post p WHERE p.thread.id = :threadId AND (p.createdAt < :createdAt OR (p.createdAt = :createdAt AND p.id < :id))")
+    long countBeforePost(@org.springframework.data.repository.query.Param("threadId") Long threadId, @org.springframework.data.repository.query.Param("createdAt") java.time.LocalDateTime createdAt, @org.springframework.data.repository.query.Param("id") Long id);
+
+    long countByThreadId(Long threadId);
+
     Page<Post> findByThreadId(Long threadId, Pageable pageable);
     java.util.Optional<Post> findFirstByThreadIdOrderByCreatedAtDesc(Long threadId);
     
