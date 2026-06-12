@@ -10,7 +10,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "threads")
+@Table(name = "threads", indexes = {
+    @Index(name = "idx_threads_last_post_at", columnList = "last_post_at"),
+    @Index(name = "idx_threads_category_last_post_at", columnList = "category_id, last_post_at"),
+    @Index(name = "idx_threads_category_pinned_last_post_at", columnList = "category_id, pinned, last_post_at")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
