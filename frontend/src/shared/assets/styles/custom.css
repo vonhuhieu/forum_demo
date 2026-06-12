@@ -30,3 +30,40 @@
 .color-c9d6e0 {
     color: #c9d6e0 !important;
 }
+
+.thread-row-center {
+    align-items: flex-start !important;
+}
+
+.thread-row-center .thread-avatar {
+    margin-top: 4px !important;
+}
+
+.thread-row-center .thread-stats {
+    align-self: center !important;
+    margin-top: 0 !important;
+}
+
+.thread-row-center .thread-last-post {
+    align-self: center !important;
+    align-items: flex-start !important;
+}
+
+.thread-row-center .last-post-avatar {
+    margin-top: 3px !important;
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+    #moi-ra-lo .thread-meta {
+        flex-wrap: wrap !important;
+    }
+
+    #moi-ra-lo .home-category-dot {
+        display: none !important;
+    }
+
+    #moi-ra-lo .home-category-link {
+        width: 100% !important;
+        margin-top: 4px !important;
+    }
+}

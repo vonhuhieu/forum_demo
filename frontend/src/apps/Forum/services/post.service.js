@@ -1,8 +1,12 @@
 import api from '@/shared/services/api.service'
 
 class PostService {
-  getByThreadId(threadId) {
-    return api.get(`/posts/thread/${threadId}`)
+  getByThreadId(threadId, page = 0, size = 10) {
+    return api.get(`/posts/thread/${threadId}`, { params: { page, size } })
+  }
+
+  getPageNumber(postId, size = 10) {
+    return api.get(`/posts/${postId}/page-number`, { params: { size } })
   }
 
   create(payload) {

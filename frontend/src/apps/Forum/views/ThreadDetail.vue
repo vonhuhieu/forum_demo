@@ -260,10 +260,7 @@
       />
     </main>
   </div>
-  
-  <div v-else-if="loading" class="container" style="padding: 3rem; text-align: center;">
-    Đang tải bài viết...
-  </div>
+  <Loading :visible="loading" />
 
   <!-- Lightbox Modal -->
   <div v-if="showLightbox" class="lightbox-modal" @click="closeLightbox">
@@ -294,6 +291,7 @@ import { formatForumDate } from '@/shared/utils/date'
 import ReactionButton from '@/shared/components/ReactionButton.vue'
 import ReactionSummary from '@/shared/components/ReactionSummary.vue'
 import ReactionListPopup from '@/shared/components/ReactionListPopup.vue'
+import Loading from '@/shared/components/Loading.vue'
 
 export default {
   name: 'ThreadDetail',
@@ -306,7 +304,8 @@ export default {
     ForumPagination,
     ReactionButton,
     ReactionSummary,
-    ReactionListPopup
+    ReactionListPopup,
+    Loading
   },
   data() {
     const userStr = localStorage.getItem('user')
@@ -320,6 +319,7 @@ export default {
     return {
       thread: null,
       posts: [],
+      totalPosts: 0,
       categoryGroup: null,
       allCategories: [],
       loading: true,
@@ -415,18 +415,19 @@ export default {
     },
     totalPages() {
       if (!this.thread) return 1;
-      const totalCount = 1 + (this.posts ? this.posts.length : 0);
+      const totalCount = 1 + this.totalPosts;
       return Math.ceil(totalCount / this.itemsPerPage) || 1;
     },
     paginatedItems() {
       if (!this.thread) return [];
-      const combined = [
-        { ...this.thread, id: 'main_thread_entry', isMain: true, seqNumber: 1 },
-        ...this.posts.map((p, idx) => ({ ...p, isMain: false, seqNumber: idx + 2 }))
-      ];
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return combined.slice(start, end);
+      if (this.currentPage === 1) {
+        return [
+          { ...this.thread, id: 'main_thread_entry', isMain: true, seqNumber: 1 },
+          ...this.posts.map((p, idx) => ({ ...p, isMain: false, seqNumber: idx + 2 }))
+        ];
+      }
+      const startSeq = (this.currentPage - 1) * this.itemsPerPage + 1;
+      return this.posts.map((p, idx) => ({ ...p, isMain: false, seqNumber: startSeq + idx }));
     },
     canShowReactionForMainPost() {
       if (!this.isLoggedIn || !this.thread || !this.thread.author || !this.currentUser) return false;
@@ -434,10 +435,19 @@ export default {
     }
   },
   async mounted() {
-    await this.fetchReactionIcons()
-    await this.fetchThread()
-    await this.fetchPosts()
-    this.fetchFollowStatus()
+    this.loading = true;
+    try {
+      await Promise.all([
+        this.fetchReactionIcons(),
+        this.fetchThread(),
+        this.fetchPosts(),
+        this.fetchFollowStatus()
+      ]);
+    } catch (e) {
+      console.error('Lỗi khi tải dữ liệu trang:', e);
+    } finally {
+      this.loading = false;
+    }
     
     // Tự động nhảy tới bình luận nếu URL có chỉ định postId
     this.jumpToTargetPost()
@@ -454,6 +464,11 @@ export default {
   },
   watch: {
     // Lắng nghe khi tham số query thay đổi (trong trường hợp click thông báo khi đang ở sẵn trong trang này)
+    '$route'(to, from) {
+      if (to.hash && to.hash !== from.hash && to.hash.startsWith('#post-')) {
+        this.jumpToTargetPost();
+      }
+    },
     '$route.query.postId': {
       handler(newVal) {
         if (newVal) {
@@ -462,19 +477,50 @@ export default {
       }
     },
     '$route.query.page': {
-      handler(newVal) {
-        if (newVal) {
-          this.currentPage = Number(newVal) || 1
+      async handler(newVal) {
+        const page = Number(newVal) || 1;
+        if (page !== this.currentPage) {
+          this.currentPage = page;
+          this.loading = true;
+          try {
+            await this.fetchPosts();
+          } catch (e) {
+            console.error('Error fetching page posts:', e);
+          } finally {
+            this.loading = false;
+          }
+          if (this.highlightedPostId) {
+            this.$nextTick(() => {
+              setTimeout(() => {
+                const element = document.getElementById(`post-${this.highlightedPostId}`);
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  setTimeout(() => {
+                     this.highlightedPostId = null;
+                  }, 4000);
+                }
+              }, 400);
+            });
+          }
         }
       }
     },
     '$route.params.id': {
       async handler(newVal, oldVal) {
         if (newVal && newVal !== oldVal) {
-          await this.fetchReactionIcons();
-          await this.fetchThread();
-          await this.fetchPosts();
-          await this.fetchFollowStatus();
+          this.loading = true;
+          try {
+            await Promise.all([
+              this.fetchReactionIcons(),
+              this.fetchThread(),
+              this.fetchPosts(),
+              this.fetchFollowStatus()
+            ]);
+          } catch (e) {
+            console.error('Lỗi khi tải lại dữ liệu trang:', e);
+          } finally {
+            this.loading = false;
+          }
           this.jumpToTargetPost();
         }
       }
@@ -582,25 +628,30 @@ export default {
         }
       } catch (error) {
         console.error('Lỗi khi tải chi tiết bài viết:', error)
-      } finally {
-        this.loading = false
       }
     },
     async fetchPosts() {
       try {
-        const response = await postService.getByThreadId(this.$route.params.id)
-        this.posts = response.data || []
+        const page = this.currentPage - 1;
+        const size = this.itemsPerPage;
+        const response = await postService.getByThreadId(this.$route.params.id, page, size)
+        this.posts = response.data.content || []
+        this.totalPosts = response.data.totalElements || 0
       } catch (error) {
         console.error('Lỗi khi tải bài bình luận:', error)
       }
     },
     changePage(page) {
-      this.currentPage = page;
-      // Cuộn mượt về đầu danh sách bình luận/trang khi đổi trang
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (page !== this.currentPage) {
+        this.$router.push({ query: { ...this.$route.query, page } });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     },
     async jumpToTargetPost() {
-      const pId = this.$route.query.postId;
+      let pId = this.$route.query.postId;
+      if (!pId && window.location.hash && window.location.hash.startsWith('#post-')) {
+        pId = window.location.hash.replace('#post-', '');
+      }
       if (!pId) return;
       
       let targetPage = 1;
@@ -609,38 +660,32 @@ export default {
       if (String(pId) === 'main_thread_entry') {
          targetPage = 1;
       } else {
-         // 2. Check if Target is in standard posts array
-         let idx = this.posts ? this.posts.findIndex(p => String(p.id) === String(pId)) : -1;
-         
-         // Nếu không tìm thấy (có thể là bình luận mới từ websocket), gọi API lấy lại danh sách
-         if (idx === -1) {
-           await this.fetchPosts();
-           idx = this.posts ? this.posts.findIndex(p => String(p.id) === String(pId)) : -1;
+         try {
+           const res = await postService.getPageNumber(pId, this.itemsPerPage);
+           targetPage = res.data || 1;
+         } catch (e) {
+           console.error('Error fetching page number for post:', e);
          }
-         
-         if (idx === -1) return;
-         
-         const seqNum = idx + 2;
-         targetPage = Math.ceil(seqNum / this.itemsPerPage);
       }
 
-      // 3. Switch Page
-      this.currentPage = targetPage;
-      this.highlightedPostId = pId;
-      
-      // 4. Wait for DOM refresh and scroll
-      await this.$nextTick();
-      setTimeout(() => {
-        const element = document.getElementById(`post-${pId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'auto', block: 'center' });
-          
-          // Cancel highlight animation after duration
-          setTimeout(() => {
-             this.highlightedPostId = null;
-          }, 4000);
-        }
-      }, 400);
+      // 3. Switch Page and navigate if different
+      if (targetPage !== this.currentPage) {
+         this.highlightedPostId = pId;
+         this.$router.push({ query: { ...this.$route.query, page: targetPage } });
+      } else {
+         // Same page, just scroll to it
+         this.highlightedPostId = pId;
+         await this.$nextTick();
+         setTimeout(() => {
+           const element = document.getElementById(`post-${pId}`);
+           if (element) {
+             element.scrollIntoView({ behavior: 'auto', block: 'center' });
+             setTimeout(() => {
+                this.highlightedPostId = null;
+             }, 4000);
+           }
+         }, 400);
+      }
     },
     processMediaTags(content) {
       if (!content) return ''
@@ -733,15 +778,18 @@ export default {
         this.replyForm.content = ''
         this.replyAttachedImages = []
         
-        
-        // Reload posts
-        await this.fetchPosts()
-        
-        // Chuyển sang trang cuối cùng để thấy bài mình vừa viết
-        this.currentPage = this.totalPages
+        this.totalPosts++
+        const lastPage = this.totalPages
+        if (this.currentPage !== lastPage) {
+          this.$router.push({ query: { ...this.$route.query, page: lastPage } })
+        } else {
+          await this.fetchPosts()
+        }
         
         this.$nextTick(() => {
-          window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+          setTimeout(() => {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+          }, 400);
         })
       } catch (error) {
         console.error(error)

@@ -17,8 +17,18 @@ public class PostController {
     private final PostService postService;
 
     @GetMapping("/thread/{threadId}")
-    public ResponseEntity<ResponseDTO<List<PostDTO>>> getPostsByThread(@PathVariable Long threadId) {
-        return ResponseEntity.ok(postService.getPostsByThread(threadId));
+    public ResponseEntity<ResponseDTO<com.forum.dto.PageResponseDTO<PostDTO>>> getPostsByThread(
+            @PathVariable Long threadId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(postService.getPostsByThread(threadId, page, size));
+    }
+
+    @GetMapping("/{id}/page-number")
+    public ResponseEntity<ResponseDTO<Integer>> getPostPageNumber(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(postService.getPostPageNumber(id, size));
     }
 
     @PostMapping
