@@ -32,6 +32,15 @@ public class ThreadService {
     private final ReactionService reactionService;
     private final NotificationService notificationService;
     private final ThreadSubscriptionRepository threadSubscriptionRepository;
+    private final ThreadViewIncrementer threadViewIncrementer;
+
+    private static final java.util.Map<Long, ThreadDTO> threadCache = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public void evictCache(Long id) {
+        if (id != null) {
+            threadCache.remove(id);
+        }
+    }
 
     public ResponseDTO<List<ThreadDTO>> getAllThreads(Long categoryId, Integer limit) {
         List<Thread> threads;
@@ -81,12 +90,39 @@ public class ThreadService {
     }
 
     public ResponseDTO<ThreadDTO> getThreadById(Long id) {
-        return threadRepository.findById(id).map(thread -> {
-            thread.setViewCount(thread.getViewCount() + 1);
-            ThreadDTO dto = threadMapper.toDTO(threadRepository.save(thread));
-            enrichThread(dto);
-            return ResponseDTO.success(dto);
-        }).orElseThrow(() -> new RuntimeException("Thread not found"));
+        threadViewIncrementer.incrementViewCountAsync(id);
+
+        ThreadDTO baseDto = threadCache.get(id);
+        if (baseDto == null) {
+            Thread thread = threadRepository.findByIdEager(id)
+                    .orElseThrow(() -> new RuntimeException("Thread not found"));
+            baseDto = threadMapper.toDTO(thread);
+            baseDto.setReactionSummary(reactionService.getSummaryForThread(id));
+            baseDto.setRecentReactors(reactionService.getRecentReactorsForThread(id));
+            threadCache.put(id, baseDto);
+        }
+
+        ThreadDTO dto = new ThreadDTO();
+        dto.setId(baseDto.getId());
+        dto.setTitle(baseDto.getTitle());
+        dto.setContent(baseDto.getContent());
+        dto.setCategory(baseDto.getCategory());
+        dto.setLabel(baseDto.getLabel());
+        dto.setAuthor(baseDto.getAuthor());
+        dto.setCreatedAt(baseDto.getCreatedAt());
+        dto.setLastPostAt(baseDto.getLastPostAt());
+        dto.setViewCount(baseDto.getViewCount());
+        dto.setReplyCount(baseDto.getReplyCount());
+        dto.setPinned(baseDto.isPinned());
+        dto.setActive(baseDto.isActive());
+        dto.setPoll(baseDto.getPoll());
+        dto.setAttachedImages(baseDto.getAttachedImages());
+        dto.setReactionSummary(baseDto.getReactionSummary());
+        dto.setRecentReactors(baseDto.getRecentReactors());
+
+        dto.setCurrentUserReaction(reactionService.getCurrentUserReactionForThread(id));
+
+        return ResponseDTO.success(dto);
     }
 
     private void enrichThreads(List<ThreadDTO> dtos) {
@@ -261,11 +297,14 @@ public class ThreadService {
                 }
             }
 
-            return ResponseDTO.success(threadMapper.toDTO(threadRepository.save(thread)));
+            Thread saved = threadRepository.save(thread);
+            evictCache(id);
+            return ResponseDTO.success(threadMapper.toDTO(saved));
         }).orElseThrow(() -> new RuntimeException("Thread not found"));
     }
 
     public ResponseDTO<Void> deleteThread(Long id) {
+        evictCache(id);
         threadRepository.findById(id).ifPresent(thread -> {
             // 0. Delete thread subscriptions related to this thread
             threadSubscriptionRepository.deleteByThreadId(id);
@@ -298,7 +337,9 @@ public class ThreadService {
     public ResponseDTO<ThreadDTO> togglePin(Long id) {
         return threadRepository.findById(id).map(thread -> {
             thread.setPinned(!thread.isPinned());
-            return ResponseDTO.success(threadMapper.toDTO(threadRepository.save(thread)));
+            Thread saved = threadRepository.save(thread);
+            evictCache(id);
+            return ResponseDTO.success(threadMapper.toDTO(saved));
         }).orElseThrow(() -> new RuntimeException("Thread not found"));
     }
 

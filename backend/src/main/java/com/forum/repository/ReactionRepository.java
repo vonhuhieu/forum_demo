@@ -20,6 +20,21 @@ public interface ReactionRepository extends JpaRepository<Reaction, Long> {
 
     void deleteByUserIdAndPostId(Long userId, Long postId);
 
+    @Query("SELECT r FROM Reaction r JOIN FETCH r.reactionIcon JOIN FETCH r.user JOIN FETCH r.post WHERE r.post.thread.id = :threadId")
+    List<Reaction> findAllByPostThreadId(@Param("threadId") Long threadId);
+
+    @Query("SELECT r FROM Reaction r JOIN FETCH r.user WHERE r.thread.id = :threadId ORDER BY r.updatedAt DESC")
+    List<Reaction> findRecentReactorsForThread(@Param("threadId") Long threadId, org.springframework.data.domain.Pageable pageable);
+
+    @Query("SELECT r FROM Reaction r JOIN FETCH r.reactionIcon WHERE r.user.username = :username AND r.post.thread.id = :threadId")
+    List<Reaction> findAllByUsernameAndThreadId(@Param("username") String username, @Param("threadId") Long threadId);
+
+    @Query("SELECT r FROM Reaction r WHERE r.user.username = :username AND r.thread.id = :threadId")
+    Optional<Reaction> findByUsernameAndThreadId(@Param("username") String username, @Param("threadId") Long threadId);
+
+    @Query("SELECT r FROM Reaction r WHERE r.user.username = :username AND r.post.id = :postId")
+    Optional<Reaction> findByUsernameAndPostId(@Param("username") String username, @Param("postId") Long postId);
+
     @Query("SELECT r.reactionIcon, COUNT(r), MAX(r.updatedAt) FROM Reaction r WHERE r.thread.id = :threadId GROUP BY r.reactionIcon")
     List<Object[]> aggregateByThreadId(@Param("threadId") Long threadId);
 
