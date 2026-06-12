@@ -55,8 +55,11 @@
               <div class="avatar-large" :style="{ backgroundColor: thread.author && thread.author.avatar ? thread.author.avatar : '#ccc', color: '#fff' }">
                 {{ thread.author ? (thread.author.displayName || thread.author.username).charAt(0).toUpperCase() : 'A' }}
               </div>
-              <div class="author-name-large">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</div>
-              <div class="author-title">Yếu sinh lý</div>
+              <div class="author-info-mobile-block">
+                <div class="author-name-large">{{ thread.author ? (thread.author.displayName || thread.author.username) : 'Ẩn danh' }}</div>
+                <div class="author-title">Yếu sinh lý</div>
+              </div>
+              <span class="message-userArrow"></span>
             </div>
             
             <div class="post-main">
@@ -133,8 +136,11 @@
               <div class="avatar-large" :style="{ backgroundColor: item.author && item.author.avatar ? item.author.avatar : '#ccc', color: '#fff' }">
                 {{ item.author ? (item.author.displayName || item.author.username).charAt(0).toUpperCase() : '?' }}
               </div>
-              <div class="author-name-large">{{ item.author ? (item.author.displayName || item.author.username) : 'Ẩn danh' }}</div>
-              <div class="author-title">Thành viên</div>
+              <div class="author-info-mobile-block">
+                <div class="author-name-large">{{ item.author ? (item.author.displayName || item.author.username) : 'Ẩn danh' }}</div>
+                <div class="author-title">Thành viên</div>
+              </div>
+              <span class="message-userArrow"></span>
             </div>
             
             <div class="post-main">
@@ -1157,6 +1163,7 @@ export default {
   flex-direction: column;
   align-items: center;
   border-right: 1px solid #e0e0e0;
+  position: relative;
 }
 
 .avatar-large {
@@ -1599,5 +1606,124 @@ export default {
 
 .btn-follow-thread:hover {
   background-color: #edf6fd;
+}
+
+/* User information block and speech bubble layout updates */
+.author-info-mobile-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Speech bubble arrow indicator for message cells */
+.message-userArrow {
+  position: absolute;
+  top: 20px;
+  right: -1px;
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-left-width: 0;
+  border-right-color: #e0e0e0;
+  z-index: 2;
+}
+
+.message-userArrow::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 1px;
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-left-width: 0;
+  border-right-color: #ffffff;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 767px) {
+  /* Center top action pagination */
+  .thread-action-bar {
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+  
+  .pagination-wrapper-left,
+  .follow-btn-wrapper-right {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  /* Center bottom pagination bar */
+  .pagination-wrapper {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+  }
+
+  /* Make post layout column-stacked */
+  .post-layout {
+    flex-direction: column !important;
+  }
+
+  /* Style post-sidebar to be horizontal banner on top */
+  .post-sidebar {
+    width: 100% !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding: 12px 15px !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    background-color: #f5f5f5 !important;
+  }
+
+  /* Adjust avatar size on mobile */
+  .avatar-large {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 1.5rem !important;
+    margin-bottom: 0 !important;
+    margin-right: 12px !important;
+  }
+
+  /* Align user text left on mobile */
+  .author-info-mobile-block {
+    align-items: flex-start !important;
+    text-align: left !important;
+  }
+
+  .author-name-large {
+    text-align: left !important;
+    font-size: 0.95rem !important;
+    margin-bottom: 2px !important;
+  }
+
+  .author-title {
+    text-align: left !important;
+    font-size: 0.85rem !important;
+  }
+
+  /* Speech bubble arrow positioned pointing upwards on mobile */
+  .message-userArrow {
+    top: auto !important;
+    right: auto !important;
+    bottom: -1px !important;
+    left: 24px !important;
+    border: 10px solid transparent !important;
+    border-top-width: 0 !important;
+    border-bottom-color: #e0e0e0 !important;
+  }
+
+  .message-userArrow::after {
+    border: 10px solid transparent !important;
+    border-top-width: 0 !important;
+    border-bottom-color: #ffffff !important;
+    top: 1px !important;
+    left: -10px !important;
+  }
 }
 </style>
