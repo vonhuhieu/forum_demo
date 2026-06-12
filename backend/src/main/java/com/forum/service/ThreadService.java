@@ -5,6 +5,7 @@ import com.forum.dto.ThreadDTO;
 import com.forum.entity.Thread;
 import com.forum.entity.ThreadSubscription;
 import com.forum.entity.User;
+import com.forum.entity.Post;
 import com.forum.mapper.ThreadMapper;
 import com.forum.repository.NotificationRepository;
 import com.forum.repository.ThreadRepository;
@@ -89,9 +90,34 @@ public class ThreadService {
     }
 
     private void enrichThreads(List<ThreadDTO> dtos) {
-        if (dtos != null) {
-            for (ThreadDTO dto : dtos) {
-                enrichThread(dto);
+        if (dtos == null || dtos.isEmpty()) return;
+        
+        List<Long> threadIds = dtos.stream()
+                .map(ThreadDTO::getId)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toList());
+                
+        if (threadIds.isEmpty()) return;
+        
+        List<Post> latestPosts = postRepository.findLatestPostsForThreadIds(threadIds);
+        java.util.Map<Long, Post> threadIdToPostMap = latestPosts.stream()
+                .collect(java.util.stream.Collectors.toMap(p -> p.getThread().getId(), p -> p, (p1, p2) -> p1));
+                
+        for (ThreadDTO dto : dtos) {
+            Post post = threadIdToPostMap.get(dto.getId());
+            if (post != null) {
+                dto.setLastPostId(post.getId());
+                dto.setLastPostAt(post.getCreatedAt());
+                
+                if (post.getAuthor() != null) {
+                    com.forum.dto.UserDTO userDTO = new com.forum.dto.UserDTO();
+                    userDTO.setId(post.getAuthor().getId());
+                    userDTO.setUsername(post.getAuthor().getUsername());
+                    userDTO.setDisplayName(post.getAuthor().getDisplayName());
+                    userDTO.setEmail(post.getAuthor().getEmail());
+                    userDTO.setAvatar(post.getAuthor().getAvatar());
+                    dto.setLastPostAuthor(userDTO);
+                }
             }
         }
     }

@@ -36,8 +36,16 @@ public class Category {
 
     @OneToMany(mappedBy = "parentCategory", cascade = CascadeType.ALL)
     @OrderBy("positionOrder ASC")
+    @org.hibernate.annotations.BatchSize(size = 100)
     private java.util.List<Category> subCategories = new java.util.ArrayList<>();
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE)
+    @org.hibernate.annotations.BatchSize(size = 100)
     private java.util.List<Thread> threads = new java.util.ArrayList<>();
+
+    @org.hibernate.annotations.Formula("(SELECT COUNT(*) FROM threads t WHERE t.category_id = id)")
+    private Long threadCount;
+
+    @org.hibernate.annotations.Formula("(SELECT COALESCE(SUM(t.reply_count + 1), 0) FROM threads t WHERE t.category_id = id)")
+    private Long postCount;
 }

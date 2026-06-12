@@ -151,7 +151,7 @@
                   </span>
                   <span class="title-txt home-last-thread-title-txt">{{ lastThreadByCat[cat.id].title }}</span>
                 </router-link>
-                <div class="last-thread-meta home-last-thread-meta">
+                <div class="last-thread-meta home-last-thread-meta display-flex-on-tablet-and-pc">
                   <span class="last-post-time">{{ formatDate(lastThreadByCat[cat.id].lastPostAt || lastThreadByCat[cat.id].createdAt) }}</span>
                   <span class="dot home-last-post-dot">•</span>
                   <span class="author home-last-post-author">{{ (lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.displayName || (lastThreadByCat[cat.id].lastPostAuthor || lastThreadByCat[cat.id].author)?.username || 'Ẩn danh' }}</span>
@@ -810,6 +810,12 @@ export default {
   font-size: 0.85rem;
   flex-shrink: 0;
   border: 1px solid #dee2e6;
+}
+
+@media (min-width: 768px) {
+  .display-flex-on-tablet-and-pc {
+    display: flex !important;
+  }
 }
 
 @import "@/shared/assets/styles/custom.css";
