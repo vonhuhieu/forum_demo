@@ -271,6 +271,10 @@ export default {
         unofficialMembers: 0,
         totalOfficialAndUnofficial: 0
       })
+    },
+    latestThreads: {
+      type: Array,
+      default: () => []
     }
   },
   components: {
@@ -279,7 +283,6 @@ export default {
   data() {
     return {
       categoryGroups: [],
-      latestThreads: [],
       lastThreadByCat: {},
       loading: true
     }
@@ -309,10 +312,6 @@ export default {
     async fetchData() {
       this.loading = true
       try {
-        // Fetch Mới ra lò
-        const latestRes = await threadService.getLatest()
-        this.latestThreads = latestRes.data || []
-
         // Fetch Groups with nested categories
         const groupRes = await categoryService.getGroups()
         this.categoryGroups = groupRes.data || []
