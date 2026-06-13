@@ -19,7 +19,7 @@
 
       <div class="main-wrapper">
         <div class="content-left">
-          <ForumHome :stats="stats" @loaded="onForumHomeLoaded" />
+          <ForumHome :stats="stats" :latestThreads="latestThreads" @loaded="onForumHomeLoaded" />
         </div>
         
         <aside class="content-right">
