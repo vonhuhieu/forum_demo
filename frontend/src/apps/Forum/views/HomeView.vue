@@ -273,7 +273,7 @@ export default {
       try {
         const response = await threadService.getLatest()
         if (response.data) {
-          this.latestThreads = response.data.slice(0, 15)
+          this.latestThreads = response.data.slice(0, 10)
         }
       } catch (error) {
         console.error('Lỗi khi tải bài viết mới nhất:', error)
