@@ -1,10 +1,12 @@
 package com.forum.dto;
 
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ThreadDTO {
     private Long id;
     private String title;

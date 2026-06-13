@@ -155,6 +155,10 @@ public class ThreadService {
                     dto.setLastPostAuthor(userDTO);
                 }
             }
+            // Strip heavy fields from list responses
+            dto.setContent(null);
+            dto.setPoll(null);
+            dto.setAttachedImages(null);
         }
     }
 
