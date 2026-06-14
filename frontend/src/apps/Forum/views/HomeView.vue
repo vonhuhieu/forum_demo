@@ -191,6 +191,7 @@ export default {
       loadingLatest: false,
       apiDataLoaded: false,
       forumHomeLoaded: false,
+      loadingCategories: false,
       stats: {
         totalCategories: 0,
         totalThreads: 0,
@@ -205,7 +206,7 @@ export default {
   },
   computed: {
     isLoading() {
-      return !this.apiDataLoaded || !this.forumHomeLoaded
+      return !this.apiDataLoaded || !this.forumHomeLoaded || this.loadingCategories
     },
     activeModalGroups() {
       if (!this.categoryGroupsModal || !Array.isArray(this.categoryGroupsModal)) return []
@@ -228,12 +229,15 @@ export default {
       }
     },
     async openPostModal() {
+      this.loadingCategories = true
       try {
         const response = await categoryService.getGroups()
         this.categoryGroupsModal = response.data
         this.showModal = true
       } catch (error) {
         console.error('Lỗi khi tải nhóm chuyên mục:', error)
+      } finally {
+        this.loadingCategories = false
       }
     },
     selectCategory(catId) {

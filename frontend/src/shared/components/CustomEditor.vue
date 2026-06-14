@@ -50,6 +50,7 @@
 </template>
 
 <script>
+import { markRaw } from 'vue'
 import { Ckeditor } from '@ckeditor/ckeditor5-vue'
 import translations from 'ckeditor5/translations/vi.js'
 import userService from '@/apps/Forum/services/user.service'
@@ -290,7 +291,7 @@ export default {
 
       // Lắng nghe sự kiện click nút Picker từ Plugin
       editor.on('openEmojiPicker', (evt, data) => {
-        this.emojiPickerTarget = data.domTarget;
+        this.emojiPickerTarget = markRaw(data.domTarget);
         this.showEmojiPicker = !this.showEmojiPicker;
       });
 

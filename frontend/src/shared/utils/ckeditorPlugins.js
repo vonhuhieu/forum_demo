@@ -197,8 +197,10 @@ export function EmojiPickerPlugin(editor) {
     });
 
     view.on('execute', (evt) => {
-      // Khi click vào button, bắn sự kiện custom của Editor để Vue cha bắt và hiển thị Picker
-      editor.fire('openEmojiPicker', { domTarget: view.element });
+      // Lấy phần tử DOM thực tế của button (đã được render ra toolbar)
+      const domTarget = view.element || null;
+      // Bắn sự kiện custom để Vue cha bắt và hiển thị Picker
+      editor.fire('openEmojiPicker', { domTarget });
     });
 
     return view;
