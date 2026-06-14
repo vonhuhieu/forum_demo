@@ -17,6 +17,7 @@ import com.forum.repository.UserRepository;
 import com.forum.repository.ConversationRepository;
 import com.forum.repository.ConversationMessageRepository;
 import com.forum.repository.ReactionIconRepository;
+import com.forum.repository.ThreadRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -41,6 +42,7 @@ public class NotificationService {
     private final ConversationRepository conversationRepository;
     private final ConversationMessageRepository conversationMessageRepository;
     private final ReactionIconRepository reactionIconRepository;
+    private final ThreadRepository threadRepository;
 
     /**
      * Logic to generate notification record and fire realtime message to targeted user socket.
@@ -219,6 +221,27 @@ public class NotificationService {
             }
         }
         return mentionedIds;
+    }
+
+    @Async
+    @Transactional
+    public void processMentionsAsync(Long actorId, Long threadId) {
+        try {
+            User actor = userRepository.findById(actorId).orElse(null);
+            Thread thread = threadRepository.findById(threadId).orElse(null);
+            if (actor == null || thread == null) {
+                return;
+            }
+            String content = thread.getContent();
+            java.util.Set<Long> mentionedUserIds = getMentionedUserIds(actor, content);
+            for (Long recipientId : mentionedUserIds) {
+                userRepository.findById(recipientId).ifPresent(recipient -> {
+                    sendMentionNotification(actor, recipient, thread, null);
+                });
+            }
+        } catch (Exception e) {
+            log.error("Failed to process mentions async", e);
+        }
     }
 
     private String removeDiacritics(String str) {

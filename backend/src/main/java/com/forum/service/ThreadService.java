@@ -210,15 +210,23 @@ public class ThreadService {
         
         Thread saved = threadRepository.save(thread);
         
-        // Gửi thông báo tag/mention cho bài đăng gốc
+        // Gửi thông báo tag/mention cho bài đăng gốc bất đồng bộ sau khi transaction commit thành công
         try {
-            User actor = saved.getAuthor();
-            String content = saved.getContent();
-            java.util.Set<Long> mentionedUserIds = notificationService.getMentionedUserIds(actor, content);
-            for (Long recipientId : mentionedUserIds) {
-                userRepository.findById(recipientId).ifPresent(recipient -> {
-                    notificationService.sendMentionNotification(actor, recipient, saved, null);
-                });
+            if (saved.getAuthor() != null) {
+                Long actorId = saved.getAuthor().getId();
+                Long threadId = saved.getId();
+                if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+                    org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                        new org.springframework.transaction.support.TransactionSynchronization() {
+                            @Override
+                            public void afterCommit() {
+                                notificationService.processMentionsAsync(actorId, threadId);
+                            }
+                        }
+                    );
+                } else {
+                    notificationService.processMentionsAsync(actorId, threadId);
+                }
             }
         } catch (Exception e) {
             // ignore
