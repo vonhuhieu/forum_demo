@@ -1,5 +1,6 @@
 <template>
   <div class="admin-create-thread">
+    <Loading :visible="isSubmitting" />
     <div class="card">
       <div class="card-header">{{ pageTitle }}</div>
       <div class="admin-form" style="padding: 2rem;">
@@ -158,13 +159,15 @@ import threadService from '@/apps/Forum/services/thread.service'
 import CustomEditor from '@/shared/components/CustomEditor.vue'
 import ImageUploaderPanel from '@/shared/components/ImageUploaderPanel.vue'
 import PollForm from '@/shared/components/PollForm.vue'
+import Loading from '@/shared/components/Loading.vue'
 
 export default {
   name: 'AdminCreateThread',
   components: {
     CustomEditor,
     ImageUploaderPanel,
-    PollForm
+    PollForm,
+    Loading
   },
   data() {
     return {
@@ -176,6 +179,7 @@ export default {
       selectedGroupId: '',
       postType: 'discussion',
       attachedImages: [],
+      isSubmitting: false,
       form: { title: '', content: '', categoryId: '', pinned: false, poll: null, labelId: null, attachedImages: '' }
     }
   },
@@ -354,6 +358,7 @@ export default {
         return
       }
       try {
+        this.isSubmitting = true
         // Loại bỏ các khối đính kèm chuẩn hóa từ editor trước khi nối khối HTML chuẩn cho cơ sở dữ liệu
         let cleanContent = this.form.content || ''
         const markers = [
@@ -413,6 +418,8 @@ export default {
         this.$router.push({ name: 'AdminThreads' })
       } catch (error) {
         alertError(this.isEditMode ? 'Lỗi khi cập nhật bài viết' : 'Lỗi khi đăng bài')
+      } finally {
+        this.isSubmitting = false
       }
     },
     handleInsertImages(urls, type) {
