@@ -65,6 +65,9 @@ export function CustomUploadPlugin(editor) {
         const formData = new FormData();
         files.forEach(file => formData.append('files', file));
         
+        // Thông báo bắt đầu upload để Vue cha có thể hiển thị Loading overlay
+        editor.fire('uploadMultipleStart');
+
         try {
           const res = await uploadService.uploadMultiple(formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
@@ -122,6 +125,9 @@ export function CustomUploadPlugin(editor) {
         } catch (err) {
           console.error('Error uploading multiple files:', err);
           alert('Không thể tải lên tệp đính kèm. Vui lòng thử lại sau.');
+        } finally {
+          // Thông báo kết thúc upload (dù thành công hay thất bại) để ẩn Loading overlay
+          editor.fire('uploadMultipleEnd');
         }
       };
 

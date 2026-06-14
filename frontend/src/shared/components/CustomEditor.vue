@@ -55,6 +55,7 @@ import { Ckeditor } from '@ckeditor/ckeditor5-vue'
 import translations from 'ckeditor5/translations/vi.js'
 import userService from '@/apps/Forum/services/user.service'
 import ForumPagination from '@/shared/components/ForumPagination.vue'
+import { downloadFileAsBlob, extractAttachmentFilename } from '@/shared/utils/downloadUtils'
 import {
   ClassicEditor,
   Plugin,
@@ -125,7 +126,7 @@ export default {
       default: null
     }
   },
-  emits: ['update:modelValue', 'ready', 'image-uploaded'],
+  emits: ['update:modelValue', 'ready', 'image-uploaded', 'upload-loading-start', 'upload-loading-end'],
   data() {
     return {
       editorInstance: null,
@@ -295,10 +296,35 @@ export default {
         this.showEmojiPicker = !this.showEmojiPicker;
       });
 
+      // Relay sự kiện upload tài liệu ra component cha để hiển thị/ẩn Loading overlay
+      editor.on('uploadMultipleStart', () => {
+        this.$emit('upload-loading-start');
+      });
+      editor.on('uploadMultipleEnd', () => {
+        this.$emit('upload-loading-end');
+      });
+
       // Lắng nghe thay đổi dữ liệu để bắt cú pháp tag @
       editor.model.document.on('change:data', () => {
         this.checkMentionTrigger();
       });
+
+      // Intercept click vào link tài liệu đính kèm (📎) bên trong editor để trigger download thay vì dời con trỏ
+      editor.editing.view.document.on('click', (evt, data) => {
+        const domEvent = data.domEvent;
+        if (!domEvent) return;
+        const target = domEvent.target;
+        if (!target) return;
+        const link = (typeof target.closest === 'function') ? target.closest('a') : null;
+        if (link) {
+          const filename = extractAttachmentFilename(link);
+          if (filename) {
+            domEvent.preventDefault();
+            evt.stop();
+            downloadFileAsBlob(link.href, filename);
+          }
+        }
+      }, { priority: 'high' });
 
       // Bắt sự kiện keydown mức độ ưu tiên cao nhất để kiểm soát di chuyển dòng và Enter/Escape
       editor.editing.view.document.on('keydown', (evt, data) => {
