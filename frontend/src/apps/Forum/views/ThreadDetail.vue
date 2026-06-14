@@ -298,6 +298,7 @@ import ReactionButton from '@/shared/components/ReactionButton.vue'
 import ReactionSummary from '@/shared/components/ReactionSummary.vue'
 import ReactionListPopup from '@/shared/components/ReactionListPopup.vue'
 import Loading from '@/shared/components/Loading.vue'
+import { downloadFileAsBlob, extractAttachmentFilename } from '@/shared/utils/downloadUtils'
 
 export default {
   name: 'ThreadDetail',
@@ -852,6 +853,18 @@ export default {
       }
     },
     handleContentClick(e) {
+      // --- Xử lý click vào link tài liệu đính kèm (📎 filename) để download ---
+      const clickedLink = e.target.closest('a');
+      if (clickedLink) {
+        const filename = extractAttachmentFilename(clickedLink);
+        if (filename) {
+          e.preventDefault();
+          e.stopPropagation();
+          downloadFileAsBlob(clickedLink.href, filename);
+          return;
+        }
+      }
+
       if (e.target.tagName === 'IMG') {
         this.openLightbox(e.target.src)
         return
