@@ -1,6 +1,6 @@
 <template>
   <div class="create-thread-page app-wrapper">
-    <Loading :visible="isUploadLoading" />
+    <Loading :visible="isUploadLoading || isSubmitting" />
     <ForumHeader />
     
     <main class="container" style="padding-top: 2rem;">
@@ -141,6 +141,7 @@ export default {
       postType: 'discussion',
       attachedImages: [],
       isUploadLoading: false,
+      isSubmitting: false,
       form: { title: '', content: '', categoryId: '', poll: null, labelId: null }
     }
   },
@@ -240,8 +241,10 @@ export default {
         return
       }
       try {
+        this.isSubmitting = true
         let cleanContent = this.form.content || ''
         const markers = [
+          /<!--/i, // Safe fallback or marker if comments exist
           /<div[^>]*class="attachment-block"[^>]*>/i,
           /<p><strong>Đính kèm<\/strong><\/p>/i
         ]
@@ -291,6 +294,8 @@ export default {
         this.$router.push({ name: 'ThreadDetail', params: { id: newThread.id } })
       } catch (error) {
         alertError('Lỗi khi đăng bài')
+      } finally {
+        this.isSubmitting = false
       }
     },
     handleInsertImages(urls, type) {
