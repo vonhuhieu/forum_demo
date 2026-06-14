@@ -1,5 +1,6 @@
 <template>
   <div class="create-thread-page app-wrapper">
+    <Loading :visible="isUploadLoading" />
     <ForumHeader />
     
     <main class="container" style="padding-top: 2rem;">
@@ -69,7 +70,13 @@
             </div>
 
             <div class="editor-container">
-              <CustomEditor ref="editor" v-model="form.content" @image-uploaded="handleImageUploaded" />
+              <CustomEditor
+                ref="editor"
+                v-model="form.content"
+                @image-uploaded="handleImageUploaded"
+                @upload-loading-start="isUploadLoading = true"
+                @upload-loading-end="isUploadLoading = false"
+              />
               
               <!-- Khối xem trước đính kèm chân bài viết -->
               <div v-if="attachedImages && attachedImages.length > 0" class="attachment-block" style="margin: 1.5rem 0; border-top: 1px dashed #ddd; padding-top: 1.5rem;">
@@ -110,6 +117,7 @@ import CustomEditor from '@/shared/components/CustomEditor.vue'
 import Breadcrumb from '@/shared/components/Breadcrumb.vue'
 import ImageUploaderPanel from '@/shared/components/ImageUploaderPanel.vue'
 import PollForm from '@/shared/components/PollForm.vue'
+import Loading from '@/shared/components/Loading.vue'
 
 export default {
   name: 'CreateThread',
@@ -118,7 +126,8 @@ export default {
     CustomEditor,
     Breadcrumb,
     ImageUploaderPanel,
-    PollForm
+    PollForm,
+    Loading
   },
   data() {
     return {
@@ -131,6 +140,7 @@ export default {
       labelDropdownOpen: false,
       postType: 'discussion',
       attachedImages: [],
+      isUploadLoading: false,
       form: { title: '', content: '', categoryId: '', poll: null, labelId: null }
     }
   },
